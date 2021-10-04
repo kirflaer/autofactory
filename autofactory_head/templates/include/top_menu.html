@@ -1,0 +1,18 @@
+<nav class="navbar navbar-expand navbar-light navbar-bg">
+    <a class="sidebar-toggle">
+        <i class="hamburger align-self-center"></i>
+    </a>
+
+    {% if request.resolver_match.view_name  == 'daybook' %}
+        <form class="d-none d-sm-inline-block" method="get">
+            <div class="input-group input-group-navbar">
+                <input type="date" class="form-control" id="start" name="date-filter"
+                       placeholder="Search projects…" aria-label="Search">
+                <button class="btn" type="submit">
+                    <i class="align-middle" data-feather="refresh-cw"></i>
+                </button>
+            </div>
+        </form>
+    {% endif %}
+
+</nav>

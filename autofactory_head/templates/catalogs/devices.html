@@ -1,0 +1,23 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Наименование</th>
+        <th style="width:40%;">Идентификатор</th>
+        <th style="width:40%;">Интервал</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.name }} </td>
+            <td> {{ element.external_key }} </td>
+            <td> {{ element.polling_interval }} </td>
+            {% include './catalogs/table_actions.html' %}
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

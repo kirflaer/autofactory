@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+{% load user_filters %}
+
+{% block menu %}
+    {% include './include/top_menu.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid p-0">
+
+        <!-- <h1 class="h3 mb-3">Form Layouts</h1> -->
+
+        <div class="row">
+            <div class="col-12 col-xl-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Horizontal form</h5>
+                        <h6 class="card-subtitle text-muted">Horizontal
+                            Bootstrap layout.</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="mb-3 row">
+                                    <label class="col-form-label col-sm-3 text-sm-right"
+                                           for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    <div class="col-sm-10">
+                                        {{ field | addclass:"form-control" }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+                            <div class="mb-3 row">
+                                <div class="col-sm-10 ml-sm-auto">
+                                    <button type="submit"
+                                            class="btn btn-outline-secondary">Сохранить
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -8,7 +8,21 @@ from factory_core.models import ShiftOperation
 from rest_framework.exceptions import APIException
 
 
-class RawDeviceData(serializers.Serializer):
+class ChangeMarkListSerializer(serializers.Serializer):
+    shift_guid = serializers.CharField(required=False)
+    marks = serializers.ListField()
+
+    def validate(self, attrs):
+        if not attrs.get('shift_guid'):
+            return super().validate(attrs)
+
+        if not ShiftOperation.objects.filter(
+                guid=attrs['shift_guid']).exists():
+            raise APIException("Смена не найдена")
+        return super().validate(attrs)
+
+
+class RawDeviceDataSerializer(serializers.Serializer):
     device = serializers.CharField()
     interval = serializers.CharField(required=False)
     marks = serializers.ListField(required=False)
@@ -27,12 +41,6 @@ class ShiftOpenSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('organization', 'number', 'date', 'catalog')
         model = ShiftOperation
-
-    # def validate(self, attrs):
-    #     author = self.context['request'].user
-    #     if ShiftOperation.objects.filter(author=author, closed=False).exists():
-    #         raise APIException("Смена уже открыта")
-    #     return super().validate(attrs)
 
 
 class ShiftSerializer(serializers.ModelSerializer):

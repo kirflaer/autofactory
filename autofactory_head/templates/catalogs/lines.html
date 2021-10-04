@@ -1,0 +1,25 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Наименование</th>
+        <th style="width:40%;">Устройство</th>
+        <th style="width:40%;">Склад</th>
+        <th style="width:40%;">Подразделение</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.name }} </td>
+            <td> {{ element.device }} </td>
+            <td> {{ element.storage }} </td>
+            <td> {{ element.department }} </td>
+            {% include './catalogs/table_actions.html' %}
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

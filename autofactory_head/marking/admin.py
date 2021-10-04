@@ -11,7 +11,7 @@ class RawMarkAdmin(admin.ModelAdmin):
 
 
 class MarkingOperationAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'date', 'author')
+    list_display = ('pk', 'date', 'author', 'manual_editing')
 
 
 class MarkingOperationMarksAdmin(admin.ModelAdmin):

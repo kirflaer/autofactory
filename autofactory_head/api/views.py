@@ -8,13 +8,16 @@ import base64
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
+import pytz
+from django.utils import timezone
 
 from .serializers import (
     OrganizationSerializer,
     ProductSerializer,
     ShiftSerializer,
     ShiftOpenSerializer,
-    RawDeviceData
+    RawDeviceDataSerializer,
+    ChangeMarkListSerializer
 )
 from factory_core.models import ShiftOperation
 from marking.models import (
@@ -23,14 +26,55 @@ from marking.models import (
     MarkingOperation,
     MarkingOperationMarks
 )
+from marking.utils import fill_marks, unloaded_marks
 from catalogs.models import Device
 
 User = get_user_model()
 
 
 @api_view(['POST', ])
+def remove_marks(request):
+    serializer = ChangeMarkListSerializer(data=request.data)
+    if serializer.is_valid():
+        marks = unloaded_marks()
+        indexes_to_remove = []
+        for mark in serializer.validated_data.get('marks'):
+            if not marks.filter(mark=mark).exists():
+                continue
+            for element in marks.filter(mark=mark):
+                if indexes_to_remove.count(element.get('pk')):
+                    continue
+                indexes_to_remove.append(element.get('pk'))
+        for index in indexes_to_remove:
+            MarkingOperationMarks.objects.get(pk=index).delete()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors,
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST', ])
+def add_marks(request):
+    serializer = ChangeMarkListSerializer(data=request.data)
+    if serializer.is_valid():
+        shift = ShiftOperation.objects.filter(
+            guid=serializer.validated_data.get('shift_guid')).get()
+        mark_filter = {'manual_editing': True, 'shift': shift}
+        if MarkingOperation.objects.filter(**mark_filter).exists():
+            marking = MarkingOperation.objects.filter(**mark_filter).get()
+        else:
+            marking = MarkingOperation.objects.create(**mark_filter)
+
+        fill_marks(marking, serializer.validated_data.get('marks'))
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors,
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST', ])
 def devices_marking(request):
-    serializer = RawDeviceData(data=request.data)
+    serializer = RawDeviceDataSerializer(data=request.data)
     if serializer.is_valid():
         external_key = serializer.validated_data.get('device')
         device = Device.objects.get(external_key=external_key)
@@ -43,7 +87,7 @@ def devices_marking(request):
 
 @api_view(['POST', ])
 def devices_status(request):
-    serializer = RawDeviceData(data=request.data)
+    serializer = RawDeviceDataSerializer(data=request.data)
     if serializer.is_valid():
         external_key = serializer.validated_data.get('device')
         device = Device.objects.get(external_key=external_key)
@@ -56,12 +100,23 @@ def devices_status(request):
 @api_view(['POST', ])
 @transaction.atomic
 def shift_open(request):
-    author = request.user
-    if ShiftOperation.objects.filter(author=author, closed=False).exists():
-        raise APIException("Смена уже открыта")
-
     serializer = ShiftOpenSerializer(data=request.data)
     if serializer.is_valid():
+        author = request.user
+        if ShiftOperation.objects.filter(author=author, closed=False).exists():
+            raise APIException("Смена уже открыта")
+
+        device = author.line.device
+        if not DeviceSignal.objects.filter(device=device).exists():
+            raise APIException("Устройство недоступно")
+
+        signal_time = DeviceSignal.objects.filter(device=device).values()[:1]
+        signal_time = signal_time[0]['date']
+        now = datetime.datetime.now(timezone.utc)
+
+        if (now - signal_time).seconds > device.polling_interval:
+            raise APIException("Устройство недоступно")
+
         date = serializer.validated_data.get('date')
         production_date = datetime.datetime.strptime(date, '%d.%m.%Y')
         author = request.user
@@ -85,24 +140,12 @@ def shift_close(request):
     shift.save()
 
     start_date = shift.date
-    end_date = datetime.datetime.today()
+    end_date = datetime.datetime.now()
     if RawMark.objects.filter(date__range=[start_date, end_date]).exists():
         marking = MarkingOperation.objects.create(shift=shift,
                                                   author=request.user)
-        for value in RawMark.objects.values():
-            mark = value['mark']
-            sku = mark[2:15]
-            product = None
-            if Product.objects.filter(sku=sku).exists():
-                product = Product.objects.get(sku=sku)
-
-            mark_bytes = mark.encode("utf-8")
-            base64_bytes = base64.b64encode(mark_bytes)
-            base64_string = base64_bytes.decode("utf-8")
-            MarkingOperationMarks.objects.create(operation=marking,
-                                                 mark=mark,
-                                                 encoded_mark=base64_string,
-                                                 product=product)
+        fill_marks(marking, RawMark.objects.filter(
+            date__range=[start_date, end_date]).values())
 
     return Response(status=status.HTTP_202_ACCEPTED)
 

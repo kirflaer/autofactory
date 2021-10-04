@@ -8,6 +8,9 @@ class DeviceSignal(models.Model):
     date = models.DateTimeField('Дата записи', auto_now_add=True)
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
 
+    class Meta:
+        ordering = ['-date']
+
 
 class RawMark(models.Model):
     date = models.DateTimeField('Дата записи', auto_now_add=True)

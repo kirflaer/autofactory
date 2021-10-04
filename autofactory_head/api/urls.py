@@ -7,7 +7,9 @@ from .views import (
     shift_open,
     shift_close,
     devices_status,
-    devices_marking
+    devices_marking,
+    add_marks,
+    remove_marks
 )
 
 urlpatterns = [
@@ -18,5 +20,7 @@ urlpatterns = [
     path('v1/shift-open/', shift_open),
     path('v1/shift-close/', shift_close),
     path('v1/devices-status/', devices_status),
+    path('v1/add-marks/', add_marks),
+    path('v1/delete-marks/', remove_marks),
     path('v1/marking/', devices_marking),
 ]

@@ -1,0 +1,29 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Наименование</th>
+        <th style="width:40%;">GTIN</th>
+        <th style="width:40%;">SKU</th>
+        <th style="width:40%;">Артикул</th>
+        <th style="width:40%;">Срок годности (в днях)</th>
+        <th style="width:40%;">Срок годности (Количество в паллете)</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.name }} </td>
+            <td> {{ element.gtin }} </td>
+            <td> {{ element.sku }} </td>
+            <td> {{ element.vendor_code }} </td>
+            <td> {{ element.expiration_date }} </td>
+            <td> {{ element.count_in_pallet }} </td>
+            {% include './catalogs/table_actions.html' %}
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

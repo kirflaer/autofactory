@@ -18,7 +18,8 @@ class BaseExternalModel(BaseModel):
     class Meta:
         abstract = True
 
-    external_key = models.CharField(max_length=36, blank=True)
+    external_key = models.CharField(max_length=36, blank=True,
+                                    verbose_name='Внешний ключ')
 
 
 class Organization(BaseExternalModel):
@@ -34,12 +35,18 @@ class Department(BaseExternalModel):
 
 
 class Device(BaseExternalModel):
-    polling_interval = models.PositiveIntegerField()
+    polling_interval = models.PositiveIntegerField(
+        verbose_name='Интервал опроса')
 
 
 class Line(BaseModel):
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True,
+                               blank=True, verbose_name='Устройство')
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True,
+                                blank=True, verbose_name='Склад')
+    department = models.ForeignKey(Department, on_delete=models.CASCADE,
+                                   null=True,
+                                   blank=True, verbose_name='Подразделение')
 
 
 class Product(BaseExternalModel):

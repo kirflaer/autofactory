@@ -8,6 +8,23 @@ from factory_core.models import ShiftOperation
 from rest_framework.exceptions import APIException
 
 
+class UnloadMarkSerializer(serializers.Serializer):
+    encoded_mark = serializers.CharField()
+    product = serializers.CharField(source='product__external_key')
+    production_date = serializers.CharField(
+        source='operation__shift__production_date')
+    batch_number = serializers.CharField(
+        source='operation__shift__batch_number')
+    operation = serializers.CharField(
+        source='operation__shift__organization__external_key')
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
 class ChangeMarkListSerializer(serializers.Serializer):
     shift_guid = serializers.CharField(required=False)
     marks = serializers.ListField()
@@ -20,6 +37,12 @@ class ChangeMarkListSerializer(serializers.Serializer):
                 guid=attrs['shift_guid']).exists():
             raise APIException("Смена не найдена")
         return super().validate(attrs)
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class RawDeviceDataSerializer(serializers.Serializer):

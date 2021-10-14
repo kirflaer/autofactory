@@ -17,8 +17,15 @@
             <td> {{ element.pk }} </td>
             <td> {{ element.date }} </td>
             <td> {{ element.shift }} </td>
-            <td> {{ element.manual_editing }} </td>
-            {% include './operation/table_actions.html' %}
+            <td> {{ element.manual_editing|yesno:"Да,Нет,-" }} </td>
+            <td class="table-action">
+                <a href="{% url  'marking_detail' element.pk %}"><i
+                        class="align-middle"
+                        data-feather="grid"></i></a>
+                <a href="{% url 'marking_remove' element.pk %}"><i
+                        class="align-middle"
+                        data-feather="trash"></i></a>
+            </td>
         </tr>
     {% endfor %}
     </tbody>

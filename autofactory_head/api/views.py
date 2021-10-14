@@ -17,9 +17,11 @@ from .serializers import (
     ShiftSerializer,
     ShiftOpenSerializer,
     RawDeviceDataSerializer,
-    ChangeMarkListSerializer
+    ChangeMarkListSerializer,
+    UnloadMarkSerializer
 )
 from factory_core.models import ShiftOperation
+from factory_core.utils import register_for_exchange
 from marking.models import (
     DeviceSignal,
     RawMark,
@@ -30,6 +32,43 @@ from marking.utils import fill_marks, unloaded_marks
 from catalogs.models import Device
 
 User = get_user_model()
+
+
+@api_view(['GET', ])
+def unload_marks(request):
+    # TODO: добавить необходимую сериализацию
+    values = MarkingOperationMarks.objects.filter(
+        operation__shift__ready_to_unload=True,
+        operation__shift__closed=True,
+    ).values('encoded_mark',
+             'product__external_key',
+             'operation__shift__production_date',
+             'operation__shift__batch_number',
+             'operation__shift__guid',
+             'operation__shift__organization__external_key',
+             'operation__shift__line__storage__external_key',
+             'operation__shift__line__department__external_key'
+             )
+
+    data = []
+    for value in values:
+        element = {'shift': value['operation__shift__guid'],
+                   'encoded_mark': value['encoded_mark'],
+                   'product': value['product__external_key'],
+                   'production_date': value[
+                       'operation__shift__production_date'].strftime(
+                       "%d.%m.%Y"),
+                   'batch_number': value['operation__shift__batch_number'],
+                   'organization': value[
+                       'operation__shift__organization__external_key'],
+                   'storage': value[
+                       'operation__shift__line__storage__external_key'],
+                   'department': value[
+                       'operation__shift__line__department__external_key']
+                   }
+        data.append(element)
+
+    return Response(data=data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST', ])
@@ -123,7 +162,7 @@ def shift_open(request):
         product = Product.objects.get(
             guid=serializer.validated_data.get('product'))
         serializer.save(production_date=production_date, author=author,
-                        product=product)
+                        product=product, line=author.line)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -141,11 +180,17 @@ def shift_close(request):
 
     start_date = shift.date
     end_date = datetime.datetime.now()
+
+    # marking
     if RawMark.objects.filter(date__range=[start_date, end_date]).exists():
         marking = MarkingOperation.objects.create(shift=shift,
                                                   author=request.user)
         fill_marks(marking, RawMark.objects.filter(
             date__range=[start_date, end_date]).values())
+
+    # prepare to exchange
+    # TODO: нужно выбирать режим закрытия смены.
+    register_for_exchange()
 
     return Response(status=status.HTTP_202_ACCEPTED)
 

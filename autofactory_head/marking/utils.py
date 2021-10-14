@@ -1,6 +1,6 @@
 from catalogs.models import Product
 import datetime
-from .models import MarkingOperationMarks, MarkingOperation
+from .models import MarkingOperationMarks
 import base64
 
 
@@ -15,6 +15,7 @@ def fill_marks(marking, marks):
         product = None
         if Product.objects.filter(sku=sku).exists():
             product = Product.objects.get(sku=sku)
+
 
         mark_bytes = mark.encode("utf-8")
         base64_bytes = base64.b64encode(mark_bytes)

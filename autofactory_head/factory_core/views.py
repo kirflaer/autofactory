@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from catalogs.models import (
     Organization,
     Department,
@@ -11,7 +11,8 @@ from catalogs.models import (
 
 from marking.models import (
     MarkingOperation,
-    MarkingOperationMarks
+    MarkingOperationMarks,
+    ShiftOperation
 )
 from django.urls import reverse_lazy
 
@@ -28,7 +29,8 @@ from .forms import (
     DepartmentForm,
     DeviceForm,
     OrganizationForm,
-    StorageForm
+    StorageForm,
+    ShiftOperationForm
 )
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -47,6 +49,7 @@ class CatalogBasicListView(LoginRequiredMixin, ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
         data['list_collapse'] = False
+        data['possibility_of_adding'] = True
         return data
 
 
@@ -65,24 +68,52 @@ class CatalogBasicRemoveView(LoginRequiredMixin, DeleteView):
 class OperationBasicListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
     ordering = 'date'
-    template_name = 'operation\marking.html'
 
 
-class MarkingListView(OperationBasicListView):
+class MarkingOperationListView(OperationBasicListView):
     model = MarkingOperation
+    template_name = 'operation\marking.html'
     extra_context = {
         'title': 'Маркировка',
-        'catalog_new_link': 'organization_new',
-        'catalog_edit_link': 'organization_edit',
-        'catalog_remove_link': 'organization_remove'
+        'element_new_link': 'organization_new',
     }
+
+
+class MarkingOperationRemoveView(CatalogBasicRemoveView):
+    model = MarkingOperation
+    success_url = reverse_lazy('marking')
+
+
+class MarkRemoveView(CatalogBasicRemoveView):
+    model = MarkingOperationMarks
+    success_url = reverse_lazy('marking')
+
+
+class ShiftOperationListView(OperationBasicListView):
+    model = ShiftOperation
+    template_name = 'operation\shift.html'
+    extra_context = {
+        'title': 'Смены',
+        'element_new_link': 'organization_new',
+    }
+
+
+class ShiftOperationUpdateView(CatalogBasicUpdateView):
+    model = ShiftOperation
+    form_class = ShiftOperationForm
+    success_url = reverse_lazy('shift')
+
+
+class ShiftOperationRemoveView(CatalogBasicRemoveView):
+    model = ShiftOperation
+    success_url = reverse_lazy('shift')
 
 
 class OrganizationListView(CatalogBasicListView):
     model = Organization
     extra_context = {
         'title': 'Организации',
-        'catalog_new_link': 'organization_new',
+        'element_new_link': 'organization_new',
         'catalog_edit_link': 'organization_edit',
         'catalog_remove_link': 'organization_remove'
     }
@@ -110,7 +141,7 @@ class ProductListView(CatalogBasicListView):
     template_name = 'catalogs\products.html'
     extra_context = {
         'title': 'Номенклатура',
-        'catalog_new_link': 'product_new',
+        'element_new_link': 'product_new',
         'catalog_edit_link': 'product_edit',
         'catalog_remove_link': 'product_remove'
     }
@@ -137,7 +168,7 @@ class StorageListView(CatalogBasicListView):
     model = Storage
     extra_context = {
         'title': 'Склады',
-        'catalog_new_link': 'storage_new',
+        'element_new_link': 'storage_new',
         'catalog_edit_link': 'storage_edit',
         'catalog_remove_link': 'storage_remove'
     }
@@ -164,7 +195,7 @@ class DepartmentListView(CatalogBasicListView):
     model = Department
     extra_context = {
         'title': 'Подразделения',
-        'catalog_new_link': 'department_new',
+        'element_new_link': 'department_new',
         'catalog_edit_link': 'department_edit',
         'catalog_remove_link': 'department_remove'
     }
@@ -192,7 +223,7 @@ class LineListView(CatalogBasicListView):
     template_name = 'catalogs\lines.html'
     extra_context = {
         'title': 'Линии',
-        'catalog_new_link': 'line_new',
+        'element_new_link': 'line_new',
         'catalog_edit_link': 'line_edit',
         'catalog_remove_link': 'line_remove'
     }
@@ -220,7 +251,7 @@ class DeviceListView(CatalogBasicListView):
     template_name = 'catalogs\devices.html'
     extra_context = {
         'title': 'Устройства сбора данных',
-        'catalog_new_link': 'device_new',
+        'element_new_link': 'device_new',
         'catalog_edit_link': 'device_edit',
         'catalog_remove_link': 'device_remove'
     }
@@ -241,3 +272,10 @@ class DeviceUpdateView(CatalogBasicUpdateView):
 class DeviceRemoveView(CatalogBasicRemoveView):
     model = Device
     success_url = reverse_lazy('devices')
+
+
+@login_required
+def marking_detail(request, pk):
+    operation = get_object_or_404(MarkingOperation, pk=pk)
+    marks = MarkingOperationMarks.objects.all().filter(operation=operation)
+    return render(request, 'operation\marking_detail.html', {'data': marks})

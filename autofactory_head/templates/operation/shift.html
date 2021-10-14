@@ -1,0 +1,44 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Номер</th>
+        <th style="width:40%;">Дата</th>
+        <th style="width:40%;">Тип смены</th>
+        <th style="width:40%;">Организация</th>
+        <th style="width:40%;">Линия</th>
+        <th style="width:40%;">Дата производства</th>
+        <th style="width:40%;">Номер партии</th>
+        <th style="width:40%;">Закрыта</th>
+        <th style="width:40%;">Готова к выгрузке</th>
+        <th style="width:40%;">Выгружена</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.pk }} </td>
+            <td> {{ element.date }} </td>
+            <td> {{ element.type_of_shift }} </td>
+            <td> {{ element.organization|default_if_none:"-" }} </td>
+            <td> {{ element.line|default_if_none:"-" }} </td>
+            <td> {{ element.production_date }} </td>
+            <td> {{ element.batch_number }} </td>
+            <td> {{ element.closed|yesno:"Да,Нет,-" }} </td>
+            <td> {{ element.ready_to_unload|yesno:"Да,Нет,-" }} </td>
+            <td> {{ element.unloaded|yesno:"Да,Нет,-" }} </td>
+            <td class="table-action">
+                <a href="{% url  'shift_edit' element.pk %}"><i
+                        class="align-middle"
+                        data-feather="edit-2"></i></a>
+                <a href="{% url 'shift_remove' element.pk %}"><i
+                        class="align-middle"
+                        data-feather="trash"></i></a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

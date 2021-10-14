@@ -23,7 +23,7 @@ class MarkingOperation(BaseModel):
     manual_editing = models.BooleanField(default=False)
 
 
-class MarkingOperationMarks(BaseModel):
+class MarkingOperationMarks(models.Model):
     operation = models.ForeignKey(MarkingOperation, on_delete=models.CASCADE,
                                   related_name='marks')
     mark = models.CharField(max_length=500)

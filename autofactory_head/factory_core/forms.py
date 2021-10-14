@@ -7,7 +7,20 @@ from catalogs.models import (
     Line
 )
 
-from django.forms import ModelForm, ModelChoiceField
+from .models import ShiftOperation
+
+from django.forms import ModelForm, BooleanField
+
+
+class ShiftOperationForm(ModelForm):
+    class Meta:
+        model = ShiftOperation
+        exclude = ['guid',
+                   'pk',
+                   'unloaded',
+                   'closed',
+                   'type_of_shift',
+                   'ready_to_unload']
 
 
 class ProductForm(ModelForm):

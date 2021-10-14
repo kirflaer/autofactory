@@ -16,70 +16,78 @@
             <span class="align-middle me-3">Autofactory</span>
         </a>
         {% with request.resolver_match.view_name as view_name %}
-        <ul class="sidebar-nav">
-            <li class="sidebar-item {% if view_name  == 'index' %}active{% endif %}">
-                <a data-bs-target="#dashboards" data-bs-toggle="collapse"
-                   class="sidebar-link">
-                    <i class="align-middle" data-feather="sliders"></i> <span
-                        class="align-middle">Рабочий стол</span>
-                    <span class="badge badge-sidebar-primary">5</span>
-                </a>
-            </li>
+            <ul class="sidebar-nav">
 
-            <li class="sidebar-item">
-                <a data-bs-target="#catalogs" data-bs-toggle="collapse"
-                   class="sidebar-link collapsed">
-                    <i class="align-middle" data-feather="folder"></i> <span
-                        class="align-middle">Справочники</span>
-                </a>
-                <ul id="catalogs"
-                    class="sidebar-dropdown list-unstyled {% if list_collapse  != False %}collapse{% endif %} "
-                    data-bs-parent="#sidebar">
-                    <li class="sidebar-item {% if view_name  == 'products' %}active{% endif %}"><a class="sidebar-link"
-                                                href="{% url 'products' %}">Номенклатура</a>
-                    </li>
-                    <li class="sidebar-item {% if view_name  == 'organizations' %}active{% endif %}" ><a class="sidebar-link"
-                                                href="{% url 'organizations' %}">Организации</a>
-                    </li>
-                    <li class="sidebar-item {% if view_name  == 'storages' %}active{% endif %}"><a class="sidebar-link"
-                                                href="{% url 'storages' %}">Склады</a>
-                    </li>
-                    <li class="sidebar-item {% if view_name  == 'lines' %}active{% endif %}"><a class="sidebar-link"
-                                                href="{% url 'lines' %}">Линии</a>
-                    </li>
-                    <li class="sidebar-item {% if view_name  == 'devices' %}active{% endif %}"><a class="sidebar-link"
-                                                href="{% url 'devices' %}">Устройства сбора данных</a>
-                    </li>
-                    <li class="sidebar-item {% if view_name  == 'departments' %}active{% endif %}"><a class="sidebar-link"
-                                                href="{% url 'departments' %}">Подразделения</a>
-                    </li>
-                </ul>
-            </li>
+                <li class="sidebar-item {% if view_name  == 'index' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'index' %}">
+                        <i class="align-middle" data-feather="list"></i> <span
+                            class="align-middle">Рабочий стол</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-item {% if view_name  == 'marking' %}active{% endif %}">
-                <a class="sidebar-link" href="{% url 'marking' %}">
-                    <i class="align-middle" data-feather="cast"></i> <span
-                        class="align-middle">Маркировка</span>
-                </a>
-            </li>
+                <li class="sidebar-item">
+                    <a data-bs-target="#catalogs" data-bs-toggle="collapse"
+                       class="sidebar-link collapsed">
+                        <i class="align-middle" data-feather="folder"></i>
+                        <span
+                                class="align-middle">Справочники</span>
+                    </a>
+                    <ul id="catalogs"
+                        class="sidebar-dropdown list-unstyled {% if list_collapse  != False %}collapse{% endif %} "
+                        data-bs-parent="#sidebar">
+                        <li class="sidebar-item {% if view_name  == 'products' %}active{% endif %}">
+                            <a class="sidebar-link"
+                               href="{% url 'products' %}">Номенклатура</a>
+                        </li>
+                        <li class="sidebar-item {% if view_name  == 'organizations' %}active{% endif %}">
+                            <a class="sidebar-link"
+                               href="{% url 'organizations' %}">Организации</a>
+                        </li>
+                        <li class="sidebar-item {% if view_name  == 'storages' %}active{% endif %}">
+                            <a class="sidebar-link"
+                               href="{% url 'storages' %}">Склады</a>
+                        </li>
+                        <li class="sidebar-item {% if view_name  == 'lines' %}active{% endif %}">
+                            <a class="sidebar-link"
+                               href="{% url 'lines' %}">Линии</a>
+                        </li>
+                        <li class="sidebar-item {% if view_name  == 'devices' %}active{% endif %}">
+                            <a class="sidebar-link"
+                               href="{% url 'devices' %}">Устройства сбора
+                                данных</a>
+                        </li>
+                        <li class="sidebar-item {% if view_name  == 'departments' %}active{% endif %}">
+                            <a class="sidebar-link"
+                               href="{% url 'departments' %}">Подразделения</a>
+                        </li>
+                    </ul>
+                </li>
 
-            <li class="sidebar-item">
-                <a class="sidebar-link" href="tables-bootstrap.html">
-                    <i class="align-middle" data-feather="users"></i> <span
-                        class="align-middle">Смены</span>
-                </a>
-            </li>
+                <li class="sidebar-item {% if view_name  == 'marking' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'marking' %}">
+                        <i class="align-middle" data-feather="cast"></i> <span
+                            class="align-middle">Маркировка</span>
+                    </a>
+                </li>
 
+                <li class="sidebar-item {% if view_name  == 'shift' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'shift' %}">
+                        <i class="align-middle" data-feather="users"></i> <span
+                            class="align-middle">Смены</span>
+                    </a>
+                </li>
 
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="tables-bootstrap.html">
+                        <i class="align-middle" data-feather="settings"></i>
+                        <span
+                                class="align-middle">Настройки</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-item">
-                <a class="sidebar-link" href="tables-bootstrap.html">
-                    <i class="align-middle" data-feather="settings"></i> <span
-                        class="align-middle">Настройки</span>
-                </a>
-            </li>
-
-        </ul>
+            </ul>
         {% endwith %}
     </div>
+
+
 </nav>

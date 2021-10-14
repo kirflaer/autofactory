@@ -1,7 +1,6 @@
 from django.urls import path
 
 from . import views
-from .views import index
 
 from .views import (
     OrganizationListView,
@@ -28,7 +27,12 @@ from .views import (
     DeviceUpdateView,
     OrganizationRemoveView,
     OrganizationUpdateView,
-    MarkingListView
+    MarkingOperationListView,
+    MarkingOperationRemoveView,
+    MarkRemoveView,
+    ShiftOperationListView,
+    ShiftOperationRemoveView,
+    ShiftOperationUpdateView
 )
 
 urlpatterns = [
@@ -83,5 +87,18 @@ urlpatterns = [
     path('devices/remove/<uuid:pk>', DeviceRemoveView.as_view(),
          name='device_remove'),
 
-    path('marking/', MarkingListView.as_view(), name='marking'),
+    path('marking/', MarkingOperationListView.as_view(), name='marking'),
+    path('marking/detail/<int:pk>', views.marking_detail,
+         name='marking_detail'),
+    path('marking/remove/<int:pk>', MarkingOperationRemoveView.as_view(),
+         name='marking_remove'),
+    path('marking/remove-mark/<int:pk>', MarkRemoveView.as_view(),
+         name='mark-remove'),
+
+    path('shift/', ShiftOperationListView.as_view(), name='shift'),
+    path('shift/edit/<int:pk>', ShiftOperationUpdateView.as_view(),
+         name='shift_edit'),
+    path('shift/remove/<int:pk>', ShiftOperationRemoveView.as_view(),
+         name='shift_remove'),
+
 ]

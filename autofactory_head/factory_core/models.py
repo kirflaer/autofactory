@@ -18,7 +18,7 @@ class BaseModel(models.Model):
                                verbose_name='Автор', null=True)
 
     def __str__(self):
-        return f'{self.pk} - {self.date}'
+        return f'{self.pk} - {self.date.strftime("%d.%m.%Y %H:%M:%S")}'
 
 
 class ShiftOperation(BaseModel):
@@ -31,10 +31,13 @@ class ShiftOperation(BaseModel):
         max_length=2,
         choices=TypeOfShift.choices,
         default=TypeOfShift.MARKING,
+        verbose_name='Тип смены'
     )
 
     closed = models.BooleanField(default=False, verbose_name='Закрыта')
     unloaded = models.BooleanField(default=False, verbose_name='Выгружена')
+    ready_to_unload = models.BooleanField(default=False,
+                                          verbose_name='Готова к выгрузке')
     batch_number = models.CharField(max_length=150,
                                     verbose_name='Номер партии', blank=True,
                                     null=True)

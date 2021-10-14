@@ -3,12 +3,12 @@ import uuid
 
 
 class BaseModel(models.Model):
-    class Meta:
-        abstract = True
-
     name = models.CharField(verbose_name='Наименование', max_length=1024)
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
+
+    class Meta:
+        abstract = True
 
     def __str__(self):
         return self.name

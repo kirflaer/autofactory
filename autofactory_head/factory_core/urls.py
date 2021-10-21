@@ -30,9 +30,9 @@ from .views import (
     MarkingOperationListView,
     MarkingOperationRemoveView,
     MarkRemoveView,
-    ShiftOperationListView,
-    ShiftOperationRemoveView,
-    ShiftOperationUpdateView
+    # ShiftOperationListView,
+    # ShiftOperationRemoveView,
+    # ShiftOperationUpdateView
 )
 
 urlpatterns = [
@@ -95,10 +95,10 @@ urlpatterns = [
     path('marking/remove-mark/<int:pk>', MarkRemoveView.as_view(),
          name='mark-remove'),
 
-    path('shift/', ShiftOperationListView.as_view(), name='shift'),
-    path('shift/edit/<int:pk>', ShiftOperationUpdateView.as_view(),
-         name='shift_edit'),
-    path('shift/remove/<int:pk>', ShiftOperationRemoveView.as_view(),
-         name='shift_remove'),
+    # path('shift/', ShiftOperationListView.as_view(), name='shift'),
+    # path('shift/edit/<int:pk>', ShiftOperationUpdateView.as_view(),
+    #      name='shift_edit'),
+    # path('shift/remove/<int:pk>', ShiftOperationRemoveView.as_view(),
+    #      name='shift_remove'),
 
 ]

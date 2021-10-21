@@ -1,3 +1,4 @@
+import enum
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -23,7 +24,7 @@ INSTALLED_APPS = [
     'catalogs',
     'api',
     'factory_core',
-    'marking',
+    'packing',
     'users',
     'rest_framework',
 ]
@@ -101,3 +102,4 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+TYPE_MARKING_CLOSE = 'ALL_IN_DAY_BY_BAT_NUMBER'

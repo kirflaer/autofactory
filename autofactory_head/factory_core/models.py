@@ -8,6 +8,10 @@ User = get_user_model()
 
 
 class BaseModel(models.Model):
+    """ Базовая модель для операций
+    Во внешнюю систему отправляются все ready_to_unload
+    После выгрузки внешним запросом помечаются unloaded"""
+
     class Meta:
         abstract = True
 
@@ -17,37 +21,22 @@ class BaseModel(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                verbose_name='Автор', null=True)
 
-    def __str__(self):
-        return f'{self.pk} - {self.date.strftime("%d.%m.%Y %H:%M:%S")}'
-
-
-class ShiftOperation(BaseModel):
-    class TypeOfShift(models.TextChoices):
-        MOVING = 'MV', _('Перемещение')
-        MARKING = 'MR', _('Маркировка')
-        INVENTORY = 'IV', _('Инвентаризация')
-
-    type_of_shift = models.CharField(
-        max_length=2,
-        choices=TypeOfShift.choices,
-        default=TypeOfShift.MARKING,
-        verbose_name='Тип смены'
-    )
-
-    closed = models.BooleanField(default=False, verbose_name='Закрыта')
-    unloaded = models.BooleanField(default=False, verbose_name='Выгружена')
-    ready_to_unload = models.BooleanField(default=False,
-                                          verbose_name='Готова к выгрузке')
-    batch_number = models.CharField(max_length=150,
-                                    verbose_name='Номер партии', blank=True,
-                                    null=True)
-    production_date = models.DateField('Дата выработки')
-
-    line = models.ForeignKey(Line, on_delete=models.CASCADE,
-                             verbose_name='Линия', blank=True, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,
-                                verbose_name='Номенклатура', blank=True,
-                                null=True)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE,
                                      verbose_name='Организация', blank=True,
                                      null=True)
+
+    closed = models.BooleanField(default=False,
+                                 verbose_name='Закрыта')
+
+    unloaded = models.BooleanField(default=False, verbose_name='Выгружена')
+    ready_to_unload = models.BooleanField(default=False,
+                                          verbose_name='Готова к выгрузке')
+
+    def __str__(self):
+        return f'{self.pk} - {self.date.strftime("%d.%m.%Y %H:%M:%S")}'
+
+    def close(self):
+        self.closed = True
+        self.save()
+
+

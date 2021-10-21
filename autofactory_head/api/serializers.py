@@ -1,22 +1,24 @@
-from abc import ABC
-
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-
-from catalogs.models import Organization, Product, Device
-from factory_core.models import ShiftOperation
 from rest_framework.exceptions import APIException
+from django.contrib.auth import get_user_model
+
+from packing.models import MarkingOperation
+
+from catalogs.models import (
+    Organization,
+    Product,
+    Device,
+    Line,
+    Department,
+    Storage,
+    Unit
+)
+
+User = get_user_model()
 
 
-class UnloadMarkSerializer(serializers.Serializer):
-    encoded_mark = serializers.CharField()
-    product = serializers.CharField(source='product__external_key')
-    production_date = serializers.CharField(
-        source='operation__shift__production_date')
-    batch_number = serializers.CharField(
-        source='operation__shift__batch_number')
-    operation = serializers.CharField(
-        source='operation__shift__organization__external_key')
+class ConfirmUnloadingSerializer(serializers.Serializer):
+    guids = serializers.ListField()
 
     def create(self, validated_data):
         pass
@@ -25,19 +27,11 @@ class UnloadMarkSerializer(serializers.Serializer):
         pass
 
 
-class ChangeMarkListSerializer(serializers.Serializer):
-    shift_guid = serializers.CharField(required=False)
+class AggregationsSerializer(serializers.Serializer):
+    aggregation_code = serializers.CharField(required=False)
+    product = serializers.CharField(required=False)
     marks = serializers.ListField()
 
-    def validate(self, attrs):
-        if not attrs.get('shift_guid'):
-            return super().validate(attrs)
-
-        if not ShiftOperation.objects.filter(
-                guid=attrs['shift_guid']).exists():
-            raise APIException("Смена не найдена")
-        return super().validate(attrs)
-
     def create(self, validated_data):
         pass
 
@@ -45,36 +39,15 @@ class ChangeMarkListSerializer(serializers.Serializer):
         pass
 
 
-class RawDeviceDataSerializer(serializers.Serializer):
-    device = serializers.CharField()
-    interval = serializers.CharField(required=False)
-    marks = serializers.ListField(required=False)
-
-    def validate(self, attrs):
-        if not Device.objects.filter(external_key=attrs['device']).exists():
-            raise APIException("Устройство не обнаружено")
-        return super().validate(attrs)
-
-
-class ShiftOpenSerializer(serializers.ModelSerializer):
-    number = serializers.CharField(source='batch_number')
-    date = serializers.CharField()
-    catalog = serializers.CharField(source='product')
+class MarkingSerializer(serializers.ModelSerializer):
+    production_date = serializers.DateField(format="%Y-%m-%d")
 
     class Meta:
-        fields = ('organization', 'number', 'date', 'catalog')
-        model = ShiftOperation
-
-
-class ShiftSerializer(serializers.ModelSerializer):
-    part = serializers.CharField(source='batch_number')
-    date = serializers.DateField(source='production_date',
-                                 format="%d.%m.%Y")
-    catalog_name = serializers.CharField(source='product')
-
-    class Meta:
-        fields = ('guid', 'part', 'date', 'catalog_name')
-        model = ShiftOperation
+        fields = (
+            'batch_number', 'production_date', 'product', 'organization',
+            'guid', 'closed', 'line')
+        read_only_fields = ('guid', 'organization', 'closed')
+        model = MarkingOperation
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -83,10 +56,54 @@ class OrganizationSerializer(serializers.ModelSerializer):
         model = Organization
 
 
+class UnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'is_default', 'guid', 'capacity', 'count_in_pallet')
+        model = Unit
+
+
 class ProductSerializer(serializers.ModelSerializer):
-    countInPallet = serializers.CharField(source='count_in_pallet')
-    expData = serializers.CharField(source='expiration_date')
+    units = UnitSerializer(read_only=True, many=True)
 
     class Meta:
-        fields = ('name', 'sku', 'guid', 'expData', 'countInPallet')
+        fields = ('name', 'gtin', 'guid', 'expiration_date', 'units')
         model = Product
+
+
+class StorageSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('guid', 'name')
+        model = Storage
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('guid', 'name')
+        model = Department
+
+
+class LineSerializer(serializers.ModelSerializer):
+    products = serializers.PrimaryKeyRelatedField(many=True,
+                                                  read_only=True)
+
+    class Meta:
+        fields = (
+            'guid', 'name', 'storage', 'department', 'products')
+        model = Line
+
+
+class DeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('guid', 'name', 'identifier', 'port', 'polling_interval')
+        read_only_fields = ('guid', 'port', 'polling_interval')
+        model = Device
+
+
+class UserSerializer(serializers.ModelSerializer):
+    scanner = DeviceSerializer(read_only=True)
+
+    class Meta:
+        fields = ('line', 'role', 'device', 'scanner')
+        model = User
+
+

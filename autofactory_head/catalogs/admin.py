@@ -7,7 +7,17 @@ from .models import (
     Device,
     Line,
     Product,
+    Unit,
+    LineProduct
 )
+
+
+class LineProductAdmin(admin.ModelAdmin):
+    list_display = ('line', 'product',)
+
+
+class UnitAdmin(admin.ModelAdmin):
+    list_display = ('product', 'name',)
 
 
 class OrganizationAdmin(admin.ModelAdmin):
@@ -52,3 +62,5 @@ admin.site.register(Department, DepartmentAdmin)
 admin.site.register(Device, DeviceAdmin)
 admin.site.register(Line, LineAdmin)
 admin.site.register(Product, ProductAdmin)
+admin.site.register(Unit, UnitAdmin)
+admin.site.register(LineProduct, LineProductAdmin)

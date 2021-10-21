@@ -9,10 +9,9 @@ from catalogs.models import (
     Line
 )
 
-from marking.models import (
+from packing.models import (
     MarkingOperation,
-    MarkingOperationMarks,
-    ShiftOperation
+    MarkingOperationMarks
 )
 from django.urls import reverse_lazy
 
@@ -30,7 +29,7 @@ from .forms import (
     DeviceForm,
     OrganizationForm,
     StorageForm,
-    ShiftOperationForm
+   # ShiftOperationForm
 )
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -89,24 +88,24 @@ class MarkRemoveView(CatalogBasicRemoveView):
     success_url = reverse_lazy('marking')
 
 
-class ShiftOperationListView(OperationBasicListView):
-    model = ShiftOperation
-    template_name = 'operation\shift.html'
-    extra_context = {
-        'title': 'Смены',
-        'element_new_link': 'organization_new',
-    }
-
-
-class ShiftOperationUpdateView(CatalogBasicUpdateView):
-    model = ShiftOperation
-    form_class = ShiftOperationForm
-    success_url = reverse_lazy('shift')
-
-
-class ShiftOperationRemoveView(CatalogBasicRemoveView):
-    model = ShiftOperation
-    success_url = reverse_lazy('shift')
+# class ShiftOperationListView(OperationBasicListView):
+#     model = ShiftOperation
+#     template_name = 'operation\shift.html'
+#     extra_context = {
+#         'title': 'Смены',
+#         'element_new_link': 'organization_new',
+#     }
+#
+#
+# class ShiftOperationUpdateView(CatalogBasicUpdateView):
+#     model = ShiftOperation
+#     form_class = ShiftOperationForm
+#     success_url = reverse_lazy('shift')
+#
+#
+# class ShiftOperationRemoveView(CatalogBasicRemoveView):
+#     model = ShiftOperation
+#     success_url = reverse_lazy('shift')
 
 
 class OrganizationListView(CatalogBasicListView):

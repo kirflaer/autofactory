@@ -6,9 +6,7 @@
     <tr>
         <th style="width:40%;">Наименование</th>
         <th style="width:40%;">Идентификатор</th>
-        <th style="width:40%;">Порт</th>
-        <th style="width:40%;">Тип</th>
-        <th style="width:40%;">В работе</th>
+        <th style="width:40%;">Порядок</th>
         <th>Действия</th>
     </tr>
     </thead>
@@ -17,9 +15,7 @@
         <tr>
             <td> {{ element.name }} </td>
             <td> {{ element.external_key }} </td>
-            <td> {{ element.port }} </td>
-            <td> {{ element.mode }} </td>
-            <td> {{ element.is_active|yesno:"Да,Нет,-"  }} </td>
+            <td> {{ element.order }} </td>
             {% include './catalogs/table_actions.html' %}
         </tr>
     {% endfor %}

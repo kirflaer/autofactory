@@ -6,7 +6,8 @@ from catalogs.models import (
     Storage,
     Device,
     Product,
-    Line
+    Line,
+    TypeFactoryOperation
 )
 
 from packing.models import (
@@ -29,7 +30,8 @@ from .forms import (
     DeviceForm,
     OrganizationForm,
     StorageForm,
-   # ShiftOperationForm
+    TypeFactoryOperationForm
+
 )
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -86,26 +88,6 @@ class MarkingOperationRemoveView(CatalogBasicRemoveView):
 class MarkRemoveView(CatalogBasicRemoveView):
     model = MarkingOperationMarks
     success_url = reverse_lazy('marking')
-
-
-# class ShiftOperationListView(OperationBasicListView):
-#     model = ShiftOperation
-#     template_name = 'operation\shift.html'
-#     extra_context = {
-#         'title': 'Смены',
-#         'element_new_link': 'organization_new',
-#     }
-#
-#
-# class ShiftOperationUpdateView(CatalogBasicUpdateView):
-#     model = ShiftOperation
-#     form_class = ShiftOperationForm
-#     success_url = reverse_lazy('shift')
-#
-#
-# class ShiftOperationRemoveView(CatalogBasicRemoveView):
-#     model = ShiftOperation
-#     success_url = reverse_lazy('shift')
 
 
 class OrganizationListView(CatalogBasicListView):
@@ -265,12 +247,40 @@ class DeviceCreateView(CatalogBasicCreateView):
 class DeviceUpdateView(CatalogBasicUpdateView):
     model = Device
     form_class = DeviceForm
-    success_url = reverse_lazy('lines')
+    success_url = reverse_lazy('devices')
 
 
 class DeviceRemoveView(CatalogBasicRemoveView):
     model = Device
     success_url = reverse_lazy('devices')
+
+
+class TypeFactoryOperationListView(CatalogBasicListView):
+    model = TypeFactoryOperation
+    template_name = 'catalogs\operation_factory_type.html'
+    extra_context = {
+        'title': 'Типы производственных операций',
+        'element_new_link': 'type_factory_operation_new',
+        'catalog_edit_link': 'type_factory_operation_edit',
+        'catalog_remove_link': 'type_factory_operation_remove'
+    }
+
+
+class TypeFactoryOperationCreateView(CatalogBasicCreateView):
+    model = TypeFactoryOperation
+    form_class = TypeFactoryOperationForm
+    success_url = reverse_lazy('type_factory_operation')
+
+
+class TypeFactoryOperationUpdateView(CatalogBasicUpdateView):
+    model = TypeFactoryOperation
+    form_class = TypeFactoryOperationForm
+    success_url = reverse_lazy('type_factory_operation')
+
+
+class TypeFactoryOperationRemoveView(CatalogBasicRemoveView):
+    model = TypeFactoryOperation
+    success_url = reverse_lazy('type_factory_operation')
 
 
 @login_required

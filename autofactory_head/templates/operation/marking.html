@@ -6,23 +6,33 @@
     <tr>
         <th style="width:40%;">Номер</th>
         <th style="width:40%;">Дата</th>
-        <th style="width:40%;">Смена</th>
+        <th style="width:40%;">Линия</th>
+        <th style="width:40%;">Номер партии</th>
+        <th style="width:40%;">Дата выработки</th>
         <th style="width:40%;">Ручная корректировка</th>
+        <th style="width:40%;">Закрыта</th>
+        <th style="width:40%;">Готова в выгрузке</th>
+        <th style="width:40%;">Выгружена</th>
         <th>Действия</th>
     </tr>
     </thead>
     <tbody>
     {% for element in data %}
         <tr>
-            <td> {{ element.pk }} </td>
+            <td> {{ element.number }} </td>
             <td> {{ element.date }} </td>
-            <td> {{ element.shift }} </td>
+            <td> {{ element.line|default_if_none:"-" }} </td>
+            <td> {{ element.batch_number }} </td>
+            <td> {{ element.production_date }} </td>
             <td> {{ element.manual_editing|yesno:"Да,Нет,-" }} </td>
+            <td> {{ element.closed|yesno:"Да,Нет,-" }} </td>
+            <td> {{ element.ready_to_unload|yesno:"Да,Нет,-" }} </td>
+            <td> {{ element.unloaded|yesno:"Да,Нет,-" }} </td>
             <td class="table-action">
-                <a href="{% url  'marking_detail' element.pk %}"><i
+                <a href="{% url  'marking_detail' element.guid %}"><i
                         class="align-middle"
                         data-feather="grid"></i></a>
-                <a href="{% url 'marking_remove' element.pk %}"><i
+                <a href="{% url 'marking_remove' element.guid %}"><i
                         class="align-middle"
                         data-feather="trash"></i></a>
             </td>

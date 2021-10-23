@@ -15,9 +15,8 @@
             <div class="col-12 col-xl-6">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title">Horizontal form</h5>
-                        <h6 class="card-subtitle text-muted">Horizontal
-                            Bootstrap layout.</h6>
+                        <h5 class="card-title">Создание/редакторивание элемента</h5>
+                        <h6 class="card-subtitle text-muted">Внеший ключ используется для связи с внешней системой.</h6>
                     </div>
                     <div class="card-body">
                         <form method="post">
@@ -27,7 +26,11 @@
                                     <label class="col-form-label col-sm-3 text-sm-right"
                                            for="{{ field.id_for_label }}">{{ field.label }}</label>
                                     <div class="col-sm-10">
-                                        {{ field | addclass:"form-control" }}
+                                        {% if field.field.widget.input_type == 'checkbox' %}
+                                            {{ field | addclass:"form-check-input" }}
+                                        {% else %}
+                                            {{ field | addclass:"form-control" }}
+                                        {% endif %}
                                     </div>
                                 </div>
                             {% endfor %}

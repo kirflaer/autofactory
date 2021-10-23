@@ -1,3 +1,5 @@
+from abc import ABC
+
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 from django.contrib.auth import get_user_model
@@ -20,23 +22,30 @@ User = get_user_model()
 class ConfirmUnloadingSerializer(serializers.Serializer):
     guids = serializers.ListField()
 
-    def create(self, validated_data):
-        pass
 
-    def update(self, instance, validated_data):
-        pass
+class MarksSerializer(serializers.Serializer):
+    marks = serializers.ListField()
+    marking = serializers.CharField(required=False)
+
+    def validate(self, attrs):
+        if self.source == 'post_request':
+            if attrs.get('marking') is None:
+                raise APIException(
+                    'Для POST запроса обязательно указывать marking')
+            if not MarkingOperation.objects.filter(
+                    guid=attrs.get('marking')).exists():
+                raise APIException('Операция маркировки не обнаружена')
+            operation = MarkingOperation.objects.get(guid=attrs.get('marking'))
+            if operation.unloaded:
+                raise APIException('Нельзя изменять выгруженную маркировку')
+
+        return super().validate(attrs)
 
 
 class AggregationsSerializer(serializers.Serializer):
     aggregation_code = serializers.CharField(required=False)
     product = serializers.CharField(required=False)
     marks = serializers.ListField()
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
 
 
 class MarkingSerializer(serializers.ModelSerializer):
@@ -94,8 +103,8 @@ class LineSerializer(serializers.ModelSerializer):
 
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('guid', 'name', 'identifier', 'port', 'polling_interval')
-        read_only_fields = ('guid', 'port', 'polling_interval')
+        fields = ('guid', 'name', 'identifier', 'port')
+        read_only_fields = ('guid', 'port')
         model = Device
 
 
@@ -105,5 +114,3 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('line', 'role', 'device', 'scanner')
         model = User
-
-

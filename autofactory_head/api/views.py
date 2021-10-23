@@ -15,7 +15,9 @@ from catalogs.models import (
 )
 
 from packing.marking_services import (
-    add_marks_to_marking_operation,
+    marking_close,
+    add_marks,
+    remove_marks,
     clear_raw_marks,
     register_to_exchange
 )
@@ -34,18 +36,22 @@ from .serializers import (
     DepartmentSerializer,
     LineSerializer,
     AggregationsSerializer,
-    DeviceSerializer
+    DeviceSerializer,
+    MarksSerializer
 )
 
 User = get_user_model()
 
 
 class OrganizationList(generics.ListAPIView):
+    """Список организаций"""
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
 
 
 class UserRetrieve(generics.RetrieveAPIView):
+    """Данные пользователя"""
+
     def retrieve(self, request, *args, **kwargs):
         instance = request.user
         serializer = UserSerializer(instance)
@@ -53,33 +59,40 @@ class UserRetrieve(generics.RetrieveAPIView):
 
 
 class ProductList(generics.ListAPIView):
+    """Список товаров"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
 
 class StorageList(generics.ListAPIView):
+    """Список складов"""
     queryset = Storage.objects.all()
     serializer_class = StorageSerializer
 
 
 class DepartmentList(generics.ListAPIView):
+    """Список подразделений"""
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
 
 
 class LineList(generics.ListAPIView):
+    """Список линий"""
     queryset = Line.objects.all()
     serializer_class = LineSerializer
 
 
 class DeviceViewSet(viewsets.ViewSet):
-    def list(self, request):
+    def list_scanners(self, request):
+        """Список автоматических сканеров"""
         queryset = Device.objects.all()
         queryset = queryset.filter(mode=Device.AUTO_SCANNER)
         serializer = DeviceSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def create(self, request):
+        """Создает устройство пользователя и связывает с пользователем
+        Если устройство найдено по идентификатору то просто связывает"""
         if not request.user.device is None:
             raise APIException("У пользователя уже определено устройство")
 
@@ -98,6 +111,7 @@ class DeviceViewSet(viewsets.ViewSet):
         return Response(serializer.errors)
 
     def remove(self, request):
+        """Очищает связанное устройство у пользователя"""
         if request.user.device is None:
             raise APIException("У пользователя не определено устройство")
 
@@ -156,7 +170,7 @@ class MarkingViewSet(viewsets.ViewSet):
             data = []
 
         with transaction.atomic():
-            add_marks_to_marking_operation(marking, data)
+            marking_close(marking, data)
             register_to_exchange(marking)
             marking.close()
             if request.user.role == User.VISION_OPERATOR:
@@ -167,6 +181,28 @@ class MarkingViewSet(viewsets.ViewSet):
     def confirm_unloading(self, request):
         """Подтверждение выгрузки маркировок во внешнюю систему"""
         return Response({'detail': 'success'})
+
+
+class MarksViewSet(viewsets.ViewSet):
+    """Добавляет марки в существующую операцию маркировки"""
+    def add_marks(self, request):
+        serializer = MarksSerializer(data=request.data, source='post_request')
+        if serializer.is_valid():
+            operation = MarkingOperation.objects.get(
+                guid=serializer.validated_data['marking'])
+            add_marks(operation, serializer.validated_data['marks'])
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+    def remove_marks(self, request):
+        serializer = MarksSerializer(data=request.data)
+        if serializer.is_valid():
+            remove_marks(serializer.validated_data['marks'])
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+    def unload_marks(self, request):
+        pass
 
 # @api_view(['GET', ])
 # def unload_marks(request):
@@ -203,74 +239,4 @@ class MarkingViewSet(viewsets.ViewSet):
 #         data.append(element)
 #
 #     return Response(data=data, status=status.HTTP_200_OK)
-#
-#
-# @api_view(['POST', ])
-# def remove_marks(request):
-#     serializer = ChangeMarkListSerializer(data=request.data)
-#     if serializer.is_valid():
-#         marks = unloaded_marks()
-#         indexes_to_remove = []
-#         for mark in serializer.validated_data.get('marks'):
-#             if not marks.filter(mark=mark).exists():
-#                 continue
-#             for element in marks.filter(mark=mark):
-#                 if indexes_to_remove.count(element.get('pk')):
-#                     continue
-#                 indexes_to_remove.append(element.get('pk'))
-#         for index in indexes_to_remove:
-#             MarkingOperationMarks.objects.get(pk=index).delete()
-#
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-#     return Response(serializer.errors,
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#
-#
-# @api_view(['POST', ])
-# def add_marks(request):
-#     serializer = ChangeMarkListSerializer(data=request.data)
-#     if serializer.is_valid():
-#         shift = ShiftOperation.objects.filter(
-#             guid=serializer.validated_data.get('shift_guid')).get()
-#         mark_filter = {'manual_editing': True, 'shift': shift}
-#         if MarkingOperation.objects.filter(**mark_filter).exists():
-#             marking = MarkingOperation.objects.filter(**mark_filter).get()
-#         else:
-#             marking = MarkingOperation.objects.create(**mark_filter)
-#
-#         fill_marks(marking, serializer.validated_data.get('marks'))
-#
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-#     return Response(serializer.errors,
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#
-#
-
-#
-# @api_view(['POST', ])
-# @transaction.atomic
-# def shift_close(request):
-#     if not ShiftOperation.objects.filter(author=request.user,
-#                                          closed=False).exists():
-#         raise APIException("Нет открытых смен")
-#
-#     shift = ShiftOperation.objects.get(author=request.user, closed=False)
-#     shift.closed = True
-#     shift.save()
-#
-#     start_date = shift.date
-#     end_date = datetime.datetime.now()
-#
-#     # marking
-#     if RawMark.objects.filter(date__range=[start_date, end_date]).exists():
-#         marking = MarkingOperation.objects.create(shift=shift,
-#                                                   author=request.user)
-#         fill_marks(marking, RawMark.objects.filter(
-#             date__range=[start_date, end_date]).values())
-#
-#     # prepare to exchange
-#     # TODO: нужно выбирать режим закрытия смены.
-#     register_for_exchange()
-#
-#     return Response(status=status.HTTP_202_ACCEPTED)
 #

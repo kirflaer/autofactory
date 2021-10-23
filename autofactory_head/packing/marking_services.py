@@ -8,6 +8,28 @@ from django.conf import settings
 import base64
 
 
+def add_marks(operation: MarkingOperation, marks: list) -> None:
+    """Добавляет марки в выбранную операцию маркировки"""
+    for mark in marks:
+        product = _get_product(mark)
+        _create_marking_operation(operation, product, None, (mark,))
+
+
+def remove_marks(marks: list) -> None:
+    """Ищет марки за последние три дня для невыгруженных операций маркировки
+    если такие марки найдены она их удаляет"""
+    for mark in marks:
+        indexes_to_remove = []
+        date_filter = datetime.datetime.now() - datetime.timedelta(7)
+        for element in MarkingOperationMarks.objects.filter(
+                operation__date__gte=date_filter, operation__unloaded=False,
+                mark=mark):
+            indexes_to_remove.append(element.id)
+
+        for index in indexes_to_remove:
+            MarkingOperationMarks.objects.get(pk=index).delete()
+
+
 def register_to_exchange(operation: MarkingOperation) -> bool:
     """Регистрирует к обмену операцию маркировки если есть возможность
     Возвращает Истина в случае если операция зарегистрирована к обмену"""
@@ -45,11 +67,9 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
     return need_exchange
 
 
-def add_marks_to_marking_operation(operation: MarkingOperation,
-                                   data: Iterable) -> None:
-    """Добавляет марки в операцию маркировки
-    Марки могут приходит из внешнего устройства в формате JSON
-    либо браться из модели RawMark"""
+def marking_close(operation: MarkingOperation, data: Iterable) -> None:
+    """Закрывает операцию маркировки, марки берет либо из запроса закрытия
+    либо из сырых марок полученных из автоматического сканера"""
 
     for value in data:
         if not isinstance(value, dict):

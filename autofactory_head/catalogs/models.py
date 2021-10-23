@@ -36,6 +36,10 @@ class Department(BaseExternalModel):
     pass
 
 
+class TypeFactoryOperation(BaseExternalModel):
+    order = models.PositiveIntegerField('Порядок', default=0)
+
+
 class Device(BaseModel):
     AUTO_SCANNER = 'AUTO_SCANNER'
     TABLET = 'TABLET'
@@ -48,12 +52,14 @@ class Device(BaseModel):
     )
 
     mode = models.CharField(max_length=255, choices=MODE, default=DCT)
-
-    identifier = models.CharField(verbose_name='IP', blank=True, null=True,
+    is_active = models.BooleanField(default=True, verbose_name='Действует')
+    identifier = models.CharField(verbose_name='IP/MAC/ID', blank=True,
+                                  null=True,
                                   max_length=50)
+    mark_reg_exp = models.CharField(
+        verbose_name='Регулярное выражение для получения марки',
+        max_length=150, blank=True)
     port = models.PositiveIntegerField(blank=True, null=True)
-    polling_interval = models.PositiveIntegerField(
-        verbose_name='Интервал опроса', blank=True, null=True)
 
 
 class Product(BaseExternalModel):
@@ -62,15 +68,19 @@ class Product(BaseExternalModel):
 
 
 class Line(BaseModel):
-    devices = models.ManyToManyField(Device,
-                                     through='LineDevice')
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True,
                                 blank=True, verbose_name='Склад')
     department = models.ForeignKey(Department, on_delete=models.CASCADE,
                                    null=True,
                                    blank=True, verbose_name='Подразделение')
     products = models.ManyToManyField(Product,
-                                      through='LineProduct')
+                                      through='LineProduct',
+                                      verbose_name='Номенклатура')
+    type_factory_operation = models.ForeignKey(TypeFactoryOperation,
+                                               on_delete=models.CASCADE,
+                                               null=True,
+                                               blank=True,
+                                               verbose_name='Тип пр. операции')
 
 
 class LineDevice(models.Model):

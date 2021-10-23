@@ -30,9 +30,11 @@ from .views import (
     MarkingOperationListView,
     MarkingOperationRemoveView,
     MarkRemoveView,
-    # ShiftOperationListView,
-    # ShiftOperationRemoveView,
-    # ShiftOperationUpdateView
+    TypeFactoryOperationCreateView,
+    TypeFactoryOperationListView,
+    TypeFactoryOperationRemoveView,
+    TypeFactoryOperationUpdateView,
+
 )
 
 urlpatterns = [
@@ -87,18 +89,24 @@ urlpatterns = [
     path('devices/remove/<uuid:pk>', DeviceRemoveView.as_view(),
          name='device_remove'),
 
+    path('type_factory_operation/', TypeFactoryOperationListView.as_view(),
+         name='type_factory_operation'),
+    path('type_factory_operation/new/',
+         TypeFactoryOperationCreateView.as_view(),
+         name='type_factory_operation_new'),
+    path('type_factory_operation/edit/<int:pk>',
+         TypeFactoryOperationUpdateView.as_view(),
+         name='type_factory_operation_edit'),
+    path('type_factory_operation/remove/<int:pk>',
+         TypeFactoryOperationRemoveView.as_view(),
+         name='type_factory_operation_remove'),
+
     path('marking/', MarkingOperationListView.as_view(), name='marking'),
-    path('marking/detail/<int:pk>', views.marking_detail,
+    path('marking/detail/<uuid:pk>', views.marking_detail,
          name='marking_detail'),
-    path('marking/remove/<int:pk>', MarkingOperationRemoveView.as_view(),
+    path('marking/remove/<uuid:pk>', MarkingOperationRemoveView.as_view(),
          name='marking_remove'),
     path('marking/remove-mark/<int:pk>', MarkRemoveView.as_view(),
          name='mark-remove'),
-
-    # path('shift/', ShiftOperationListView.as_view(), name='shift'),
-    # path('shift/edit/<int:pk>', ShiftOperationUpdateView.as_view(),
-    #      name='shift_edit'),
-    # path('shift/remove/<int:pk>', ShiftOperationRemoveView.as_view(),
-    #      name='shift_remove'),
 
 ]

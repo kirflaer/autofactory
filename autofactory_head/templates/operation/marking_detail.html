@@ -19,9 +19,10 @@
                         <thead>
                         <tr>
                             <th style="width:40%;">Номер</th>
+                            <th style="width:40%;">Номенклатура</th>
+                            <th style="width:40%;">Код агрегации</th>
                             <th style="width:40%;">Марка</th>
                             <th style="width:40%;">Марка base64</th>
-                            <th style="width:40%;">Номенклатура</th>
                             <th>Действия</th>
                         </tr>
                         </thead>
@@ -29,9 +30,11 @@
                         {% for element in data %}
                             <tr>
                                 <td> {{ element.pk }} </td>
+                                <td> {{ element.product }} </td>
+                                <td> {{ element.aggregation_code }} </td>
+                                <td> {{ element.product }} </td>
                                 <td> {{ element.mark }} </td>
                                 <td> {{ element.encoded_mark }} </td>
-                                <td> {{ element.product }} </td>
                                 <td class="table-action">
                                     <a href="{% url 'mark-remove' element.pk %}"><i
                                             class="align-middle"

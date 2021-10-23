@@ -4,23 +4,17 @@ from catalogs.models import (
     Storage,
     Device,
     Product,
-    Line
+    Line,
+    TypeFactoryOperation
 )
 
-#from .models import ShiftOperation
-
-from django.forms import ModelForm, BooleanField
+from django.forms import ModelForm
 
 
-# class ShiftOperationForm(ModelForm):
-#     class Meta:
-#         model = ShiftOperation
-#         exclude = ['guid',
-#                    'pk',
-#                    'unloaded',
-#                    'closed',
-#                    'type_of_shift',
-#                    'ready_to_unload']
+class TypeFactoryOperationForm(ModelForm):
+    class Meta:
+        model = TypeFactoryOperation
+        exclude = ['guid']
 
 
 class ProductForm(ModelForm):

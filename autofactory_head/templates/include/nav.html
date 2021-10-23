@@ -53,8 +53,11 @@
                         </li>
                         <li class="sidebar-item {% if view_name  == 'devices' %}active{% endif %}">
                             <a class="sidebar-link"
-                               href="{% url 'devices' %}">Устройства сбора
-                                данных</a>
+                               href="{% url 'devices' %}">Устройства сбора данных</a>
+                        </li>
+                        <li class="sidebar-item {% if view_name  == 'type_factory_operation' %}active{% endif %}">
+                            <a class="sidebar-link"
+                               href="{% url 'type_factory_operation' %}">Типы производственных операций</a>
                         </li>
                         <li class="sidebar-item {% if view_name  == 'departments' %}active{% endif %}">
                             <a class="sidebar-link"
@@ -67,13 +70,6 @@
                     <a class="sidebar-link" href="{% url 'marking' %}">
                         <i class="align-middle" data-feather="cast"></i> <span
                             class="align-middle">Маркировка</span>
-                    </a>
-                </li>
-
-                <li class="sidebar-item {% if view_name  == 'shift' %}active{% endif %}">
-                    <a class="sidebar-link" href="{% url 'shift' %}">
-                        <i class="align-middle" data-feather="users"></i> <span
-                            class="align-middle">Смены</span>
                     </a>
                 </li>
 

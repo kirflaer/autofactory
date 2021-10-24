@@ -40,10 +40,15 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'autofactory_head.urls'
 AUTH_USER_MODEL = "users.User"
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+ADDITIONAL_BASE_DIR = Path(__file__).resolve().parent
+TEMPLATES_ADDITIONAL_DIR = os.path.join(ADDITIONAL_BASE_DIR, "templates")
+CATALOGS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "catalogs")
+OPERATIONS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "operation")
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [TEMPLATES_DIR],
+        'DIRS': [TEMPLATES_DIR, CATALOGS_TEMPLATES_DIR,
+                 TEMPLATES_ADDITIONAL_DIR, OPERATIONS_TEMPLATES_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -97,7 +102,7 @@ USE_L10N = True
 USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-#STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+# STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

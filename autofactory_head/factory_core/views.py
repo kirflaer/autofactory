@@ -45,7 +45,7 @@ def index(request):
 class CatalogBasicListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
     ordering = 'name'
-    template_name = 'catalogs\external_catalogs_list.html'
+    template_name = 'base_catalogs_list.html'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
@@ -73,7 +73,7 @@ class OperationBasicListView(LoginRequiredMixin, ListView):
 
 class MarkingOperationListView(OperationBasicListView):
     model = MarkingOperation
-    template_name = 'operation\marking.html'
+    template_name = 'marking.html'
     extra_context = {
         'title': 'Маркировка',
         'element_new_link': 'organization_new',
@@ -119,7 +119,7 @@ class OrganizationRemoveView(CatalogBasicRemoveView):
 
 class ProductListView(CatalogBasicListView):
     model = Product
-    template_name = 'catalogs\products.html'
+    template_name = 'products.html'
     extra_context = {
         'title': 'Номенклатура',
         'element_new_link': 'product_new',
@@ -201,7 +201,7 @@ class DepartmentRemoveView(CatalogBasicRemoveView):
 
 class LineListView(CatalogBasicListView):
     model = Line
-    template_name = 'catalogs\lines.html'
+    template_name = 'lines.html'
     extra_context = {
         'title': 'Линии',
         'element_new_link': 'line_new',
@@ -229,7 +229,7 @@ class LineRemoveView(CatalogBasicRemoveView):
 
 class DeviceListView(CatalogBasicListView):
     model = Device
-    template_name = 'catalogs\devices.html'
+    template_name = 'devices.html'
     extra_context = {
         'title': 'Устройства сбора данных',
         'element_new_link': 'device_new',
@@ -257,7 +257,7 @@ class DeviceRemoveView(CatalogBasicRemoveView):
 
 class TypeFactoryOperationListView(CatalogBasicListView):
     model = TypeFactoryOperation
-    template_name = 'catalogs\operation_factory_type.html'
+    template_name = 'operation_factory_type.html'
     extra_context = {
         'title': 'Типы производственных операций',
         'element_new_link': 'type_factory_operation_new',
@@ -287,4 +287,4 @@ class TypeFactoryOperationRemoveView(CatalogBasicRemoveView):
 def marking_detail(request, pk):
     operation = get_object_or_404(MarkingOperation, pk=pk)
     marks = MarkingOperationMarks.objects.all().filter(operation=operation)
-    return render(request, 'operation\marking_detail.html', {'data': marks})
+    return render(request, 'marking_detail.html', {'data': marks})

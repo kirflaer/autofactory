@@ -20,7 +20,7 @@
             <td> {{ element.port }} </td>
             <td> {{ element.mode }} </td>
             <td> {{ element.is_active|yesno:"Да,Нет,-"  }} </td>
-            {% include './catalogs/table_actions.html' %}
+            {% include 'table_actions.html' %}
         </tr>
     {% endfor %}
     </tbody>

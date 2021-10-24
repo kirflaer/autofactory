@@ -94,10 +94,10 @@ urlpatterns = [
     path('type_factory_operation/new/',
          TypeFactoryOperationCreateView.as_view(),
          name='type_factory_operation_new'),
-    path('type_factory_operation/edit/<int:pk>',
+    path('type_factory_operation/edit/<uuid:pk>',
          TypeFactoryOperationUpdateView.as_view(),
          name='type_factory_operation_edit'),
-    path('type_factory_operation/remove/<int:pk>',
+    path('type_factory_operation/remove/<uuid:pk>',
          TypeFactoryOperationRemoveView.as_view(),
          name='type_factory_operation_remove'),
 

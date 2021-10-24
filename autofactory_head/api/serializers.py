@@ -55,7 +55,7 @@ class MarkingSerializer(serializers.ModelSerializer):
         fields = (
             'batch_number', 'production_date', 'product', 'organization',
             'guid', 'closed', 'line')
-        read_only_fields = ('guid', 'organization', 'closed')
+        read_only_fields = ('guid', 'organization', 'closed', 'product')
         model = MarkingOperation
 
 

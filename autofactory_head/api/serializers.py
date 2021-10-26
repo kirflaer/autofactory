@@ -58,6 +58,12 @@ class MarkingSerializer(serializers.ModelSerializer):
         read_only_fields = ('guid', 'organization', 'closed', 'product')
         model = MarkingOperation
 
+    def validate(self, attrs):
+        if MarkingOperation.objects.filter(author=self.context['request'].user,
+                                           closed=False).exists():
+            raise APIException("Маркировка уже запущена")
+        return super().validate(attrs)
+
 
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -112,5 +118,7 @@ class UserSerializer(serializers.ModelSerializer):
     scanner = DeviceSerializer(read_only=True)
 
     class Meta:
-        fields = ('line', 'role', 'device', 'scanner')
+        fields = (
+            'line', 'role', 'device', 'scanner', 'vision_controller_address',
+            'vision_controller_port')
         model = User

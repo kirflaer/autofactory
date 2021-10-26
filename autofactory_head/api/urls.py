@@ -1,7 +1,6 @@
 from django.urls import include, path, re_path
 
 from .views import (
-    MarkingViewSet,
     OrganizationList,
     ProductList,
     UserRetrieve,
@@ -9,7 +8,9 @@ from .views import (
     StorageList,
     DepartmentList,
     DeviceViewSet,
-    MarksViewSet
+    MarksViewSet,
+    MarkingListCreateViewSet,
+    MarkingViewSet
 )
 
 urlpatterns = [
@@ -23,12 +24,8 @@ urlpatterns = [
         {'post': 'create', 'delete': 'remove'})),
     re_path(r'v[0-9]/scanners/$', DeviceViewSet.as_view(
         {'get': 'list_scanners'})),
-    path('v1/marking/',
-         MarkingViewSet.as_view(
-             {'get': 'list', 'post': 'create', 'put': 'confirm_unloading'})),
-    path('v1/marking/<uuid:pk>/',
-         MarkingViewSet.as_view(
-             {'put': 'close'})),
+    path('v1/marking/', MarkingListCreateViewSet.as_view()),
+    path('v1/marking/<uuid:pk>/', MarkingViewSet.as_view({'put': 'close'})),
     path('v1/marks/',
          MarksViewSet.as_view(
              {'get': 'unload_marks', 'post': 'add_marks',

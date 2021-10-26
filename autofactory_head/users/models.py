@@ -37,6 +37,12 @@ class User(AbstractUser):
     scanner = models.ForeignKey(Device, on_delete=models.CASCADE, null=True,
                                 blank=True, verbose_name='Сканер',
                                 related_name='user_scanners')
+    vision_controller_address = models.CharField(
+        verbose_name='Контроллер тех. зрения (адрес)', max_length=150,
+        blank=True)
+
+    vision_controller_port = models.PositiveIntegerField(
+        verbose_name='Контроллер тех. зрения (порт)', blank=True, null=True)
 
     USERNAME_FIELD = "username"
 

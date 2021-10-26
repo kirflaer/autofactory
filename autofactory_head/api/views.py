@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework import viewsets, generics
+from django_filters.rest_framework import DjangoFilterBackend
 
 from django.contrib.auth import get_user_model
 
@@ -120,31 +121,24 @@ class DeviceViewSet(viewsets.ViewSet):
         return Response({'detail': 'success'})
 
 
-class MarkingViewSet(viewsets.ViewSet):
-    def list(self, request):
-        """Отправляет список невыгруженных маркировок по пользователю"""
+class MarkingListCreateViewSet(generics.ListCreateAPIView):
+    serializer_class = MarkingSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('line',)
 
+    def perform_create(self, serializer):
+        author = self.request.user
+        line = serializer.validated_data.get('line')
+        line = author.line if line is None else line
+        serializer.save(author=author, line=line)
+
+    def get_queryset(self):
         queryset = MarkingOperation.objects.all()
-        queryset = queryset.filter(unloaded=False, author=request.user)
-        serializer = MarkingSerializer(queryset, many=True)
-        return Response(serializer.data)
+        queryset = queryset.filter(closed=False)
+        return queryset
 
-    def create(self, request):
-        """Создает новую маркировку"""
 
-        serializer = MarkingSerializer(data=request.data)
-        if serializer.is_valid():
-            author = request.user
-            if MarkingOperation.objects.filter(author=author,
-                                               closed=False).exists():
-                raise APIException("Маркировка уже запущена")
-            line = author.line if serializer.validated_data.get(
-                'line') is None else serializer.validated_data.get('line')
-
-            serializer.save(author=author, line=line)
-            return Response(serializer.data)
-        return Response(serializer.errors)
-
+class MarkingViewSet(viewsets.ViewSet):
     def close(self, request, pk=None):
         """Закрывает текущую маркировку
         Если закрытие происходит с ТСД отправляется набор марок
@@ -178,13 +172,10 @@ class MarkingViewSet(viewsets.ViewSet):
 
         return Response({'detail': 'success'})
 
-    def confirm_unloading(self, request):
-        """Подтверждение выгрузки маркировок во внешнюю систему"""
-        return Response({'detail': 'success'})
-
 
 class MarksViewSet(viewsets.ViewSet):
     """Добавляет марки в существующую операцию маркировки"""
+
     def add_marks(self, request):
         serializer = MarksSerializer(data=request.data, source='post_request')
         if serializer.is_valid():

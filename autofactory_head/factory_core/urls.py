@@ -34,7 +34,7 @@ from .views import (
     TypeFactoryOperationListView,
     TypeFactoryOperationRemoveView,
     TypeFactoryOperationUpdateView,
-
+    check_status_view,
 )
 
 urlpatterns = [
@@ -109,4 +109,5 @@ urlpatterns = [
     path('marking/remove-mark/<int:pk>', MarkRemoveView.as_view(),
          name='mark-remove'),
 
+    path('check-status/', check_status_view),
 ]

@@ -288,3 +288,7 @@ def marking_detail(request, pk):
     operation = get_object_or_404(MarkingOperation, pk=pk)
     marks = MarkingOperationMarks.objects.all().filter(operation=operation)
     return render(request, 'marking_detail.html', {'data': marks})
+
+
+def check_status_view(request):
+    return render(request, 'check_form.html')

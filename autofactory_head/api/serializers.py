@@ -116,6 +116,8 @@ class DeviceSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     scanner = DeviceSerializer(read_only=True)
+    device = serializers.SlugRelatedField(many=False, read_only=True,
+                                          slug_field='identifier')
 
     class Meta:
         fields = (

@@ -3,6 +3,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework import viewsets, generics
 from django_filters.rest_framework import DjangoFilterBackend
+import time
 
 from django.contrib.auth import get_user_model
 
@@ -127,10 +128,22 @@ class MarkingListCreateViewSet(generics.ListCreateAPIView):
     filterset_fields = ('line',)
 
     def perform_create(self, serializer):
-        author = self.request.user
         line = serializer.validated_data.get('line')
-        line = author.line if line is None else line
-        serializer.save(author=author, line=line)
+        line = self.request.user.line if line is None else line
+
+        values = {'author': self.request.user,
+                  'line': line}
+
+        product = serializer.validated_data.get('product')
+        if not product is None:
+            values['product'] = Product.objects.filter(pk=product).first()
+
+        organization = serializer.validated_data.get('organization')
+        if not organization is None:
+            values['organization'] = Organization.objects.filter(
+                pk=organization).first()
+
+        serializer.save(**values)
 
     def get_queryset(self):
         queryset = MarkingOperation.objects.all()
@@ -165,10 +178,10 @@ class MarkingViewSet(viewsets.ViewSet):
 
         with transaction.atomic():
             marking_close(marking, data)
-            register_to_exchange(marking)
-            marking.close()
-            if request.user.role == User.VISION_OPERATOR:
-                clear_raw_marks(marking)
+            # register_to_exchange(marking)
+            # marking.close()
+            # if request.user.role == User.VISION_OPERATOR:
+            #     clear_raw_marks(marking)
 
         return Response({'detail': 'success'})
 

@@ -48,23 +48,6 @@ class AggregationsSerializer(serializers.Serializer):
     marks = serializers.ListField()
 
 
-class MarkingSerializer(serializers.ModelSerializer):
-    production_date = serializers.DateField(format="%Y-%m-%d")
-
-    class Meta:
-        fields = (
-            'batch_number', 'production_date', 'product', 'organization',
-            'guid', 'closed', 'line')
-        read_only_fields = ('guid', 'organization', 'closed', 'product')
-        model = MarkingOperation
-
-    def validate(self, attrs):
-        if MarkingOperation.objects.filter(author=self.context['request'].user,
-                                           closed=False).exists():
-            raise APIException("Маркировка уже запущена")
-        return super().validate(attrs)
-
-
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'guid')
@@ -124,3 +107,22 @@ class UserSerializer(serializers.ModelSerializer):
             'line', 'role', 'device', 'scanner', 'vision_controller_address',
             'vision_controller_port')
         model = User
+
+
+class MarkingSerializer(serializers.ModelSerializer):
+    production_date = serializers.DateField(format="%Y-%m-%d")
+    product = serializers.CharField(required=False)
+    organization = serializers.CharField(required=False)
+
+    class Meta:
+        fields = (
+            'batch_number', 'production_date', 'product', 'organization',
+            'guid', 'closed', 'line', 'organization', 'product')
+        read_only_fields = ('guid', 'closed')
+        model = MarkingOperation
+
+    def validate(self, attrs):
+        if MarkingOperation.objects.filter(author=self.context['request'].user,
+                                           closed=False).exists():
+            raise APIException("Маркировка уже запущена")
+        return super().validate(attrs)

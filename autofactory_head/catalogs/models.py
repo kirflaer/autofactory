@@ -65,6 +65,8 @@ class Device(BaseModel):
 class Product(BaseExternalModel):
     gtin = models.CharField(default='', blank=True, max_length=50)
     expiration_date = models.PositiveIntegerField('Срок годности', default=0)
+    is_weight = models.BooleanField(default=False,
+                                    verbose_name='Весовой товар')
 
 
 class Line(BaseModel):

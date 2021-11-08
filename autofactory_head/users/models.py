@@ -2,23 +2,19 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from catalogs.models import Line, Device
 
-from enum import Enum
-
-
-class Color(Enum):
-    BLUE = 3
-
 
 class User(AbstractUser):
     VISION_OPERATOR = 'VISION_OPERATOR'
     VISION_MASTER = 'VISION_MASTER'
     PACKER = 'PACKER'
     PALLET_COLLECTOR = 'PALLET_COLLECTOR'
+    REJECTER = 'REJECTER'
 
     ROLE = (
         (VISION_OPERATOR, VISION_OPERATOR),
         (PACKER, PACKER),
         (PALLET_COLLECTOR, PALLET_COLLECTOR),
+        (REJECTER, REJECTER),
     )
 
     role = models.CharField(max_length=255, choices=ROLE, default=PACKER)

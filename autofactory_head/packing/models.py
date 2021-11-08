@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Max
+
 from catalogs.models import Device, Line
 from factory_core.models import BaseModel
 from catalogs.models import Product
@@ -19,6 +21,20 @@ class MarkingOperation(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
                                 verbose_name='Номенклатура', blank=True,
                                 null=True)
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.is_new:
+            number = MarkingOperation.objects.all().aggregate(
+                Max('number')).get('number__max')
+            if number is None:
+                number = 1
+            else:
+                number += 1
+
+            self.number = number
+            self.is_new = False
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class MarkingOperationMarks(models.Model):

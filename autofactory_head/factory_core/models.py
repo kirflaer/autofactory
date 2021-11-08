@@ -32,14 +32,10 @@ class BaseModel(models.Model):
     ready_to_unload = models.BooleanField(default=False,
                                           verbose_name='Готова к выгрузке')
     number = models.IntegerField(default=1)
+    is_new = models.BooleanField(default=True, verbose_name='Это новый')
 
     def __str__(self):
         return f'{self.number} - {self.date.strftime("%d.%m.%Y %H:%M:%S")}'
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        self.number += 1
-        super().save(force_insert, force_update, using, update_fields)
 
     def close(self):
         self.closed = True

@@ -1,5 +1,4 @@
 import datetime
-
 from .models import RawMark, MarkingOperation, MarkingOperationMarks
 from catalogs.models import Product
 from collections.abc import Iterable
@@ -70,6 +69,8 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
 def marking_close(operation: MarkingOperation, data: Iterable) -> None:
     """Закрывает операцию маркировки, марки берет либо из запроса закрытия
     либо из сырых марок полученных из автоматического сканера"""
+    products = {}
+    marking_operations = []
 
     for value in data:
         if not isinstance(value, dict):
@@ -77,11 +78,27 @@ def marking_close(operation: MarkingOperation, data: Iterable) -> None:
 
         mark = value.get('mark')
         if mark is None:
-            value['product'] = _get_product(guid=value.get('product'))
+            pass
+            guid = value.get('product')
+            product = products.get(guid)
+            if product is None:
+                product = _get_product(guid=guid)
+                products[guid] = product
+
+            value['product'] = product
             _create_marking_operation(operation=operation, **value)
         else:
-            product = _get_product(mark=mark)
-            _create_marking_operation(operation, product, None, (mark,))
+            gtin = get_product_gtin_from_mark(mark)
+            product = products.get(gtin)
+            if product is None:
+                product = _get_product(gtin=gtin)
+                products[gtin] = product
+
+            _create_marking_operation(marking_operations, operation, None,
+                                      None,
+                                      (mark,))
+
+    MarkingOperationMarks.objects.bulk_create(marking_operations)
 
 
 def clear_raw_marks(operation: MarkingOperation) -> None:
@@ -91,16 +108,21 @@ def clear_raw_marks(operation: MarkingOperation) -> None:
         RawMark.objects.filter(operation=operation).delete()
 
 
-def _get_product(mark: Optional[str] = None,
+def get_product_gtin_from_mark(mark: str) -> Optional[int]:
+    if len(mark) >= 16:
+        return int(mark[2:16])
+    else:
+        return None
+
+
+def _get_product(gtin: Optional[int] = None,
                  guid: Optional[str] = None) -> Optional[Product]:
     """Поиск номенклатуры по марке либо по GUID"""
     product_filter = {}
-    if not mark is None:
-        product_filter['gtin'] = mark[2:15]
-    elif not guid is None:
-        product_filter['guid'] = guid
+    if guid is None:
+        product_filter['gtin'] = gtin
     else:
-        return None
+        product_filter['guid'] = guid
 
     if Product.objects.filter(**product_filter).exists():
         return Product.objects.get(**product_filter)
@@ -108,7 +130,8 @@ def _get_product(mark: Optional[str] = None,
         return None
 
 
-def _create_marking_operation(operation: MarkingOperation,
+def _create_marking_operation(marking_operation_marks: Iterable,
+                              operation: MarkingOperation,
                               product: Optional[Product],
                               aggregation_code: Optional[str],
                               marks: Iterable) -> None:
@@ -119,11 +142,12 @@ def _create_marking_operation(operation: MarkingOperation,
         mark_bytes = mark.encode("utf-8")
         base64_bytes = base64.b64encode(mark_bytes)
         base64_string = base64_bytes.decode("utf-8")
-        MarkingOperationMarks.objects.create(operation=operation,
-                                             mark=mark,
-                                             encoded_mark=base64_string,
-                                             product=product,
-                                             aggregation_code=aggregation_code)
+        marking_operation_marks.append(
+            MarkingOperationMarks(operation=operation,
+                                  mark=mark,
+                                  encoded_mark=base64_string,
+                                  product=product,
+                                  aggregation_code=aggregation_code))
 
 
 def _unloaded_marks():

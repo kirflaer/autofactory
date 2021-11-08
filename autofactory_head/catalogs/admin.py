@@ -24,14 +24,6 @@ class OrganizationAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid')
-
-
-class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid')
-
-
 class StorageAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
@@ -49,7 +41,7 @@ class LineAdmin(admin.ModelAdmin):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid')
+    list_display = ('name', 'guid', 'gtin')
 
 
 class PropertyAdmin(admin.ModelAdmin):

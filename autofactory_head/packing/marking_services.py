@@ -2,16 +2,65 @@ import datetime
 from .models import RawMark, MarkingOperation, MarkingOperationMarks
 from catalogs.models import Product
 from collections.abc import Iterable
-from typing import Union, Optional
-from django.conf import settings
+from typing import Optional
 import base64
+from django.contrib.auth import get_user_model
+from django.db import transaction
+
+User = get_user_model()
 
 
-def add_marks(operation: MarkingOperation, marks: list) -> None:
-    """Добавляет марки в выбранную операцию маркировки"""
-    for mark in marks:
-        product = _get_product(mark)
-        _create_marking_operation(operation, product, None, (mark,))
+def confirm_marks_unloading(operations: list) -> None:
+    """Устанавливает признак unloaded у операций маркировок
+    Подтверждая выгрузку во внешнюю систему"""
+    for guid in operations:
+        operation = MarkingOperation.objects.get(guid=guid)
+        operation.unloaded = True
+        operation.save()
+
+
+def get_marks_to_unload() -> list:
+    """ Возвращает список марок для выгрузки. Марки по закрытым маркировкам
+    С отметкой ready_to_unload"""
+
+    values = MarkingOperationMarks.objects.filter(
+        operation__ready_to_unload=True,
+        operation__closed=True,
+    ).values('encoded_mark',
+             'product__external_key',
+             'operation__production_date',
+             'operation__batch_number',
+             'operation__guid',
+             'operation__organization__external_key',
+             'operation__line',
+             'operation__line__storage__external_key',
+             'operation__line__department__external_key',
+             'operation__line__type_factory_operation__external_key',
+             )
+
+    data = []
+    for value in values:
+        element = {'operation': value['operation__guid'],
+                   'encoded_mark': value['encoded_mark'],
+                   'product': value['product__external_key'],
+                   'production_date': value[
+                       'operation__production_date'].strftime(
+                       "%d.%m.%Y"),
+                   'batch_number': value['operation__batch_number'],
+                   'organization': value[
+                       'operation__organization__external_key'],
+                   'storage': value[
+                       'operation__line__storage__external_key'],
+                   'line': value[
+                       'operation__line'],
+                   'department': value[
+                       'operation__line__department__external_key'],
+                   'type_factory_operation': value[
+                       'operation__line__type_factory_operation__external_key']
+                   }
+        data.append(element)
+
+    return data
 
 
 def remove_marks(marks: list) -> None:
@@ -41,12 +90,14 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         date__range=[start_date, end_date]).filter(unloaded=False).filter(
         ready_to_unload=False)
 
+    settings = operation.author.settings
     need_exchange = True
-    if settings.TYPE_MARKING_CLOSE == 'ALL_IN_DAY_BY_LINE':
+    if settings.type_marking_close == settings.ALL_IN_DAY_BY_LINE:
         markings = markings.filter(line=operation.line)
-    elif settings.TYPE_MARKING_CLOSE == 'ALL_IN_DAY_BY_BAT_NUMBER':
+    elif settings.type_marking_close == settings.ALL_IN_DAY_BY_BAT_NUMBER:
         markings = markings.filter(batch_number=operation.batch_number)
-    elif settings.TYPE_MARKING_CLOSE == 'ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER':
+    elif (settings.type_marking_close ==
+          settings.ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER):
         markings = markings.filter(line=operation.line,
                                    batch_number=operation.batch_number)
 
@@ -66,41 +117,6 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
     return need_exchange
 
 
-def marking_close(operation: MarkingOperation, data: Iterable) -> None:
-    """Закрывает операцию маркировки, марки берет либо из запроса закрытия
-    либо из сырых марок полученных из автоматического сканера"""
-    products = {}
-    marking_operations = []
-
-    for value in data:
-        if not isinstance(value, dict):
-            continue
-
-        mark = value.get('mark')
-        if mark is None:
-            pass
-            guid = value.get('product')
-            product = products.get(guid)
-            if product is None:
-                product = _get_product(guid=guid)
-                products[guid] = product
-
-            value['product'] = product
-            _create_marking_operation(operation=operation, **value)
-        else:
-            gtin = get_product_gtin_from_mark(mark)
-            product = products.get(gtin)
-            if product is None:
-                product = _get_product(gtin=gtin)
-                products[gtin] = product
-
-            _create_marking_operation(marking_operations, operation, None,
-                                      None,
-                                      (mark,))
-
-    MarkingOperationMarks.objects.bulk_create(marking_operations)
-
-
 def clear_raw_marks(operation: MarkingOperation) -> None:
     """Очищает данные сырых марок
     после создание экземпляров MarkingOperationMarks"""
@@ -113,6 +129,55 @@ def get_product_gtin_from_mark(mark: str) -> Optional[int]:
         return int(mark[2:16])
     else:
         return None
+
+
+def marking_close(operation: MarkingOperation, data: Iterable) -> None:
+    """Закрывает операцию маркировки, марки берет либо из запроса закрытия
+    либо из сырых марок полученных из автоматического сканера"""
+    with transaction.atomic():
+        create_marking_marks(operation, data)
+        register_to_exchange(operation)
+        operation.close()
+        if operation.author.role == User.VISION_OPERATOR:
+            clear_raw_marks(operation)
+
+
+def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
+    """Создает и записывает в базу экземпляры MarkingOperationMarks"""
+    products = {}
+    marking_marks_instances = []
+
+    for value in data:
+        if not isinstance(value, dict):
+            continue
+
+        mark = value.get('mark')
+        if mark is None:
+            guid = value.get('product')
+            product = products.get(guid)
+            if product is None:
+                product = _get_product(guid=guid)
+                products[guid] = product
+
+            value['product'] = product
+            _create_instance_marking_marks(
+                marking_marks_instances=marking_marks_instances,
+                operation=operation, **value)
+        else:
+            gtin = get_product_gtin_from_mark(mark)
+            product = products.get(gtin)
+            if product is None:
+                product = _get_product(gtin=gtin)
+                products[gtin] = product
+
+            _create_instance_marking_marks(
+                marking_marks_instances,
+                operation,
+                None,
+                None,
+                marks=(mark,))
+
+    MarkingOperationMarks.objects.bulk_create(marking_marks_instances)
 
 
 def _get_product(gtin: Optional[int] = None,
@@ -130,29 +195,24 @@ def _get_product(gtin: Optional[int] = None,
         return None
 
 
-def _create_marking_operation(marking_operation_marks: Iterable,
-                              operation: MarkingOperation,
-                              product: Optional[Product],
-                              aggregation_code: Optional[str],
-                              marks: Iterable) -> None:
+def _create_instance_marking_marks(marking_marks_instances: Iterable,
+                                   operation: MarkingOperation,
+                                   product: Optional[Product],
+                                   aggregation_code: Optional[str],
+                                   marks: Iterable) -> None:
     """Создает экземпляры модели MarkingOperationMarks
-    сырые марки кодируются в base64"""
+    сырые марки кодируются в base64
+    Экземпляры добавляются в массив marking_operation_marks
+    Для использования конструкции bulk_create
+    """
 
     for mark in marks:
         mark_bytes = mark.encode("utf-8")
         base64_bytes = base64.b64encode(mark_bytes)
         base64_string = base64_bytes.decode("utf-8")
-        marking_operation_marks.append(
+        marking_marks_instances.append(
             MarkingOperationMarks(operation=operation,
                                   mark=mark,
                                   encoded_mark=base64_string,
                                   product=product,
                                   aggregation_code=aggregation_code))
-
-
-def _unloaded_marks():
-    pass
-    # date_filter = datetime.datetime.now() - datetime.timedelta(7)
-    # return MarkingOperationMarks.objects.filter(
-    #     operation__shift__date__gte=date_filter,
-    #     operation__shift__unloaded=False).values('pk', 'operation', 'mark')

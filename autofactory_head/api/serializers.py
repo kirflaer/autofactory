@@ -20,7 +20,13 @@ User = get_user_model()
 
 
 class ConfirmUnloadingSerializer(serializers.Serializer):
-    guids = serializers.ListField()
+    operations = serializers.ListField()
+
+    def validate(self, attrs):
+        for operation in attrs.get('operations'):
+            if not MarkingOperation.objects.filter(guid=operation).exists():
+                raise APIException('Операция маркировки не обнаружена')
+        return super().validate(attrs)
 
 
 class MarksSerializer(serializers.Serializer):
@@ -64,7 +70,8 @@ class ProductSerializer(serializers.ModelSerializer):
     units = UnitSerializer(read_only=True, many=True)
 
     class Meta:
-        fields = ('name', 'gtin', 'guid', 'expiration_date', 'units')
+        fields = ('name',
+                  'gtin', 'guid', 'is_weight', 'expiration_date', 'units')
         model = Product
 
 
@@ -110,19 +117,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class MarkingSerializer(serializers.ModelSerializer):
+    aggregations = AggregationsSerializer(required=False, many=True)
     production_date = serializers.DateField(format="%Y-%m-%d")
-    product = serializers.CharField(required=False)
-    organization = serializers.CharField(required=False)
+    product = serializers.CharField(write_only=True, required=False)
+    organization = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         fields = (
             'batch_number', 'production_date', 'product', 'organization',
-            'guid', 'closed', 'line', 'organization', 'product')
+            'guid', 'closed', 'line', 'organization', 'product',
+            'aggregations')
         read_only_fields = ('guid', 'closed')
         model = MarkingOperation
-
-    def validate(self, attrs):
-        if MarkingOperation.objects.filter(author=self.context['request'].user,
-                                           closed=False).exists():
-            raise APIException("Маркировка уже запущена")
-        return super().validate(attrs)

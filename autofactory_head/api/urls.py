@@ -28,7 +28,7 @@ urlpatterns = [
     path('v1/marking/<uuid:pk>/', MarkingViewSet.as_view({'put': 'close'})),
     path('v1/marks/',
          MarksViewSet.as_view(
-             {'get': 'unload_marks', 'post': 'add_marks',
-              'delete': 'remove_marks'})),
+             {'get': 'marks_to_unload', 'post': 'add_marks',
+              'delete': 'remove_marks', 'put': 'confirm_unloading'})),
 
 ]

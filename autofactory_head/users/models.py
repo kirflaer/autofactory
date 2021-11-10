@@ -3,6 +3,27 @@ from django.contrib.auth.models import AbstractUser
 from catalogs.models import Line, Device
 
 
+class Settings(models.Model):
+    ALL_IN_DAY_BY_LINE = 'ALL_IN_DAY_BY_LINE'
+    ALL_IN_DAY_BY_BAT_NUMBER = 'ALL_IN_DAY_BY_BAT_NUMBER'
+    ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER = 'ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER'
+
+    TYPE_MARKING_CLOSE = (
+        (ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER, ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER),
+        (ALL_IN_DAY_BY_BAT_NUMBER, ALL_IN_DAY_BY_BAT_NUMBER),
+        (ALL_IN_DAY_BY_LINE, ALL_IN_DAY_BY_LINE)
+    )
+
+    type_marking_close = models.CharField(max_length=255,
+                                          choices=TYPE_MARKING_CLOSE,
+                                          default=ALL_IN_DAY_BY_BAT_NUMBER)
+
+    name = models.TextField(blank=True, default='base settings')
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractUser):
     VISION_OPERATOR = 'VISION_OPERATOR'
     VISION_MASTER = 'VISION_MASTER'
@@ -25,6 +46,9 @@ class User(AbstractUser):
     confirmation_code = models.CharField(
         max_length=100, unique=True, blank=True, null=True)
 
+    settings = models.ForeignKey(Settings, on_delete=models.CASCADE,
+                                    null=True, blank=True)
+
     line = models.ForeignKey(Line, blank=True,
                              on_delete=models.CASCADE, null=True)
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True,
@@ -44,3 +68,13 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.settings is None:
+            base_settings = Settings.objects.first()
+            if base_settings is None:
+                base_settings = Settings.objects.create()
+            self.settings = base_settings
+
+        super().save(force_insert, force_update, using, update_fields)

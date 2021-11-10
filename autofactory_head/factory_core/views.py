@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.shortcuts import render, get_object_or_404
 from catalogs.models import (
     Organization,
@@ -39,7 +40,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 @login_required
 def index(request):
-    return render(request, 'index.html')
+    return render(request, 'index.html', {'version': settings.VERSION})
 
 
 class CatalogBasicListView(LoginRequiredMixin, ListView):

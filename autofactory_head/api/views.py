@@ -1,9 +1,7 @@
-from django.db import transaction
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework import viewsets, generics
 from django_filters.rest_framework import DjangoFilterBackend
-import time
 
 from django.contrib.auth import get_user_model
 
@@ -18,10 +16,10 @@ from catalogs.models import (
 
 from packing.marking_services import (
     marking_close,
-    add_marks,
+    create_marking_marks,
     remove_marks,
-    clear_raw_marks,
-    register_to_exchange
+    get_marks_to_unload,
+    confirm_marks_unloading
 )
 
 from packing.models import (
@@ -39,7 +37,8 @@ from .serializers import (
     LineSerializer,
     AggregationsSerializer,
     DeviceSerializer,
-    MarksSerializer
+    MarksSerializer,
+    ConfirmUnloadingSerializer
 )
 
 User = get_user_model()
@@ -123,6 +122,7 @@ class DeviceViewSet(viewsets.ViewSet):
 
 
 class MarkingListCreateViewSet(generics.ListCreateAPIView):
+    """Используется для создания маркировок и отображения списка маркировок"""
     serializer_class = MarkingSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('line',)
@@ -143,7 +143,12 @@ class MarkingListCreateViewSet(generics.ListCreateAPIView):
             values['organization'] = Organization.objects.filter(
                 pk=organization).first()
 
-        serializer.save(**values)
+        if serializer.validated_data.get('aggregations') is None:
+            serializer.save(**values)
+        else:
+            data = serializer.validated_data.pop('aggregations')
+            instance = serializer.save(**values)
+            marking_close(instance, data)
 
     def get_queryset(self):
         queryset = MarkingOperation.objects.all()
@@ -176,13 +181,7 @@ class MarkingViewSet(viewsets.ViewSet):
         else:
             data = []
 
-        with transaction.atomic():
-            marking_close(marking, data)
-            # register_to_exchange(marking)
-            # marking.close()
-            # if request.user.role == User.VISION_OPERATOR:
-            #     clear_raw_marks(marking)
-
+        marking_close(marking, data)
         return Response({'detail': 'success'})
 
 
@@ -194,7 +193,9 @@ class MarksViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             operation = MarkingOperation.objects.get(
                 guid=serializer.validated_data['marking'])
-            add_marks(operation, serializer.validated_data['marks'])
+            create_marking_marks(operation,
+                                 [{'mark': i} for i in
+                                  serializer.validated_data['marks']])
             return Response(serializer.data)
         return Response(serializer.errors)
 
@@ -205,42 +206,12 @@ class MarksViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors)
 
-    def unload_marks(self, request):
-        pass
+    def marks_to_unload(self, request):
+        return Response(data=get_marks_to_unload())
 
-# @api_view(['GET', ])
-# def unload_marks(request):
-#     # TODO: добавить необходимую сериализацию
-#     values = MarkingOperationMarks.objects.filter(
-#         operation__shift__ready_to_unload=True,
-#         operation__shift__closed=True,
-#     ).values('encoded_mark',
-#              'product__external_key',
-#              'operation__shift__production_date',
-#              'operation__shift__batch_number',
-#              'operation__shift__guid',
-#              'operation__shift__organization__external_key',
-#              'operation__shift__line__storage__external_key',
-#              'operation__shift__line__department__external_key'
-#              )
-#
-#     data = []
-#     for value in values:
-#         element = {'shift': value['operation__shift__guid'],
-#                    'encoded_mark': value['encoded_mark'],
-#                    'product': value['product__external_key'],
-#                    'production_date': value[
-#                        'operation__shift__production_date'].strftime(
-#                        "%d.%m.%Y"),
-#                    'batch_number': value['operation__shift__batch_number'],
-#                    'organization': value[
-#                        'operation__shift__organization__external_key'],
-#                    'storage': value[
-#                        'operation__shift__line__storage__external_key'],
-#                    'department': value[
-#                        'operation__shift__line__department__external_key']
-#                    }
-#         data.append(element)
-#
-#     return Response(data=data, status=status.HTTP_200_OK)
-#
+    def confirm_unloading(self, request):
+        serializer = ConfirmUnloadingSerializer(data=request.data)
+        if serializer.is_valid():
+            confirm_marks_unloading(serializer.validated_data['operations'])
+            return Response(serializer.data)
+        return Response(serializer.errors)

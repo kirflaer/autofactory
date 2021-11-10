@@ -9,7 +9,7 @@ class RawMarkAdmin(admin.ModelAdmin):
 class MarkingOperationAdmin(admin.ModelAdmin):
     list_display = (
         'number', 'guid', 'date', 'author', 'device', 'manual_editing',
-        'closed', 'ready_to_unload', 'line', 'batch_number')
+        'closed', 'ready_to_unload', 'unloaded', 'line', 'batch_number')
 
 
 class MarkingOperationMarksAdmin(admin.ModelAdmin):

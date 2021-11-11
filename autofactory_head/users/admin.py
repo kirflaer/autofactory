@@ -4,7 +4,7 @@ from .models import User, Settings
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'settings')
+    list_display = ('username', 'settings', 'line', 'role', 'scanner')
 
 
 class SettingsAdmin(admin.ModelAdmin):

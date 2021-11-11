@@ -124,8 +124,9 @@ class DeviceViewSet(viewsets.ViewSet):
 class MarkingListCreateViewSet(generics.ListCreateAPIView):
     """Используется для создания маркировок и отображения списка маркировок"""
     serializer_class = MarkingSerializer
+    queryset = MarkingOperation.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('line',)
+    filterset_fields = ('line', 'closed', 'unloaded')
 
     def perform_create(self, serializer):
         line = serializer.validated_data.get('line')
@@ -149,11 +150,6 @@ class MarkingListCreateViewSet(generics.ListCreateAPIView):
             data = serializer.validated_data.pop('aggregations')
             instance = serializer.save(**values)
             marking_close(instance, data)
-
-    def get_queryset(self):
-        queryset = MarkingOperation.objects.all()
-        queryset = queryset.filter(closed=False)
-        return queryset
 
 
 class MarkingViewSet(viewsets.ViewSet):

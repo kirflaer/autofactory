@@ -25,6 +25,7 @@ def get_marks_to_unload() -> list:
 
     values = MarkingOperationMarks.objects.filter(
         operation__ready_to_unload=True,
+        operation__unloaded=False,
         operation__closed=True,
     ).values('encoded_mark',
              'product__external_key',

@@ -1,4 +1,4 @@
-from django.urls import include, path, re_path
+from django.urls import path, re_path
 
 from .views import (
     OrganizationList,
@@ -26,9 +26,11 @@ urlpatterns = [
         {'get': 'list_scanners'})),
     path('v1/marking/', MarkingListCreateViewSet.as_view()),
     path('v1/marking/<uuid:pk>/', MarkingViewSet.as_view({'put': 'close'})),
-    path('v1/marks/',
-         MarksViewSet.as_view(
-             {'get': 'marks_to_unload', 'post': 'add_marks',
-              'delete': 'remove_marks', 'put': 'confirm_unloading'})),
+
+    path('v1/marks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
+    path('v1/marks/remove/', MarksViewSet.as_view({'post': 'remove_marks'})),
+
+    path('v1/marks/', MarksViewSet.as_view(
+        {'get': 'marks_to_unload', 'put': 'confirm_unloading'})),
 
 ]

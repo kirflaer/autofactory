@@ -17,7 +17,7 @@ class LineProductAdmin(admin.ModelAdmin):
 
 
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ('product', 'name',)
+    list_display = ('name', 'product',)
 
 
 class OrganizationAdmin(admin.ModelAdmin):

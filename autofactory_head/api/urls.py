@@ -1,8 +1,9 @@
-from django.urls import path, re_path
+from django.urls import path, re_path, include
+from rest_framework.routers import SimpleRouter
 
 from .views import (
     OrganizationList,
-    ProductList,
+    ProductViewSet,
     UserRetrieve,
     LineList,
     StorageList,
@@ -15,7 +16,7 @@ from .views import (
 
 urlpatterns = [
     re_path(r'v[0-9]/organizations/$', OrganizationList.as_view()),
-    re_path(r'v[0-9]/products/$', ProductList.as_view()),
+    re_path(r'v[0-9]/products/$', ProductViewSet.as_view()),
     re_path(r'v[0-9]/storages/$', StorageList.as_view()),
     re_path(r'v[0-9]/departments/$', DepartmentList.as_view()),
     re_path(r'v[0-9]/lines/$', LineList.as_view()),
@@ -32,5 +33,4 @@ urlpatterns = [
 
     path('v1/marks/', MarksViewSet.as_view(
         {'get': 'marks_to_unload', 'put': 'confirm_unloading'})),
-
 ]

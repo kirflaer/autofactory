@@ -65,14 +65,27 @@ class UnitSerializer(serializers.ModelSerializer):
         fields = ('name', 'is_default', 'guid', 'capacity', 'count_in_pallet')
         model = Unit
 
+    def create(self, validated_data):
+        return super().create(validated_data)
+
 
 class ProductSerializer(serializers.ModelSerializer):
-    units = UnitSerializer(read_only=True, many=True)
+    units = UnitSerializer(many=True)
+    external_key = serializers.CharField(write_only=True)
 
     class Meta:
         fields = ('name',
-                  'gtin', 'guid', 'is_weight', 'expiration_date', 'units')
+                  'gtin', 'guid', 'is_weight', 'expiration_date', 'units',
+                  'external_key')
         model = Product
+        read_only_fields = ('guid',)
+
+    def create(self, validated_data):
+        units = validated_data.pop('units')
+        product = Product.objects.create(**validated_data)
+        for unit in units:
+            Unit.objects.create(product=product, **unit)
+        return product
 
 
 class StorageSerializer(serializers.ModelSerializer):
@@ -82,8 +95,11 @@ class StorageSerializer(serializers.ModelSerializer):
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
+    external_key = serializers.CharField(write_only=True)
+
     class Meta:
-        fields = ('guid', 'name')
+        fields = ('guid', 'name', 'external_key')
+        read_only_fields = ('guid',)
         model = Department
 
 

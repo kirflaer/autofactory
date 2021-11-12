@@ -59,8 +59,8 @@ class UserRetrieve(generics.RetrieveAPIView):
         return Response(serializer.data)
 
 
-class ProductList(generics.ListAPIView):
-    """Список товаров"""
+class ProductViewSet(generics.ListCreateAPIView):
+    """Список и создание товаров"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
@@ -71,8 +71,8 @@ class StorageList(generics.ListAPIView):
     serializer_class = StorageSerializer
 
 
-class DepartmentList(generics.ListAPIView):
-    """Список подразделений"""
+class DepartmentList(generics.ListCreateAPIView):
+    """Список и создание подразделений"""
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
 

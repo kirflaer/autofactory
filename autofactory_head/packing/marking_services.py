@@ -147,6 +147,7 @@ def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
     """Создает и записывает в базу экземпляры MarkingOperationMarks"""
     products = {}
     marking_marks_instances = []
+    marks = []
 
     for value in data:
         if not isinstance(value, dict):
@@ -165,6 +166,10 @@ def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
                 marking_marks_instances=marking_marks_instances,
                 operation=operation, **value)
         else:
+            if marks.count(mark):
+                continue
+
+            marks.append(mark)
             gtin = get_product_gtin_from_mark(mark)
             product = products.get(gtin)
             if product is None:
@@ -174,7 +179,7 @@ def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
             _create_instance_marking_marks(
                 marking_marks_instances,
                 operation,
-                None,
+                product,
                 None,
                 marks=(mark,))
 

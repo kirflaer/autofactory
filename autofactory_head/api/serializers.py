@@ -71,7 +71,7 @@ class UnitSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     units = UnitSerializer(many=True)
-    external_key = serializers.CharField(write_only=True)
+    external_key = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         fields = ('name',
@@ -95,7 +95,7 @@ class StorageSerializer(serializers.ModelSerializer):
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
-    external_key = serializers.CharField(write_only=True)
+    external_key = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         fields = ('guid', 'name', 'external_key')

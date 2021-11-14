@@ -1,3 +1,6 @@
+from django.contrib.auth import get_user_model
+from django.forms import ModelForm, CharField, PasswordInput
+
 from catalogs.models import (
     Organization,
     Department,
@@ -8,7 +11,7 @@ from catalogs.models import (
     TypeFactoryOperation
 )
 
-from django.forms import ModelForm
+User = get_user_model()
 
 
 class TypeFactoryOperationForm(ModelForm):
@@ -33,6 +36,16 @@ class DepartmentForm(ModelForm):
     class Meta:
         model = Department
         exclude = ['guid']
+
+
+class CustomUserForm(ModelForm):
+    password_custom = CharField(label='Пароль', widget=PasswordInput())
+
+    class Meta:
+        model = User
+        fields = ['username', 'password_custom', 'role', 'line',
+                  'vision_controller_address', 'vision_controller_port',
+                  'scanner', ]
 
 
 class StorageForm(ModelForm):

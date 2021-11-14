@@ -73,13 +73,13 @@
                     </a>
                 </li>
 
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="tables-bootstrap.html">
-                        <i class="align-middle" data-feather="settings"></i>
-                        <span
-                                class="align-middle">Настройки</span>
+                <li class="sidebar-item {% if view_name  == 'users' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'users' %}">
+                        <i class="align-middle" data-feather="users"></i> <span
+                            class="align-middle">Пользователи</span>
                     </a>
                 </li>
+
 
             </ul>
         {% endwith %}

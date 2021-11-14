@@ -1,6 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth import get_user_model
 from catalogs.models import (
     Organization,
     Department,
@@ -31,11 +33,13 @@ from .forms import (
     DeviceForm,
     OrganizationForm,
     StorageForm,
-    TypeFactoryOperationForm
-
+    TypeFactoryOperationForm,
+    CustomUserForm
 )
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+
+User = get_user_model()
 
 
 @login_required
@@ -99,6 +103,58 @@ class OrganizationListView(CatalogBasicListView):
         'catalog_edit_link': 'organization_edit',
         'catalog_remove_link': 'organization_remove'
     }
+
+
+class UserListView(LoginRequiredMixin, ListView):
+    model = User
+    context_object_name = 'data'
+    ordering = 'username'
+    template_name = 'users.html'
+    extra_context = {
+        'title': 'Пользователи',
+        'element_new_link': 'users_new',
+        'catalog_edit_link': 'users_edit',
+        'catalog_remove_link': 'users_remove'
+    }
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        data = super().get_context_data(object_list=object_list, **kwargs)
+        data['possibility_of_adding'] = True
+        return data
+
+    def get_queryset(self):
+        queryset = User.objects.all()
+        queryset = queryset.filter(is_superuser=False)
+        return queryset
+
+
+class UserCreateView(CatalogBasicCreateView):
+    model = User
+    form_class = CustomUserForm
+    success_url = reverse_lazy('users')
+
+    def form_valid(self, form):
+        user = form.save(commit=False)
+        user.set_password(self.request.POST['password_custom'])
+        user.save()
+        return super().form_valid(form)
+
+
+class UserUpdateView(CatalogBasicUpdateView):
+    model = User
+    form_class = CustomUserForm
+    success_url = reverse_lazy('users')
+
+    def form_valid(self, form):
+        user = form.save(commit=False)
+        user.set_password(self.request.POST['password_custom'])
+        user.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class UserRemoveView(CatalogBasicRemoveView):
+    model = User
+    success_url = reverse_lazy('users')
 
 
 class OrganizationCreateView(CatalogBasicCreateView):

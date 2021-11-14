@@ -5,7 +5,6 @@
     <thead>
     <tr>
         <th style="width:40%;">Наименование</th>
-        <th style="width:40%;">Устройство</th>
         <th style="width:40%;">Склад</th>
         <th style="width:40%;">Подразделение</th>
         <th>Действия</th>
@@ -15,7 +14,6 @@
     {% for element in data %}
         <tr>
             <td> {{ element.name }} </td>
-            <td> {{ element.device }} </td>
             <td> {{ element.storage }} </td>
             <td> {{ element.department }} </td>
             {% include 'table_actions.html' %}

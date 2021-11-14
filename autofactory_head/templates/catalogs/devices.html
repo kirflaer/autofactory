@@ -16,7 +16,7 @@
     {% for element in data %}
         <tr>
             <td> {{ element.name }} </td>
-            <td> {{ element.external_key }} </td>
+            <td> {{ element.identifier }} </td>
             <td> {{ element.port }} </td>
             <td> {{ element.mode }} </td>
             <td> {{ element.is_active|yesno:"Да,Нет,-"  }} </td>

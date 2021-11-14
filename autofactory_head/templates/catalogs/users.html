@@ -1,0 +1,29 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Наименование</th>
+        <th style="width:40%;">Роль</th>
+        <th style="width:40%;">Сканер</th>
+        <th style="width:40%;">Линия</th>
+        <th style="width:40%;">Устройство</th>
+        <th style="width:40%;">Действует</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.username }} </td>
+            <td> {{ element.role }} </td>
+            <td> {{ element.scanner }} </td>
+            <td> {{ element.line }} </td>
+            <td> {{ element.device }} </td>
+            <td> {{ element.is_active|yesno:"Да,Нет,-"  }} </td>
+            {% include 'table_actions.html' %}
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

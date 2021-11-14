@@ -38,19 +38,22 @@ class User(AbstractUser):
         (REJECTER, REJECTER),
     )
 
-    role = models.CharField(max_length=255, choices=ROLE, default=PACKER)
+    role = models.CharField(max_length=255, choices=ROLE, default=PACKER,
+                            verbose_name='Роль')
     email = models.EmailField(
-        help_text="email address", blank=False, unique=True)
+        help_text="email address", blank=True, unique=False, default='-')
+
     bio = models.TextField(blank=True)
 
     confirmation_code = models.CharField(
         max_length=100, unique=True, blank=True, null=True)
 
     settings = models.ForeignKey(Settings, on_delete=models.CASCADE,
-                                    null=True, blank=True)
+                                 null=True, blank=True)
 
     line = models.ForeignKey(Line, blank=True,
-                             on_delete=models.CASCADE, null=True)
+                             on_delete=models.CASCADE, null=True,
+                             verbose_name='Линия')
     device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True,
                                blank=True, verbose_name='Устройство',
                                related_name='user_devices')

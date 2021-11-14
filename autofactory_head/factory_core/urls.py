@@ -35,6 +35,10 @@ from .views import (
     TypeFactoryOperationRemoveView,
     TypeFactoryOperationUpdateView,
     check_status_view,
+    UserListView,
+    UserCreateView,
+    UserUpdateView,
+    UserRemoveView
 )
 
 urlpatterns = [
@@ -108,6 +112,14 @@ urlpatterns = [
          name='marking_remove'),
     path('marking/remove-mark/<int:pk>', MarkRemoveView.as_view(),
          name='mark-remove'),
+
+    path('users/', UserListView.as_view(), name='users'),
+    path('users/new/', UserCreateView.as_view(),
+         name='users_new'),
+    path('users/edit/<int:pk>', UserUpdateView.as_view(),
+         name='users_edit'),
+    path('users/remove/<int:pk>', UserRemoveView.as_view(),
+         name='users_remove'),
 
     path('check-status/', check_status_view),
 ]

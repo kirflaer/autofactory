@@ -61,6 +61,8 @@ class Device(BaseModel):
         max_length=150, blank=True)
     port = models.PositiveIntegerField(verbose_name='Порт', blank=True,
                                        null=True)
+    stream_splitter_code = models.PositiveIntegerField(
+        'Разделитель потока сканирования марок', default=0)
 
 
 class Product(BaseExternalModel):

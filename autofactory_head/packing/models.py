@@ -53,5 +53,3 @@ class RawMark(models.Model):
                                   related_name='raw_marks')
     date = models.DateTimeField('Дата записи', auto_now_add=True)
     mark = models.CharField(max_length=500)
-    stream_splitter_code = models.PositiveIntegerField(
-        'Разделитель потока сканирования марок', default=0)

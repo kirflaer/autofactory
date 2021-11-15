@@ -59,7 +59,8 @@ class Device(BaseModel):
     mark_reg_exp = models.CharField(
         verbose_name='Регулярное выражение для получения марки',
         max_length=150, blank=True)
-    port = models.PositiveIntegerField(blank=True, null=True)
+    port = models.PositiveIntegerField(verbose_name='Порт', blank=True,
+                                       null=True)
 
 
 class Product(BaseExternalModel):

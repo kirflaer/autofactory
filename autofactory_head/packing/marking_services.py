@@ -196,7 +196,7 @@ def _get_product(gtin: Optional[int] = None,
         product_filter['guid'] = guid
 
     if Product.objects.filter(**product_filter).exists():
-        return Product.objects.get(**product_filter)
+        return Product.objects.filter(**product_filter).first()
     else:
         return None
 

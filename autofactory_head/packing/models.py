@@ -51,5 +51,4 @@ class MarkingOperationMarks(models.Model):
 class RawMark(models.Model):
     operation = models.ForeignKey(MarkingOperation, on_delete=models.CASCADE,
                                   related_name='raw_marks')
-    date = models.DateTimeField('Дата записи', auto_now_add=True)
     mark = models.CharField(max_length=500)

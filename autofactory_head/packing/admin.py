@@ -3,7 +3,7 @@ from .models import RawMark, MarkingOperation, MarkingOperationMarks
 
 
 class RawMarkAdmin(admin.ModelAdmin):
-    list_display = ('operation', 'date', 'mark')
+    list_display = ('operation', 'mark')
 
 
 class MarkingOperationAdmin(admin.ModelAdmin):

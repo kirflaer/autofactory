@@ -12,14 +12,16 @@
             <div class="col-12 col-xl-12">
                 <div class="card">
                     {% if possibility_of_adding %}
-                    <div class="card-body">
-                        <a href="{% url element_new_link %}"
-                           class="btn btn-outline-secondary">Добавить</a>
-                    </div>
+                        {% block new_element %}
+                            <div class="card-body">
+                                <a href="{% url element_new_link %}"
+                                   class="btn btn-outline-secondary">Добавить</a>
+                            </div>
+                        {% endblock %}
                     {% endif %}
                     <table class="table table-striped ">
-                    {% block table %}
-                    {% endblock %}
+                        {% block table %}
+                        {% endblock %}
                     </table>
                 </div>
             </div>

@@ -8,7 +8,8 @@ from catalogs.models import (
     Device,
     Product,
     Line,
-    TypeFactoryOperation
+    TypeFactoryOperation,
+    Unit
 )
 
 User = get_user_model()
@@ -18,6 +19,12 @@ class TypeFactoryOperationForm(ModelForm):
     class Meta:
         model = TypeFactoryOperation
         exclude = ['guid']
+
+
+class UnitForm(ModelForm):
+    class Meta:
+        model = Unit
+        exclude = ['guid', 'product', 'external_key']
 
 
 class ProductForm(ModelForm):

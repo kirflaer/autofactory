@@ -1,0 +1,34 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block new_element %}
+    <div class="card-body">
+        <a href="{% url element_new_link product_uuid%}"
+           class="btn btn-outline-secondary">Добавить</a>
+    </div>
+{% endblock %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Наименование</th>
+        <th style="width:40%;">Количество в паллете</th>
+        <th style="width:40%;">Вместимость</th>
+        <th style="width:40%;">Упаковка по умолчанию</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.name }} </td>
+            <td> {{ element.count_in_pallet }} </td>
+            <td> {{ element.capacity }} </td>
+            <td> {{ element.is_default|yesno:"Да,Нет,-" }} </td>
+            <td class="table-action">
+                {% include 'table_actions.html' %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

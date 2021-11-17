@@ -14,7 +14,9 @@
         <tr>
             <td> {{ element.name }} </td>
             <td> {{ element.external_key }} </td>
-            {% include 'table_actions.html' %}
+            <td class="table-action">
+                {% include 'table_actions.html' %}
+            </td>
         </tr>
     {% endfor %}
     </tbody>

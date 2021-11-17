@@ -10,7 +10,8 @@ from catalogs.models import (
     Device,
     Product,
     Line,
-    TypeFactoryOperation
+    TypeFactoryOperation,
+    Unit
 )
 
 from packing.models import (
@@ -34,7 +35,7 @@ from .forms import (
     OrganizationForm,
     StorageForm,
     TypeFactoryOperationForm,
-    CustomUserForm
+    CustomUserForm, UnitForm
 )
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -172,6 +173,60 @@ class OrganizationUpdateView(CatalogBasicUpdateView):
 class OrganizationRemoveView(CatalogBasicRemoveView):
     model = Organization
     success_url = reverse_lazy('organizations')
+
+
+class UnitListView(CatalogBasicListView):
+    model = Unit
+    template_name = 'product_detail.html'
+    extra_context = {
+        'title': 'Упаковки',
+        'element_new_link': 'unit_new',
+        'catalog_edit_link': 'unit_edit',
+        'catalog_remove_link': 'unit_remove'
+    }
+
+    def get_queryset(self):
+        product = get_object_or_404(Product, guid=self.kwargs['pk'])
+        return Unit.objects.all().filter(product=product)
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        data = super().get_context_data(object_list=object_list, **kwargs)
+        data['possibility_of_adding'] = True
+        data['product_uuid'] = self.kwargs['pk']
+        return data
+
+
+class UnitCreateView(CatalogBasicCreateView):
+    model = Unit
+    form_class = UnitForm
+
+    def get_success_url(self):
+        return reverse_lazy('product_detail',
+                            kwargs={'pk': self.kwargs['pk']})
+
+    def form_valid(self, form):
+        product = get_object_or_404(Product, guid=self.kwargs['pk'])
+        unit = form.save(commit=False)
+        unit.product = product
+        unit.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class UnitUpdateView(CatalogBasicUpdateView):
+    model = Unit
+    form_class = UnitForm
+
+    def get_success_url(self):
+        return reverse_lazy('product_detail',
+                            kwargs={'pk': self.object.product.guid})
+
+
+class UnitRemoveView(CatalogBasicRemoveView):
+    model = Unit
+
+    def get_success_url(self):
+        return reverse_lazy('product_detail',
+                            kwargs={'pk': self.object.product.guid})
 
 
 class ProductListView(CatalogBasicListView):

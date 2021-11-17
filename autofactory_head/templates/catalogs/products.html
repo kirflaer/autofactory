@@ -18,7 +18,12 @@
             <td> {{ element.gtin }} </td>
             <td> {{ element.expiration_date }} </td>
             <td> {{ element.count_in_pallet }} </td>
-            {% include 'table_actions.html' %}
+            <td class="table-action">
+                <a href="{% url  'product_detail' element.guid %}"><i
+                        class="align-middle"
+                        data-feather="grid"></i></a>
+                {% include 'table_actions.html' %}
+            </td>
         </tr>
     {% endfor %}
     </tbody>

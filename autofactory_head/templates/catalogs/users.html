@@ -22,7 +22,9 @@
             <td> {{ element.line }} </td>
             <td> {{ element.device }} </td>
             <td> {{ element.is_active|yesno:"Да,Нет,-"  }} </td>
-            {% include 'table_actions.html' %}
+            <td class="table-action">
+                {% include 'table_actions.html' %}
+            </td>
         </tr>
     {% endfor %}
     </tbody>

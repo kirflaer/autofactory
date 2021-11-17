@@ -38,7 +38,11 @@ from .views import (
     UserListView,
     UserCreateView,
     UserUpdateView,
-    UserRemoveView
+    UserRemoveView,
+    UnitListView,
+    UnitRemoveView,
+    UnitUpdateView,
+    UnitCreateView
 )
 
 urlpatterns = [
@@ -68,6 +72,16 @@ urlpatterns = [
          name='product_edit'),
     path('products/remove/<uuid:pk>', ProductRemoveView.as_view(),
          name='product_remove'),
+    path('products/detail/<uuid:pk>', UnitListView.as_view(),
+         name='product_detail'),
+
+    path('units/new/<uuid:pk>', UnitCreateView.as_view(),
+         name='unit_new'),
+    path('units/edit/<uuid:pk>', UnitUpdateView.as_view(),
+         name='unit_edit'),
+    path('units/remove/<uuid:pk>', UnitRemoveView.as_view(),
+         name='unit_remove'),
+
 
     path('storages/', StorageListView.as_view(), name='storages'),
     path('storages/new/', StorageCreateView.as_view(),

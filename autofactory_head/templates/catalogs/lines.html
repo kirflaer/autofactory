@@ -16,7 +16,9 @@
             <td> {{ element.name }} </td>
             <td> {{ element.storage }} </td>
             <td> {{ element.department }} </td>
-            {% include 'table_actions.html' %}
+            <td class="table-action">
+                {% include 'table_actions.html' %}
+            </td>
         </tr>
     {% endfor %}
     </tbody>

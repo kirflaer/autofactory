@@ -1,10 +1,10 @@
 from abc import ABC
-
+from packing.marking_services import get_base64_string
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 from django.contrib.auth import get_user_model
-
-from packing.models import MarkingOperation
+from users.models import Setting
+from packing.models import MarkingOperation, CollectingOperation
 
 from catalogs.models import (
     Organization,
@@ -13,7 +13,8 @@ from catalogs.models import (
     Line,
     Department,
     Storage,
-    Unit
+    Unit,
+    Log
 )
 
 User = get_user_model()
@@ -46,12 +47,6 @@ class MarksSerializer(serializers.Serializer):
                 raise APIException('Нельзя изменять выгруженную маркировку')
 
         return super().validate(attrs)
-
-
-class AggregationsSerializer(serializers.Serializer):
-    aggregation_code = serializers.CharField(required=False)
-    product = serializers.CharField(required=False)
-    marks = serializers.ListField()
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -114,22 +109,59 @@ class LineSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
+    mark_reg_exp_base64 = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
-        fields = ('guid', 'name', 'identifier', 'port')
+        fields = ('guid', 'name', 'identifier', 'port', 'mark_reg_exp_base64')
         read_only_fields = ('guid', 'port')
         model = Device
+
+    def get_mark_reg_exp_base64(self, obj):
+        return get_base64_string(obj.mark_reg_exp)
+
+
+class VisionControllerSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('identifier', 'port')
+        model = Device
+
+
+class LogSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('data', 'device_version')
+        model = Log
+
+
+class SettingSerializer(serializers.ModelSerializer):
+    pallet_passport_template_base64 = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = ('use_organization', 'pallet_passport_template_base64')
+        model = Setting
+
+    def get_pallet_passport_template_base64(self, obj):
+        return get_base64_string(obj.pallet_passport_template)
 
 
 class UserSerializer(serializers.ModelSerializer):
     scanner = DeviceSerializer(read_only=True)
+    vision_controller = VisionControllerSerializer(read_only=True)
     device = serializers.SlugRelatedField(many=False, read_only=True,
                                           slug_field='identifier')
+    settings = SettingSerializer(read_only=True)
 
     class Meta:
         fields = (
-            'line', 'role', 'device', 'scanner', 'vision_controller_address',
-            'vision_controller_port')
+            'line', 'role', 'device', 'scanner', 'vision_controller',
+            'settings')
+
         model = User
+
+
+class AggregationsSerializer(serializers.Serializer):
+    aggregation_code = serializers.CharField(required=False)
+    product = serializers.CharField(required=False)
+    marks = serializers.ListField()
 
 
 class MarkingSerializer(serializers.ModelSerializer):
@@ -145,3 +177,8 @@ class MarkingSerializer(serializers.ModelSerializer):
             'aggregations', 'unloaded')
         read_only_fields = ('guid', 'closed', 'unloaded')
         model = MarkingOperation
+
+
+class CollectingOperationSerializer(serializers.Serializer):
+    codes = serializers.ListField()
+    identifier = serializers.CharField()

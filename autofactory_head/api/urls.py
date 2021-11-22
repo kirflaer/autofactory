@@ -11,10 +11,13 @@ from .views import (
     DeviceViewSet,
     MarksViewSet,
     MarkingListCreateViewSet,
-    MarkingViewSet
+    MarkingViewSet,
+    LogCreateViewSet,
+    CollectingOperationViewSet
 )
 
 urlpatterns = [
+    re_path(r'v[0-9]/logs/$', LogCreateViewSet.as_view()),
     re_path(r'v[0-9]/organizations/$', OrganizationList.as_view()),
     re_path(r'v[0-9]/products/$', ProductViewSet.as_view()),
     re_path(r'v[0-9]/storages/$', StorageList.as_view()),
@@ -33,4 +36,7 @@ urlpatterns = [
 
     path('v1/marks/', MarksViewSet.as_view(
         {'get': 'marks_to_unload', 'put': 'confirm_unloading'})),
+
+    path('v1/collecting/', CollectingOperationViewSet.as_view(
+        {'post': 'create_collecting_operation'})),
 ]

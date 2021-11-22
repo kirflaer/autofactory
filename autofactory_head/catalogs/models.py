@@ -44,11 +44,13 @@ class Device(BaseModel):
     AUTO_SCANNER = 'AUTO_SCANNER'
     TABLET = 'TABLET'
     DCT = 'DCT'
+    VISION_CONTROLLER = 'VISION_CONTROLLER'
 
     MODE = (
         (AUTO_SCANNER, AUTO_SCANNER),
         (TABLET, TABLET),
         (DCT, DCT),
+        (VISION_CONTROLLER, VISION_CONTROLLER)
     )
 
     mode = models.CharField(max_length=255, choices=MODE, default=DCT)
@@ -128,3 +130,16 @@ class Unit(BaseExternalModel):
 
     capacity = models.PositiveIntegerField('Вместимость', default=0)
     is_default = models.BooleanField('Упаковка по умолчанию', default=False)
+
+
+class Log(models.Model):
+    data = models.TextField(verbose_name='Данные лога')
+    device = models.ForeignKey(Device, verbose_name='Устройство', null=True,
+                               blank=True, on_delete=models.CASCADE)
+    app_version = models.CharField(verbose_name='Версия устройства',
+                                   max_length=255)
+    server_version = models.CharField(verbose_name='Версия промежуточной',
+                                      max_length=255)
+    username = models.CharField(verbose_name='Имя пользователя',
+                                max_length=255)
+    date = models.DateTimeField('Дата создания', auto_now_add=True)

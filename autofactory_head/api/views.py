@@ -1,9 +1,11 @@
+import base64
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, generics
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
-from rest_framework import viewsets, generics
-from django_filters.rest_framework import DjangoFilterBackend
-
-from django.contrib.auth import get_user_model
 
 from catalogs.models import (
     Organization,
@@ -13,20 +15,18 @@ from catalogs.models import (
     Department,
     Storage
 )
-
 from packing.marking_services import (
     marking_close,
     create_marking_marks,
     remove_marks,
     get_marks_to_unload,
-    confirm_marks_unloading
+    confirm_marks_unloading,
+    create_collect_operation
 )
-
 from packing.models import (
     MarkingOperation,
     RawMark
 )
-
 from .serializers import (
     OrganizationSerializer,
     ProductSerializer,
@@ -38,7 +38,9 @@ from .serializers import (
     AggregationsSerializer,
     DeviceSerializer,
     MarksSerializer,
-    ConfirmUnloadingSerializer
+    ConfirmUnloadingSerializer,
+    LogSerializer,
+    CollectingOperationSerializer
 )
 
 User = get_user_model()
@@ -209,5 +211,27 @@ class MarksViewSet(viewsets.ViewSet):
         serializer = ConfirmUnloadingSerializer(data=request.data)
         if serializer.is_valid():
             confirm_marks_unloading(serializer.validated_data['operations'])
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+
+class LogCreateViewSet(generics.CreateAPIView):
+    serializer_class = LogSerializer
+
+    def perform_create(self, serializer):
+        data = serializer.validated_data.pop('data')
+        serializer.save(server_version=settings.VERSION,
+                        username=self.request.user.username,
+                        device=self.request.user.device,
+                        data=base64.b64decode(data))
+
+
+class CollectingOperationViewSet(viewsets.ViewSet):
+    def create_collecting_operation(self, request):
+        serializer = CollectingOperationSerializer(data=request.data)
+        if serializer.is_valid():
+            create_collect_operation(request.user,
+                                     serializer.validated_data['identifier'],
+                                     serializer.validated_data['codes'])
             return Response(serializer.data)
         return Response(serializer.errors)

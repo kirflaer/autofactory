@@ -1,5 +1,11 @@
 import datetime
-from .models import RawMark, MarkingOperation, MarkingOperationMarks
+from .models import (
+    RawMark,
+    MarkingOperation,
+    MarkingOperationMark,
+    CollectingOperation,
+    CollectCode
+)
 from catalogs.models import Product
 from collections.abc import Iterable
 from typing import Optional
@@ -8,6 +14,14 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 User = get_user_model()
+
+
+def create_collect_operation(author: User, identifier: str,
+                             collect_codes: list) -> None:
+    operation = CollectingOperation.objects.create(author=author,
+                                                   identifier=identifier)
+    for code in collect_codes:
+        CollectCode.objects.create(operation=operation, code=code)
 
 
 def confirm_marks_unloading(operations: list) -> None:
@@ -23,7 +37,7 @@ def get_marks_to_unload() -> list:
     """ Возвращает список марок для выгрузки. Марки по закрытым маркировкам
     С отметкой ready_to_unload"""
 
-    values = MarkingOperationMarks.objects.filter(
+    values = MarkingOperationMark.objects.filter(
         operation__ready_to_unload=True,
         operation__unloaded=False,
         operation__closed=True,
@@ -70,13 +84,13 @@ def remove_marks(marks: list) -> None:
     for mark in marks:
         indexes_to_remove = []
         date_filter = datetime.datetime.now() - datetime.timedelta(7)
-        for element in MarkingOperationMarks.objects.filter(
+        for element in MarkingOperationMark.objects.filter(
                 operation__date__gte=date_filter, operation__unloaded=False,
                 mark=mark):
             indexes_to_remove.append(element.id)
 
         for index in indexes_to_remove:
-            MarkingOperationMarks.objects.get(pk=index).delete()
+            MarkingOperationMark.objects.get(pk=index).delete()
 
 
 def register_to_exchange(operation: MarkingOperation) -> bool:
@@ -120,7 +134,7 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
 
 def clear_raw_marks(operation: MarkingOperation) -> None:
     """Очищает данные сырых марок
-    после создание экземпляров MarkingOperationMarks"""
+    после создание экземпляров MarkingOperationMark"""
     if RawMark.objects.filter(operation=operation).exists():
         RawMark.objects.filter(operation=operation).delete()
 
@@ -144,7 +158,7 @@ def marking_close(operation: MarkingOperation, data: Iterable) -> None:
 
 
 def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
-    """Создает и записывает в базу экземпляры MarkingOperationMarks"""
+    """Создает и записывает в базу экземпляры MarkingOperationMark"""
     products = {}
     marking_marks_instances = []
     marks = []
@@ -183,7 +197,14 @@ def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
                 None,
                 marks=(mark,))
 
-    MarkingOperationMarks.objects.bulk_create(marking_marks_instances)
+    MarkingOperationMark.objects.bulk_create(marking_marks_instances)
+
+
+def get_base64_string(source: str) -> str:
+    data_bytes = source.encode("utf-8")
+    base64_bytes = base64.b64encode(data_bytes)
+    base64_string = base64_bytes.decode("utf-8")
+    return base64_string
 
 
 def _get_product(gtin: Optional[int] = None,
@@ -206,19 +227,16 @@ def _create_instance_marking_marks(marking_marks_instances: Iterable,
                                    product: Optional[Product],
                                    aggregation_code: Optional[str],
                                    marks: Iterable) -> None:
-    """Создает экземпляры модели MarkingOperationMarks
+    """Создает экземпляры модели MarkingOperationMark
     сырые марки кодируются в base64
     Экземпляры добавляются в массив marking_operation_marks
     Для использования конструкции bulk_create
     """
 
     for mark in marks:
-        mark_bytes = mark.encode("utf-8")
-        base64_bytes = base64.b64encode(mark_bytes)
-        base64_string = base64_bytes.decode("utf-8")
         marking_marks_instances.append(
-            MarkingOperationMarks(operation=operation,
-                                  mark=mark,
-                                  encoded_mark=base64_string,
-                                  product=product,
-                                  aggregation_code=aggregation_code))
+            MarkingOperationMark(operation=operation,
+                                 mark=mark,
+                                 encoded_mark=get_base64_string(mark),
+                                 product=product,
+                                 aggregation_code=aggregation_code))

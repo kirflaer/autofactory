@@ -73,6 +73,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-item {% if view_name  == 'collecting' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'collecting' %}">
+                        <i class="align-middle" data-feather="package"></i> <span
+                            class="align-middle">Сбор паллет</span>
+                    </a>
+                </li>
+
                 <li class="sidebar-item {% if view_name  == 'users' %}active{% endif %}">
                     <a class="sidebar-link" href="{% url 'users' %}">
                         <i class="align-middle" data-feather="users"></i> <span

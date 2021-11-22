@@ -22,22 +22,11 @@ class MarkingOperation(BaseModel):
                                 verbose_name='Номенклатура', blank=True,
                                 null=True)
 
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        if self.is_new:
-            number = MarkingOperation.objects.all().aggregate(
-                Max('number')).get('number__max')
-            if number is None:
-                number = 1
-            else:
-                number += 1
-
-            self.number = number
-            self.is_new = False
-        super().save(force_insert, force_update, using, update_fields)
+    def get_query_set(self):
+        return MarkingOperation.objects.all()
 
 
-class MarkingOperationMarks(models.Model):
+class MarkingOperationMark(models.Model):
     operation = models.ForeignKey(MarkingOperation, on_delete=models.CASCADE,
                                   related_name='marks')
     mark = models.CharField(max_length=500)
@@ -52,3 +41,19 @@ class RawMark(models.Model):
     operation = models.ForeignKey(MarkingOperation, on_delete=models.CASCADE,
                                   related_name='raw_marks')
     mark = models.CharField(max_length=500)
+
+
+class CollectingOperation(BaseModel):
+    identifier = models.CharField(verbose_name='Идентификатор', blank=True,
+                                  null=True,
+                                  max_length=50)
+
+    def get_query_set(self):
+        return CollectingOperation.objects.all()
+
+
+class CollectCode(models.Model):
+    operation = models.ForeignKey(CollectingOperation,
+                                  on_delete=models.CASCADE,
+                                  related_name='codes')
+    code = models.CharField(max_length=500)

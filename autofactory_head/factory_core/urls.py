@@ -42,7 +42,9 @@ from .views import (
     UnitListView,
     UnitRemoveView,
     UnitUpdateView,
-    UnitCreateView
+    UnitCreateView,
+    CollectingOperationListView,
+    collecting_detail
 )
 
 urlpatterns = [
@@ -136,4 +138,7 @@ urlpatterns = [
          name='users_remove'),
 
     path('check-status/', check_status_view),
+    path('collecting/', CollectingOperationListView.as_view(), name='collecting'),
+    path('collecting/detail/<uuid:pk>', views.collecting_detail,
+         name='collecting_detail'),
 ]

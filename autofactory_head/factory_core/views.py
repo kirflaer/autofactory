@@ -16,7 +16,9 @@ from catalogs.models import (
 
 from packing.models import (
     MarkingOperation,
-    MarkingOperationMarks
+    MarkingOperationMark,
+    CollectingOperation,
+    CollectCode
 )
 from django.urls import reverse_lazy
 
@@ -92,7 +94,7 @@ class MarkingOperationRemoveView(CatalogBasicRemoveView):
 
 
 class MarkRemoveView(CatalogBasicRemoveView):
-    model = MarkingOperationMarks
+    model = MarkingOperationMark
     success_url = reverse_lazy('marking')
 
 
@@ -137,6 +139,7 @@ class UserCreateView(CatalogBasicCreateView):
     def form_valid(self, form):
         user = form.save(commit=False)
         user.set_password(self.request.POST['password_custom'])
+        user.settings = self.request.user
         user.save()
         return super().form_valid(form)
 
@@ -398,9 +401,24 @@ class TypeFactoryOperationRemoveView(CatalogBasicRemoveView):
 @login_required
 def marking_detail(request, pk):
     operation = get_object_or_404(MarkingOperation, pk=pk)
-    marks = MarkingOperationMarks.objects.all().filter(operation=operation)
+    marks = MarkingOperationMark.objects.all().filter(operation=operation)
     return render(request, 'marking_detail.html', {'data': marks})
 
 
 def check_status_view(request):
     return render(request, 'check_form.html')
+
+
+class CollectingOperationListView(OperationBasicListView):
+    model = CollectingOperation
+    template_name = 'collecting.html'
+    extra_context = {
+        'title': 'Сбор паллет',
+    }
+
+
+@login_required
+def collecting_detail(request, pk):
+    operation = get_object_or_404(CollectingOperation, pk=pk)
+    codes = CollectCode.objects.all().filter(operation=operation)
+    return render(request, 'collecting_detail.html', {'data': codes})

@@ -8,8 +8,14 @@ from .models import (
     Line,
     Product,
     Unit,
-    LineProduct
+    LineProduct,
+    Log
 )
+
+
+class LogAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'device', 'username', 'app_version', 'server_version')
 
 
 class LineProductAdmin(admin.ModelAdmin):
@@ -33,7 +39,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 
 
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid')
+    list_display = ('name', 'guid', 'mode')
 
 
 class LineAdmin(admin.ModelAdmin):
@@ -56,3 +62,4 @@ admin.site.register(Line, LineAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Unit, UnitAdmin)
 admin.site.register(LineProduct, LineProductAdmin)
+admin.site.register(Log, LogAdmin)

@@ -51,7 +51,7 @@ class CustomUserForm(ModelForm):
     class Meta:
         model = User
         fields = ['username', 'password_custom', 'role', 'line',
-                  'vision_controller_address', 'vision_controller_port',
+                  'vision_controller',
                   'scanner', ]
 
 

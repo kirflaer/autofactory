@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Settings
+from .models import User, Setting
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -11,5 +11,5 @@ class SettingsAdmin(admin.ModelAdmin):
     list_display = ('type_marking_close',)
 
 
-admin.site.register(Settings, SettingsAdmin)
+admin.site.register(Setting, SettingsAdmin)
 admin.site.register(User, UserAdmin)

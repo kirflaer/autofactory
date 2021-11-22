@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from catalogs.models import Line, Device
 
 
-class Settings(models.Model):
+class Setting(models.Model):
     ALL_IN_DAY_BY_LINE = 'ALL_IN_DAY_BY_LINE'
     ALL_IN_DAY_BY_BAT_NUMBER = 'ALL_IN_DAY_BY_BAT_NUMBER'
     ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER = 'ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER'
@@ -18,7 +18,12 @@ class Settings(models.Model):
                                           choices=TYPE_MARKING_CLOSE,
                                           default=ALL_IN_DAY_BY_BAT_NUMBER)
 
-    name = models.TextField(blank=True, default='base settings')
+    name = models.CharField(max_length=100, blank=True,
+                            default='base settings')
+    use_organization = models.BooleanField('Использовать организацию',
+                                           default=False)
+    pallet_passport_template = models.TextField('Шаблон паллетного паспорта',
+                                                blank=True)
 
     def __str__(self):
         return self.name
@@ -48,7 +53,7 @@ class User(AbstractUser):
     confirmation_code = models.CharField(
         max_length=100, unique=True, blank=True, null=True)
 
-    settings = models.ForeignKey(Settings, on_delete=models.CASCADE,
+    settings = models.ForeignKey(Setting, on_delete=models.CASCADE,
                                  null=True, blank=True)
 
     line = models.ForeignKey(Line, blank=True,
@@ -60,24 +65,13 @@ class User(AbstractUser):
     scanner = models.ForeignKey(Device, on_delete=models.CASCADE, null=True,
                                 blank=True, verbose_name='Сканер',
                                 related_name='user_scanners')
-    vision_controller_address = models.CharField(
-        verbose_name='Контроллер тех. зрения (адрес)', max_length=150,
-        blank=True)
-
-    vision_controller_port = models.PositiveIntegerField(
-        verbose_name='Контроллер тех. зрения (порт)', blank=True, null=True)
+    vision_controller = models.ForeignKey(Device, on_delete=models.CASCADE,
+                                          null=True,
+                                          blank=True,
+                                          verbose_name='Контр. тех. зрения',
+                                          related_name='vision_controller')
 
     USERNAME_FIELD = "username"
 
     def __str__(self):
         return self.username
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        if self.settings is None:
-            base_settings = Settings.objects.first()
-            if base_settings is None:
-                base_settings = Settings.objects.create()
-            self.settings = base_settings
-
-        super().save(force_insert, force_update, using, update_fields)

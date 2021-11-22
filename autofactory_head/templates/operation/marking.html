@@ -4,16 +4,16 @@
 {% block table %}
     <thead>
     <tr>
-        <th style="width:40%;">Номер</th>
-        <th style="width:40%;">Дата</th>
-        <th style="width:40%;">Линия</th>
-        <th style="width:40%;">Номер партии</th>
-        <th style="width:40%;">Дата выработки</th>
+        <th style="width:5%;">Номер</th>
+        <th style="width:20%;">Дата</th>
+        <th style="width:30%;">Линия</th>
+        <th style="width:10%;">Номер партии</th>
+        <th style="width:15%;">Дата выработки</th>
         <th style="width:40%;">Ручная корректировка</th>
         <th style="width:40%;">Закрыта</th>
         <th style="width:40%;">Готова в выгрузке</th>
         <th style="width:40%;">Выгружена</th>
-        <th>Действия</th>
+        <th style="width:5%;">Действия</th>
     </tr>
     </thead>
     <tbody>
@@ -32,9 +32,6 @@
                 <a href="{% url  'marking_detail' element.guid %}"><i
                         class="align-middle"
                         data-feather="grid"></i></a>
-                <a href="{% url 'marking_remove' element.guid %}"><i
-                        class="align-middle"
-                        data-feather="trash"></i></a>
             </td>
         </tr>
     {% endfor %}

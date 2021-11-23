@@ -228,10 +228,9 @@ class LogCreateViewSet(generics.CreateAPIView):
 
 class CollectingOperationViewSet(viewsets.ViewSet):
     def create_collecting_operation(self, request):
-        serializer = CollectingOperationSerializer(data=request.data)
+        serializer = CollectingOperationSerializer(data=request.data,
+                                                   many=True)
         if serializer.is_valid():
-            create_collect_operation(request.user,
-                                     serializer.validated_data['identifier'],
-                                     serializer.validated_data['codes'])
+            create_collect_operation(request.user, serializer.validated_data)
             return Response(serializer.data)
         return Response(serializer.errors)

@@ -127,8 +127,9 @@ class VisionControllerSerializer(serializers.ModelSerializer):
 
 
 class LogSerializer(serializers.ModelSerializer):
+    data_base64 = serializers.CharField(source="data")
     class Meta:
-        fields = ('data', 'device_version')
+        fields = ('data_base64', 'app_version')
         model = Log
 
 

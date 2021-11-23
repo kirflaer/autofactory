@@ -16,12 +16,13 @@ from django.db import transaction
 User = get_user_model()
 
 
-def create_collect_operation(author: User, identifier: str,
-                             collect_codes: list) -> None:
-    operation = CollectingOperation.objects.create(author=author,
-                                                   identifier=identifier)
-    for code in collect_codes:
-        CollectCode.objects.create(operation=operation, code=code)
+def create_collect_operation(author: User, collecting_data: Iterable) -> None:
+    for element in collecting_data:
+        operation = CollectingOperation.objects.create(author=author,
+                                                       identifier=element[
+                                                           'identifier'])
+        for code in element['codes']:
+            CollectCode.objects.create(operation=operation, code=code)
 
 
 def confirm_marks_unloading(operations: list) -> None:

@@ -11,7 +11,7 @@ from catalogs.models import (
     Product,
     Line,
     TypeFactoryOperation,
-    Unit
+    Unit, Log
 )
 
 from packing.models import (
@@ -139,7 +139,7 @@ class UserCreateView(CatalogBasicCreateView):
     def form_valid(self, form):
         user = form.save(commit=False)
         user.set_password(self.request.POST['password_custom'])
-        user.settings = self.request.user
+        user.settings = self.request.user.settings
         user.save()
         return super().form_valid(form)
 
@@ -422,3 +422,12 @@ def collecting_detail(request, pk):
     operation = get_object_or_404(CollectingOperation, pk=pk)
     codes = CollectCode.objects.all().filter(operation=operation)
     return render(request, 'collecting_detail.html', {'data': codes})
+
+
+@login_required
+def view_log(request, pk):
+    log = Log.objects.get(pk=pk)
+    s = log.data[2:].encode("utf8").decode("unicode-escape").encode(
+        "latin1").decode('utf8')
+
+    return render(request, 'test/log.html', {'log': s})

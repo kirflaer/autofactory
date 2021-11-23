@@ -141,4 +141,5 @@ urlpatterns = [
     path('collecting/', CollectingOperationListView.as_view(), name='collecting'),
     path('collecting/detail/<uuid:pk>', views.collecting_detail,
          name='collecting_detail'),
+
 ]

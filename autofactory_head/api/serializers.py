@@ -109,15 +109,10 @@ class LineSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
-    mark_reg_exp_base64 = serializers.SerializerMethodField(read_only=True)
-
     class Meta:
-        fields = ('guid', 'name', 'identifier', 'port', 'mark_reg_exp_base64')
+        fields = ('guid', 'name', 'identifier', 'port')
         read_only_fields = ('guid', 'port')
         model = Device
-
-    def get_mark_reg_exp_base64(self, obj):
-        return get_base64_string(obj.mark_reg_exp)
 
 
 class VisionControllerSerializer(serializers.ModelSerializer):

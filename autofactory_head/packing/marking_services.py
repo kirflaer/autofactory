@@ -1,4 +1,8 @@
 import datetime
+
+from datetime import datetime as dt, timedelta
+from django.db.models import Count
+
 from .models import (
     RawMark,
     MarkingOperation,
@@ -14,6 +18,30 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 User = get_user_model()
+
+
+def get_dashboard_data() -> dict:
+    raw_marks_data = RawMark.objects.all().values('operation__line__name',
+                                                  'operation__batch_number',
+                                                  'operation__date',
+                                                  'operation__number').annotate(
+        count=Count('operation'))
+
+    labels = []
+    data = []
+
+    today = dt.today()
+    monday = today - timedelta(dt.weekday(today))
+    sunday = today + timedelta(6 - dt.weekday(today))
+    pie_data = MarkingOperationMark.objects.filter(
+        operation__date__range=[monday, sunday]).values(
+        'operation__line__name').annotate(count=Count('operation'))
+    for element in pie_data:
+        labels.append(element['operation__line__name'])
+        data.append(element['count'])
+
+    return {'raw_marks_data': raw_marks_data, 'labels': labels, 'data': data,
+            'pie_data': pie_data}
 
 
 def create_collect_operation(author: User, collecting_data: Iterable) -> None:

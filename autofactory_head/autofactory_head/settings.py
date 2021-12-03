@@ -13,7 +13,6 @@ DEBUG = env.bool('DEBUG', default=False)
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split()
 
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -48,11 +47,13 @@ ADDITIONAL_BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_ADDITIONAL_DIR = os.path.join(ADDITIONAL_BASE_DIR, "templates")
 CATALOGS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "catalogs")
 OPERATIONS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "operation")
+SERVICES_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "service")
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [TEMPLATES_DIR, CATALOGS_TEMPLATES_DIR,
-                 TEMPLATES_ADDITIONAL_DIR, OPERATIONS_TEMPLATES_DIR],
+                 TEMPLATES_ADDITIONAL_DIR, OPERATIONS_TEMPLATES_DIR,
+                 SERVICES_TEMPLATES_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -99,7 +100,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_L10N = True
@@ -109,4 +110,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-VERSION = '1.0.2.3'
+VERSION = '1.0.3.0'

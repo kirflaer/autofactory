@@ -44,7 +44,7 @@ from .views import (
     UnitUpdateView,
     UnitCreateView,
     CollectingOperationListView,
-    collecting_detail
+    LogListView
 )
 
 urlpatterns = [
@@ -83,7 +83,6 @@ urlpatterns = [
          name='unit_edit'),
     path('units/remove/<uuid:pk>', UnitRemoveView.as_view(),
          name='unit_remove'),
-
 
     path('storages/', StorageListView.as_view(), name='storages'),
     path('storages/new/', StorageCreateView.as_view(),
@@ -138,8 +137,12 @@ urlpatterns = [
          name='users_remove'),
 
     path('check-status/', check_status_view),
-    path('collecting/', CollectingOperationListView.as_view(), name='collecting'),
+    path('collecting/', CollectingOperationListView.as_view(),
+         name='collecting'),
     path('collecting/detail/<uuid:pk>', views.collecting_detail,
          name='collecting_detail'),
+
+    path('logs/', LogListView.as_view(), name='logs'),
+    path('logs/detail/<int:pk>', views.logs_detail, name='logs_detail'),
 
 ]

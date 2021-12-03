@@ -143,3 +143,5 @@ class Log(models.Model):
     username = models.CharField(verbose_name='Имя пользователя',
                                 max_length=255)
     date = models.DateTimeField('Дата создания', auto_now_add=True)
+    level = models.CharField('Уровень логирования', max_length=255,
+                             default='ERROR')

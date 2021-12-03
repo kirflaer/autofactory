@@ -223,6 +223,7 @@ class LogCreateViewSet(generics.CreateAPIView):
         serializer.save(server_version=settings.VERSION,
                         username=self.request.user.username,
                         device=self.request.user.device,
+                        level=self.request.user.level,
                         data=base64.b64decode(data))
 
 

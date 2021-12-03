@@ -10,6 +10,7 @@ from .models import (
 
 class RawMarkAdmin(admin.ModelAdmin):
     list_display = ('operation', 'mark')
+    list_filter = ('operation',)
 
 
 class MarkingOperationAdmin(admin.ModelAdmin):
@@ -20,6 +21,7 @@ class MarkingOperationAdmin(admin.ModelAdmin):
 
 class MarkingOperationMarkAdmin(admin.ModelAdmin):
     list_display = ('operation', 'product', 'mark', 'encoded_mark',)
+    list_filter = ('operation',)
 
 
 class CollectingOperationAdmin(admin.ModelAdmin):

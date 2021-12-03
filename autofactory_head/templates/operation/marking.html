@@ -22,7 +22,7 @@
             <td> {{ element.number }} </td>
             <td> {{ element.date }} </td>
             <td> {{ element.line|default_if_none:"-" }} </td>
-            <td> {{ element.batch_number }} </td>
+            <td> {{ element.batch_number|default_if_none:"-" }} </td>
             <td> {{ element.production_date }} </td>
             <td> {{ element.manual_editing|yesno:"Да,Нет,-" }} </td>
             <td> {{ element.closed|yesno:"Да,Нет,-" }} </td>

@@ -1,0 +1,33 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Дата</th>
+        <th style="width:40%;">Уровень</th>
+        <th style="width:40%;">Устройство</th>
+        <th style="width:40%;">Версия устройства</th>
+        <th style="width:40%;">Версия промежуточной</th>
+        <th style="width:40%;">Имя пользователя</th>
+        <th>Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.date }} </td>
+            <td> {{ element.level }} </td>
+            <td> {{ element.device }} </td>
+            <td> {{ element.app_version }} </td>
+            <td> {{ element.server_version }} </td>
+            <td> {{ element.username }} </td>
+            <td class="table-action">
+                <a href="{% url 'logs_detail' element.pk %}"><i
+                        class="align-middle"
+                        data-feather="grid"></i></a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

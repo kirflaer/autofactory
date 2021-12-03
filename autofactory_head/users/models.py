@@ -30,6 +30,16 @@ class Setting(models.Model):
 
 
 class User(AbstractUser):
+    ERROR = 'ERROR'
+    WARNING = 'WARNING'
+    INFO = 'INFO'
+
+    LEVEL = (
+        (ERROR, ERROR),
+        (INFO, INFO),
+        (WARNING, WARNING),
+    )
+
     VISION_OPERATOR = 'VISION_OPERATOR'
     VISION_MASTER = 'VISION_MASTER'
     PACKER = 'PACKER'
@@ -72,6 +82,13 @@ class User(AbstractUser):
                                           related_name='vision_controller')
 
     USERNAME_FIELD = "username"
+
+    log_level = models.CharField('Уровень логирования', max_length=255,
+                                 choices=LEVEL, default=ERROR)
+    inactive_sound_enabled = models.BooleanField(
+        'Включать звуковое оповещение при неактивности', default=False)
+    inactive_period_in_sec = models.PositiveIntegerField('Интервал оповещения',
+                                                         default=0)
 
     def __str__(self):
         return self.username

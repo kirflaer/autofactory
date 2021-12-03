@@ -3,6 +3,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
+from packing.marking_services import get_dashboard_data
 from catalogs.models import (
     Organization,
     Department,
@@ -11,7 +12,8 @@ from catalogs.models import (
     Product,
     Line,
     TypeFactoryOperation,
-    Unit, Log
+    Unit,
+    Log
 )
 
 from packing.models import (
@@ -47,7 +49,9 @@ User = get_user_model()
 
 @login_required
 def index(request):
-    return render(request, 'index.html', {'version': settings.VERSION})
+    dashboard_data = get_dashboard_data()
+    dashboard_data['version'] = settings.VERSION
+    return render(request, 'index.html', dashboard_data)
 
 
 class CatalogBasicListView(LoginRequiredMixin, ListView):
@@ -424,10 +428,22 @@ def collecting_detail(request, pk):
     return render(request, 'collecting_detail.html', {'data': codes})
 
 
-@login_required
-def view_log(request, pk):
-    log = Log.objects.get(pk=pk)
-    s = log.data[2:].encode("utf8").decode("unicode-escape").encode(
-        "latin1").decode('utf8')
+class LogListView(LoginRequiredMixin, ListView):
+    model = Log
+    context_object_name = 'data'
+    ordering = 'date'
+    template_name = 'log.html'
 
-    return render(request, 'test/log.html', {'log': s})
+    def get_context_data(self, *, object_list=None, **kwargs):
+        data = super().get_context_data(object_list=object_list, **kwargs)
+        data['list_collapse'] = True
+        data['possibility_of_adding'] = False
+        return data
+
+
+@login_required
+def logs_detail(request, pk):
+    log = get_object_or_404(Log, pk=pk)
+    log_data = log.data[2:].encode("utf8").decode("unicode-escape").encode(
+        "latin1").decode('utf8')
+    return render(request, 'log_detail.html', {'data': log_data})

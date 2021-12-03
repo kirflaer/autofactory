@@ -123,6 +123,7 @@ class VisionControllerSerializer(serializers.ModelSerializer):
 
 class LogSerializer(serializers.ModelSerializer):
     data_base64 = serializers.CharField(source="data")
+
     class Meta:
         fields = ('data_base64', 'app_version')
         model = Log
@@ -149,7 +150,8 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
             'line', 'role', 'device', 'scanner', 'vision_controller',
-            'settings')
+            'settings', 'log_level', 'inactive_sound_enabled',
+            'inactive_period_in_sec')
 
         model = User
 

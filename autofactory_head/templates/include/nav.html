@@ -87,6 +87,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-item {% if view_name  == 'logs' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'logs' %}">
+                        <i class="align-middle" data-feather="alert-circle"></i> <span
+                            class="align-middle">Логи</span>
+                    </a>
+                </li>
+
 
             </ul>
         {% endwith %}

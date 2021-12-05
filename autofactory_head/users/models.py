@@ -100,18 +100,19 @@ class User(AbstractUser):
         return self.username
 
 
-class ServiceEvent(models.Model):
-    SERVICE = 'SERVICE'
+class ConfigEvent(models.Model):
+    LOG_REQUEST = 'LOG_REQUEST'
     CUSTOM = 'CUSTOM'
-    TABLET = 'TABLET'
+    TABLE_UPDATE = 'TABLE_UPDATE'
 
-    ROLE = (
-        (SERVICE, SERVICE),
+    SERVICE_TYPE = (
+        (LOG_REQUEST, LOG_REQUEST),
         (CUSTOM, CUSTOM),
-        (TABLET, TABLET),
+        (TABLE_UPDATE, TABLE_UPDATE),
     )
 
-    type_event = models.CharField(max_length=255, choices=ROLE, default=CUSTOM,
+    type_event = models.CharField(max_length=255, choices=SERVICE_TYPE,
+                                  default=CUSTOM,
                                   verbose_name='Тип события')
 
     user = models.ForeignKey(User, verbose_name='Пользователь',

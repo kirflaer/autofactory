@@ -437,7 +437,9 @@ class LogListView(LoginRequiredMixin, ListView):
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
         data['list_collapse'] = True
-        data['possibility_of_adding'] = False
+        data['possibility_of_adding'] = True
+        data['devices'] = Device.objects.all()
+
         return data
 
 
@@ -447,3 +449,8 @@ def logs_detail(request, pk):
     log_data = log.data[2:].encode("utf8").decode("unicode-escape").encode(
         "latin1").decode('utf8')
     return render(request, 'log_detail.html', {'data': log_data})
+
+
+@login_required
+def logs_summary(request):
+    pass

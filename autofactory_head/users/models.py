@@ -24,6 +24,8 @@ class Setting(models.Model):
                                            default=False)
     pallet_passport_template = models.TextField('Шаблон паллетного паспорта',
                                                 blank=True)
+    collect_pallet_mode_is_active = models.BooleanField(
+        'Доступен режим сбора паллет', default=True)
 
     def __str__(self):
         return self.name
@@ -45,12 +47,14 @@ class User(AbstractUser):
     PACKER = 'PACKER'
     PALLET_COLLECTOR = 'PALLET_COLLECTOR'
     REJECTER = 'REJECTER'
+    SERVICE = 'SERVICE'
 
     ROLE = (
         (VISION_OPERATOR, VISION_OPERATOR),
         (PACKER, PACKER),
         (PALLET_COLLECTOR, PALLET_COLLECTOR),
         (REJECTER, REJECTER),
+        (SERVICE, SERVICE)
     )
 
     role = models.CharField(max_length=255, choices=ROLE, default=PACKER,
@@ -89,6 +93,27 @@ class User(AbstractUser):
         'Включать звуковое оповещение при неактивности', default=False)
     inactive_period_in_sec = models.PositiveIntegerField('Интервал оповещения',
                                                          default=0)
+    is_local_admin = models.BooleanField(
+        verbose_name='Локальный администратор', default=False)
 
     def __str__(self):
         return self.username
+
+
+class ServiceEvent(models.Model):
+    SERVICE = 'SERVICE'
+    CUSTOM = 'CUSTOM'
+    TABLET = 'TABLET'
+
+    ROLE = (
+        (SERVICE, SERVICE),
+        (CUSTOM, CUSTOM),
+        (TABLET, TABLET),
+    )
+
+    type_event = models.CharField(max_length=255, choices=ROLE, default=CUSTOM,
+                                  verbose_name='Тип события')
+
+    user = models.ForeignKey(User, verbose_name='Пользователь',
+                             on_delete=models.CASCADE)
+    argument = models.CharField(verbose_name='Параметр', max_length=255)

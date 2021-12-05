@@ -1,6 +1,48 @@
 {% extends "list_base.html" %}
 {% load static %}
 
+{% block new_element %}
+    <div class="card-header">
+        <h5 class="card-title">Просмотр логов по устройству</h5>
+    </div>
+
+    <div class="card-body">
+        <form class="row row-cols-md-auto align-items-center">
+        {% csrf_token %}
+            <div class="col-12">
+                <label class="sr-only" for="inlineFormInputName2">Name</label>
+                <select class="form-control mb-2 mr-sm-2"
+                        id="device" placeholder="Jane Doe">
+                    {% for device in devices %}
+                        <option>{{ device.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
+                <div class="input-group mb-2 mr-sm-2">
+                    <input type="date" class="form-control" id="start"
+                           name="date_source"
+                           placeholder="Search projects…" aria-label="Search">
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="form-control mb-2" >Просмотреть
+                </button>
+            </div>
+
+            <div class="col-12">
+                <a href="{% url 'index' %}"
+                   class="btn btn-outline-secondary mb-2">Просмотреть</a>
+            </div>
+
+
+        </form>
+    </div>
+{% endblock %}
+
 {% block table %}
     <thead>
     <tr>

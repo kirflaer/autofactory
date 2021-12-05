@@ -25,7 +25,7 @@ class Setting(models.Model):
     pallet_passport_template = models.TextField('Шаблон паллетного паспорта',
                                                 blank=True)
     collect_pallet_mode_is_active = models.BooleanField(
-        'Доступен режим сбора паллет', default=True)
+        'Доступен режим сбора паллет', default=False)
 
     def __str__(self):
         return self.name

@@ -128,7 +128,7 @@ class MarkingListCreateViewSet(generics.ListCreateAPIView):
     serializer_class = MarkingSerializer
     queryset = MarkingOperation.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('line', 'closed', 'unloaded')
+    filterset_fields = ('line', 'closed', 'unloaded', 'guid')
 
     def perform_create(self, serializer):
         line = serializer.validated_data.get('line')

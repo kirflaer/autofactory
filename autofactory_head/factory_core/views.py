@@ -42,6 +42,8 @@ from .forms import (
     CustomUserForm, UnitForm
 )
 
+from .log_services import logs_summary_data, log_line_decode
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 User = get_user_model()
@@ -446,11 +448,14 @@ class LogListView(LoginRequiredMixin, ListView):
 @login_required
 def logs_detail(request, pk):
     log = get_object_or_404(Log, pk=pk)
-    log_data = log.data[2:].encode("utf8").decode("unicode-escape").encode(
-        "latin1").decode('utf8')
-    return render(request, 'log_detail.html', {'data': log_data})
+    log_data = log_line_decode(log.data[2:])
+    return render(request, 'log_detail.html', {'data': (log_data,)})
 
 
 @login_required
 def logs_summary(request):
-    pass
+    device_guid = request.GET.get('device')
+    device = get_object_or_404(Device, pk=device_guid)
+    date_source = request.GET.get('date_source')
+    return render(request, 'log_detail.html',
+                  {'data': logs_summary_data(device, date_source)})

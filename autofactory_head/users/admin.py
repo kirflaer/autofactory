@@ -12,7 +12,8 @@ class ServiceEventAdmin(admin.ModelAdmin):
 
 
 class SettingsAdmin(admin.ModelAdmin):
-    list_display = ('type_marking_close',)
+    list_display = (
+        'name', 'type_marking_close', 'collect_pallet_mode_is_active')
 
 
 admin.site.register(Setting, SettingsAdmin)

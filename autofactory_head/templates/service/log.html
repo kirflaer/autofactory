@@ -7,14 +7,14 @@
     </div>
 
     <div class="card-body">
-        <form class="row row-cols-md-auto align-items-center">
+        <form class="row row-cols-md-auto align-items-center" action="{% url 'logs_summary' %}" method="get">
         {% csrf_token %}
-            <div class="col-12">
+              <div class="col-12">
                 <label class="sr-only" for="inlineFormInputName2">Name</label>
                 <select class="form-control mb-2 mr-sm-2"
-                        id="device" placeholder="Jane Doe">
+                        id="device" placeholder="Jane Doe" name="device">
                     {% for device in devices %}
-                        <option>{{ device.name }}</option>
+                        <option value="{{ device.guid }}">{{ device.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -32,12 +32,6 @@
                 <button type="submit" class="form-control mb-2" >Просмотреть
                 </button>
             </div>
-
-            <div class="col-12">
-                <a href="{% url 'index' %}"
-                   class="btn btn-outline-secondary mb-2">Просмотреть</a>
-            </div>
-
 
         </form>
     </div>

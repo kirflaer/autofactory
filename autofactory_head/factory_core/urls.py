@@ -143,7 +143,8 @@ urlpatterns = [
          name='collecting_detail'),
 
     path('logs/', LogListView.as_view(), name='logs'),
+    path('logs/summary/', views.logs_summary, name='logs_summary'),
     path('logs/detail/<int:pk>', views.logs_detail, name='logs_detail'),
-    path('logs/summary/', views.logs_detail, name='logs_summary'),
+
 
 ]

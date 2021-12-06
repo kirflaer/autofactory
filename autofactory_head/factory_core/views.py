@@ -82,7 +82,7 @@ class CatalogBasicRemoveView(LoginRequiredMixin, DeleteView):
 
 class OperationBasicListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
-    ordering = 'date'
+    ordering = '-date'
 
 
 class MarkingOperationListView(OperationBasicListView):
@@ -433,7 +433,7 @@ def collecting_detail(request, pk):
 class LogListView(LoginRequiredMixin, ListView):
     model = Log
     context_object_name = 'data'
-    ordering = 'date'
+    ordering = '-date'
     template_name = 'log.html'
 
     def get_context_data(self, *, object_list=None, **kwargs):

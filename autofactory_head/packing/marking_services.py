@@ -32,6 +32,7 @@ def get_dashboard_data() -> dict:
 
     today = dt.today()
     monday = today - timedelta(dt.weekday(today))
+    monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
     sunday = today + timedelta(6 - dt.weekday(today))
     pie_data = MarkingOperationMark.objects.filter(
         operation__date__range=[monday, sunday]).values(

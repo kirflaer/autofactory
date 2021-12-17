@@ -1,0 +1,21 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:20%;">Дата</th>
+        <th style="width:40%;">Статус</th>
+        <th style="width:40%;">Тип</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.date }} </td>
+            <td> {{ element.status }} </td>
+            <td> {{ element.type_task }} </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

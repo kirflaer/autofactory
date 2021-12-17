@@ -3,8 +3,11 @@ from .models import (
     RawMark,
     MarkingOperation,
     MarkingOperationMark,
-    CollectCode,
-    CollectingOperation
+    PalletCode,
+    Pallet,
+    Task,
+    TaskProduct,
+    TaskPallet
 )
 
 
@@ -24,12 +27,31 @@ class MarkingOperationMarkAdmin(admin.ModelAdmin):
     list_filter = ('operation',)
 
 
-class CollectingOperationAdmin(admin.ModelAdmin):
-    list_display = ('identifier', 'number', 'guid', 'date', 'author', 'closed',
-                    'ready_to_unload', 'unloaded',)
+class PalletAdmin(admin.ModelAdmin):
+    list_display = ('date', 'guid', 'id',)
 
 
-admin.site.register(RawMark, RawMarkAdmin)
+class PalletCodesAdmin(admin.ModelAdmin):
+    list_display = ('pallet', 'code')
+
+
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ('date', 'number', 'type_task', 'status')
+
+
+class TaskProductsAdmin(admin.ModelAdmin):
+    list_display = ('task', 'product', 'weight')
+
+
+class TaskPalletsAdmin(admin.ModelAdmin):
+    list_display = ('task', 'pallet')
+
+
 admin.site.register(MarkingOperation, MarkingOperationAdmin)
 admin.site.register(MarkingOperationMark, MarkingOperationMarkAdmin)
-admin.site.register(CollectingOperation, CollectingOperationAdmin)
+admin.site.register(Pallet, PalletAdmin)
+admin.site.register(PalletCode, PalletCodesAdmin)
+admin.site.register(Task, TaskAdmin)
+admin.site.register(TaskProduct, TaskProductsAdmin)
+admin.site.register(TaskPallet, TaskPalletsAdmin)
+admin.site.register(RawMark, RawMarkAdmin)

@@ -1,8 +1,7 @@
 from django.db import models
 import uuid
 from django.contrib.auth import get_user_model
-from django.db.models import Max
-from django.utils.translation import gettext_lazy as _
+from django.db.models import Max, UniqueConstraint
 from catalogs.models import Organization, Product, Line
 
 User = get_user_model()

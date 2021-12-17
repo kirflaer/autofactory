@@ -19,8 +19,9 @@ from catalogs.models import (
 from packing.models import (
     MarkingOperation,
     MarkingOperationMark,
-    CollectingOperation,
-    CollectCode
+    PalletCode,
+    Pallet,
+    Task
 )
 from django.urls import reverse_lazy
 
@@ -415,26 +416,27 @@ def check_status_view(request):
     return render(request, 'check_form.html')
 
 
-class CollectingOperationListView(OperationBasicListView):
-    model = CollectingOperation
-    template_name = 'collecting.html'
+class PalletListView(OperationBasicListView):
+    model = Pallet
+    template_name = 'pallet.html'
     extra_context = {
-        'title': 'Сбор паллет',
+        'title': 'Собранные паллеты',
     }
 
 
-@login_required
-def collecting_detail(request, pk):
-    operation = get_object_or_404(CollectingOperation, pk=pk)
-    codes = CollectCode.objects.all().filter(operation=operation)
-    return render(request, 'collecting_detail.html', {'data': codes})
+class TaskListView(OperationBasicListView):
+    model = Task
+    template_name = 'tasks.html'
+    extra_context = {
+        'title': 'Задания',
+    }
 
 
 class LogListView(LoginRequiredMixin, ListView):
-    model = Log
+    model = Task
     context_object_name = 'data'
     ordering = '-date'
-    template_name = 'log.html'
+    template_name = 'tasks.html'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)
@@ -443,6 +445,13 @@ class LogListView(LoginRequiredMixin, ListView):
         data['devices'] = Device.objects.all()
 
         return data
+
+
+@login_required
+def pallet_detail(request, pk):
+    pallet = get_object_or_404(Pallet, pk=pk)
+    codes = PalletCode.objects.all().filter(pallet=pallet)
+    return render(request, 'pallet_codes.html', {'data': codes})
 
 
 @login_required

@@ -21,11 +21,14 @@ from packing.marking_services import (
     remove_marks,
     get_marks_to_unload,
     confirm_marks_unloading,
-    create_collect_operation
+    create_pallet,
+    change_pallet_content
 )
 from packing.models import (
     MarkingOperation,
-    RawMark
+    RawMark,
+    Pallet,
+    Task
 )
 from .serializers import (
     OrganizationSerializer,
@@ -40,7 +43,9 @@ from .serializers import (
     MarksSerializer,
     ConfirmUnloadingSerializer,
     LogSerializer,
-    CollectingOperationSerializer
+    PalletWriteSerializer,
+    PalletReadSerializer, PalletUpdateSerializer,
+    ChangePalletContentSerializer, TaskUpdateSerializer, TaskSerializer
 )
 
 User = get_user_model()
@@ -227,11 +232,45 @@ class LogCreateViewSet(generics.CreateAPIView):
                         data=base64.b64decode(data))
 
 
-class CollectingOperationViewSet(viewsets.ViewSet):
-    def create_collecting_operation(self, request):
-        serializer = CollectingOperationSerializer(data=request.data,
-                                                   many=True)
+class PalletListViewSet(generics.ListCreateAPIView):
+    """Используется для создания маркировок и отображения списка паллет"""
+    serializer_class = PalletReadSerializer
+    queryset = Pallet.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('id', 'guid',)
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.stream is None:
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return PalletWriteSerializer(data=self.request.data, many=True)
+
+    def perform_create(self, serializer):
+        create_pallet(serializer.validated_data)
+
+
+class PalletUpdate(generics.UpdateAPIView):
+    queryset = Pallet.objects.all()
+    lookup_field = 'id'
+    serializer_class = PalletUpdateSerializer
+
+
+class PalletViewSet(viewsets.ViewSet):
+    def change_content(self, request):
+        serializer = ChangePalletContentSerializer(data=request.data)
         if serializer.is_valid():
-            create_collect_operation(request.user, serializer.validated_data)
+            change_pallet_content(serializer.validated_data)
             return Response(serializer.data)
         return Response(serializer.errors)
+
+
+class TaskUpdate(generics.UpdateAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskUpdateSerializer
+
+
+class TaskListView(generics.ListAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('type_task', 'guid',)

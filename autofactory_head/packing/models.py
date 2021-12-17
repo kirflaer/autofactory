@@ -1,5 +1,7 @@
+import uuid
+
 from django.db import models
-from django.db.models import Max
+from django.db.models import Max, UniqueConstraint
 
 from catalogs.models import Device, Line
 from factory_core.models import BaseModel
@@ -43,17 +45,78 @@ class RawMark(models.Model):
     mark = models.CharField(max_length=500)
 
 
-class CollectingOperation(BaseModel):
-    identifier = models.CharField(verbose_name='Идентификатор', blank=True,
-                                  null=True,
-                                  max_length=50)
+class Pallet(models.Model):
+    guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
+    id = models.CharField(verbose_name='Идентификатор', blank=True,
+                          null=True,
+                          max_length=50)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,
+                                verbose_name='Номенклатура', blank=True,
+                                null=True)
+    date = models.DateTimeField('Дата создания', auto_now_add=True)
+    is_confirmed = models.BooleanField('Подтверждена', default=False)
+
+
+class PalletCode(models.Model):
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE,
+                               related_name='codes')
+    code = models.CharField(max_length=500)
+
+
+class Task(BaseModel):
+    NEW = 'NEW'
+    WORK = 'WORK'
+    CLOSE = 'CLOSE'
+
+    STATUS = (
+        (NEW, NEW),
+        (WORK, WORK),
+        (CLOSE, CLOSE),
+    )
+
+    ACCEPTANCE_TO_STOCK = 'ACCEPTANCE_TO_STOCK'
+    TYPE_TASK = (
+        (ACCEPTANCE_TO_STOCK, ACCEPTANCE_TO_STOCK),
+    )
+
+    type_task = models.CharField(max_length=255, choices=TYPE_TASK,
+                                 default=ACCEPTANCE_TO_STOCK,
+                                 verbose_name='Тип задания')
+
+    status = models.CharField(max_length=255, choices=STATUS, default=NEW,
+                              verbose_name='Статус')
+    products = models.ManyToManyField(Product, through='TaskProduct',
+                                      verbose_name='Номенклатура задания')
+    pallets = models.ManyToManyField(Pallet, through='TaskPallet',
+                                     verbose_name='Паллеты задания')
 
     def get_query_set(self):
-        return CollectingOperation.objects.all()
+        return Task.objects.all()
 
 
-class CollectCode(models.Model):
-    operation = models.ForeignKey(CollectingOperation,
-                                  on_delete=models.CASCADE,
-                                  related_name='codes')
-    code = models.CharField(max_length=500)
+class TaskProduct(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, null=True,
+                             blank=True,
+                             verbose_name='Задание')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
+                                blank=True,
+                                verbose_name='Номенклатура')
+    weight = models.PositiveIntegerField(verbose_name='Вес', default=0)
+
+    class Meta:
+        constraints = [UniqueConstraint(fields=['task', 'product'],
+                                        name='unique_task_product')]
+
+
+class TaskPallet(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, null=True,
+                             blank=True,
+                             verbose_name='Задание')
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, null=True,
+                               blank=True,
+                               verbose_name='Паллета')
+
+    class Meta:
+        constraints = [UniqueConstraint(fields=['task', 'pallet'],
+                                        name='unique_task_pallet')]

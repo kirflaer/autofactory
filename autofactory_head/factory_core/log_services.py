@@ -3,7 +3,7 @@ from catalogs.models import (
     Device
 )
 
-from datetime import datetime as dt, date as date_construct, timedelta
+from datetime import datetime as dt
 from collections.abc import Iterable
 from typing import Optional
 

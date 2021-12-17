@@ -4,7 +4,13 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 from django.contrib.auth import get_user_model
 from users.models import Setting
-from packing.models import MarkingOperation, CollectingOperation
+from packing.models import (
+    MarkingOperation,
+    Pallet,
+    PalletCode,
+    Task,
+    TaskProduct,
+)
 
 from catalogs.models import (
     Organization,
@@ -177,6 +183,85 @@ class MarkingSerializer(serializers.ModelSerializer):
         model = MarkingOperation
 
 
-class CollectingOperationSerializer(serializers.Serializer):
+class ProductShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'gtin', 'guid')
+        model = Product
+
+
+class PalletReadSerializer(serializers.Serializer):
+    codes = serializers.SerializerMethodField()
+    id = serializers.CharField()
+    product = ProductShortSerializer()
+    is_confirmed = serializers.BooleanField()
+
+    def get_codes(self, obj):
+        pallet_codes = PalletCode.objects.filter(pallet=obj)
+        if pallet_codes.exists():
+            return [i.code for i in pallet_codes]
+        else:
+            return []
+
+
+class PalletWriteSerializer(serializers.Serializer):
     codes = serializers.ListField()
-    identifier = serializers.CharField()
+    id = serializers.CharField()
+    product = serializers.CharField()
+
+
+class ChangePalletContentSerializer(serializers.Serializer):
+    codes = serializers.ListField()
+    source = serializers.CharField()
+    destination = serializers.CharField()
+
+    def validate(self, attrs):
+        if not Pallet.objects.filter(id=attrs.get('source')).exists():
+            raise APIException('Паллета источник не обнаружена')
+
+        if not Pallet.objects.filter(id=attrs.get('destination')).exists():
+            raise APIException('Паллета назначения не обнаружена')
+
+        return super().validate(attrs)
+
+
+class PalletUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('is_confirmed',)
+        model = Pallet
+
+
+class TaskUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('status',)
+        model = Task
+
+
+class TaskPalletSerializer(serializers.ModelSerializer):
+    product = serializers.StringRelatedField(read_only=True)
+    count = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = ('id', 'is_confirmed', 'product', 'count')
+        model = Pallet
+
+    def get_count(self, obj):
+        return PalletCode.objects.filter(pallet__pk=obj.guid).count()
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
+    pallets = TaskPalletSerializer(many=True, read_only=True)
+
+    class Meta:
+        fields = ('guid', 'number', 'date', 'products', 'pallets')
+        model = Task
+
+    def get_products(self, obj):
+        task_products = TaskProduct.objects.filter(task__guid=obj.guid)
+        result = []
+        if not task_products.exists():
+            return result
+        for element in task_products:
+            result.append(
+                {'name': element.product.name, 'weight': element.weight})
+        return result

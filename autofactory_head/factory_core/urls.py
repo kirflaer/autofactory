@@ -43,8 +43,8 @@ from .views import (
     UnitRemoveView,
     UnitUpdateView,
     UnitCreateView,
-    CollectingOperationListView,
-    LogListView
+    PalletListView,
+    LogListView, TaskListView
 )
 
 urlpatterns = [
@@ -137,14 +137,14 @@ urlpatterns = [
          name='users_remove'),
 
     path('check-status/', check_status_view),
-    path('collecting/', CollectingOperationListView.as_view(),
-         name='collecting'),
-    path('collecting/detail/<uuid:pk>', views.collecting_detail,
-         name='collecting_detail'),
+    path('pallets/', PalletListView.as_view(),
+         name='pallets'),
+    path('pallets/detail/<uuid:pk>', views.pallet_detail,
+         name='pallet_detail'),
 
     path('logs/', LogListView.as_view(), name='logs'),
     path('logs/summary/', views.logs_summary, name='logs_summary'),
     path('logs/detail/<int:pk>', views.logs_detail, name='logs_detail'),
 
-
+    path('tasks/', TaskListView.as_view(), name='tasks'),
 ]

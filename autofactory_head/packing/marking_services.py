@@ -7,8 +7,8 @@ from .models import (
     RawMark,
     MarkingOperation,
     MarkingOperationMark,
-    CollectingOperation,
-    CollectCode
+    PalletCode,
+    Pallet
 )
 from catalogs.models import Product
 from collections.abc import Iterable
@@ -45,13 +45,26 @@ def get_dashboard_data() -> dict:
             'pie_data': pie_data}
 
 
-def create_collect_operation(author: User, collecting_data: Iterable) -> None:
+def change_pallet_content(content: dict) -> None:
+    source = Pallet.objects.get(id=content['source'])
+    destination = Pallet.objects.get(id=content['destination'])
+
+    for code in content['codes']:
+        pallet_code = PalletCode.objects.filter(pallet=source,
+                                                code=code).first()
+        if not pallet_code is None:
+            pallet_code.pallet = destination
+            pallet_code.save()
+
+
+def create_pallet(collecting_data: Iterable) -> None:
+    """ Создает паллету и наполняет ее кодами агрегации"""
     for element in collecting_data:
-        operation = CollectingOperation.objects.create(author=author,
-                                                       identifier=element[
-                                                           'identifier'])
+        product = Product.objects.filter(guid=element['product']).first()
+        pallet = Pallet.objects.create(id=element['id'], product=product)
         for code in element['codes']:
-            CollectCode.objects.create(operation=operation, code=code)
+            if not PalletCode.objects.filter(pallet=pallet, code=code).exists():
+                PalletCode.objects.create(pallet=pallet, code=code)
 
 
 def confirm_marks_unloading(operations: list) -> None:

@@ -48,13 +48,15 @@ class User(AbstractUser):
     PALLET_COLLECTOR = 'PALLET_COLLECTOR'
     REJECTER = 'REJECTER'
     SERVICE = 'SERVICE'
+    LOADER = 'LOADER'
 
     ROLE = (
         (VISION_OPERATOR, VISION_OPERATOR),
         (PACKER, PACKER),
         (PALLET_COLLECTOR, PALLET_COLLECTOR),
         (REJECTER, REJECTER),
-        (SERVICE, SERVICE)
+        (SERVICE, SERVICE),
+        (LOADER, LOADER)
     )
 
     role = models.CharField(max_length=255, choices=ROLE, default=PACKER,

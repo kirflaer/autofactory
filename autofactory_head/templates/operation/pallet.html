@@ -4,20 +4,20 @@
 {% block table %}
     <thead>
     <tr>
-        <th style="width:5%;">Номер</th>
         <th style="width:20%;">Дата</th>
         <th style="width:40%;">Идентификатор</th>
+        <th style="width:40%;">Подтверждена</th>
         <th style="width:5%;">Действия</th>
     </tr>
     </thead>
     <tbody>
     {% for element in data %}
         <tr>
-            <td> {{ element.number }} </td>
             <td> {{ element.date }} </td>
-            <td> {{ element.identifier }} </td>
+            <td> {{ element.id }} </td>
+            <td> {{ element.is_confirmed|yesno:"Да,Нет,-" }} </td>
             <td class="table-action">
-                <a href="{% url  'collecting_detail' element.guid %}"><i
+                <a href="{% url  'pallet_detail' element.guid %}"><i
                         class="align-middle"
                         data-feather="grid"></i></a>
             </td>

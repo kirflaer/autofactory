@@ -232,27 +232,28 @@ class LogCreateViewSet(generics.CreateAPIView):
                         data=base64.b64decode(data))
 
 
-class PalletListViewSet(generics.ListCreateAPIView):
+class PalletListViewSet(generics.CreateAPIView):
     """Используется для создания маркировок и отображения списка паллет"""
-    serializer_class = PalletReadSerializer
+    serializer_class = PalletWriteSerializer
     queryset = Pallet.objects.all()
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('id', 'guid',)
 
     def get_serializer(self, *args, **kwargs):
-        if self.request.stream is None:
-            return super().get_serializer(*args, **kwargs)
-        else:
-            return PalletWriteSerializer(data=self.request.data, many=True)
+        return PalletWriteSerializer(data=self.request.data, many=True)
 
     def perform_create(self, serializer):
         create_pallet(serializer.validated_data)
 
 
-class PalletUpdate(generics.UpdateAPIView):
+class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = Pallet.objects.all()
     lookup_field = 'id'
-    serializer_class = PalletUpdateSerializer
+    serializer_class = PalletReadSerializer
+
+    def get_serializer_class(self):
+        if self.request.stream is None:
+            return PalletReadSerializer
+        else:
+            return PalletUpdateSerializer
 
 
 class PalletViewSet(viewsets.ViewSet):

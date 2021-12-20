@@ -249,10 +249,16 @@ class PalletListViewSet(generics.ListCreateAPIView):
         create_pallet(serializer.validated_data)
 
 
-class PalletUpdate(generics.UpdateAPIView):
+class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = Pallet.objects.all()
     lookup_field = 'id'
-    serializer_class = PalletUpdateSerializer
+    serializer_class = PalletReadSerializer
+
+    def get_serializer_class(self):
+        if self.request.stream is None:
+            return PalletReadSerializer
+        else:
+            return PalletUpdateSerializer
 
 
 class PalletViewSet(viewsets.ViewSet):

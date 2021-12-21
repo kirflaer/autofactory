@@ -16,7 +16,8 @@ from .views import (
     PalletListViewSet,
     TaskListView,
     TaskUpdate,
-    PalletRetrieveUpdate
+    PalletRetrieveUpdate,
+    PalletViewSet
 )
 
 urlpatterns = [
@@ -41,6 +42,8 @@ urlpatterns = [
         {'get': 'marks_to_unload', 'put': 'confirm_unloading'})),
 
     path('v1/pallets/', PalletListViewSet.as_view()),
+    path('v1/pallets/content/',
+         PalletViewSet.as_view({'patch': 'change_content'})),
     path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
     path('v1/tasks/', TaskListView.as_view()),
     path('v1/tasks/<uuid:pk>/', TaskUpdate.as_view()),

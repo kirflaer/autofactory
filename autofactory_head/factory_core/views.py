@@ -433,10 +433,10 @@ class TaskListView(OperationBasicListView):
 
 
 class LogListView(LoginRequiredMixin, ListView):
-    model = Task
+    model = Log
     context_object_name = 'data'
     ordering = '-date'
-    template_name = 'tasks.html'
+    template_name = 'log.html'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)

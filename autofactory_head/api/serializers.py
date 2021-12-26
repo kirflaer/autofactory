@@ -237,11 +237,12 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
 
 
 class TaskPalletSerializer(serializers.ModelSerializer):
-    product = serializers.StringRelatedField(read_only=True)
+    product_name = serializers.StringRelatedField(read_only=True,
+                                                  source='product')
     count = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('id', 'is_confirmed', 'product', 'count')
+        fields = ('id', 'is_confirmed', 'product_name', 'count')
         model = Pallet
 
     def get_count(self, obj):
@@ -253,7 +254,7 @@ class TaskSerializer(serializers.ModelSerializer):
     pallets = TaskPalletSerializer(many=True, read_only=True)
 
     class Meta:
-        fields = ('guid', 'number', 'date', 'products', 'pallets')
+        fields = ('guid', 'number', 'status', 'date', 'products', 'pallets')
         model = Task
 
     def get_products(self, obj):

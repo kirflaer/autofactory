@@ -6,6 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
+from django.db.models import Q
 
 from catalogs.models import (
     Organization,
@@ -269,9 +270,15 @@ class TaskUpdate(generics.UpdateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskUpdateSerializer
 
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
+
 
 class TaskListView(generics.ListAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('type_task', 'guid',)
+
+    def get_queryset(self):
+        qs = Task.objects.all()
+        qs = qs.filter(Q(user=self.request.user) | Q(status=Task.NEW))
+        return qs

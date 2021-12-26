@@ -1,14 +1,24 @@
 import uuid
 
+from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import Max, UniqueConstraint
+from django.db.models import UniqueConstraint
 
 from catalogs.models import Device, Line
 from factory_core.models import BaseModel
-from catalogs.models import Product
+from catalogs.models import Product, Organization
+
+User = get_user_model()
 
 
 class MarkingOperation(BaseModel):
+    author = models.ForeignKey(User, on_delete=models.CASCADE,
+                               verbose_name='Автор', null=True)
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE,
+                                     verbose_name='Организация', blank=True,
+                                     null=True)
+
     device = models.ForeignKey(Device, on_delete=models.CASCADE,
                                verbose_name='Устройство', null=True,
                                blank=True, )
@@ -23,9 +33,6 @@ class MarkingOperation(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
                                 verbose_name='Номенклатура', blank=True,
                                 null=True)
-
-    def get_query_set(self):
-        return MarkingOperation.objects.all()
 
 
 class MarkingOperationMark(models.Model):
@@ -90,9 +97,9 @@ class Task(BaseModel):
                                       verbose_name='Номенклатура задания')
     pallets = models.ManyToManyField(Pallet, through='TaskPallet',
                                      verbose_name='Паллеты задания')
-
-    def get_query_set(self):
-        return Task.objects.all()
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             verbose_name='Пользователь', null=True,
+                             blank=True)
 
 
 class TaskProduct(models.Model):

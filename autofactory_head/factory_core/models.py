@@ -39,7 +39,7 @@ class BaseModel(models.Model):
              update_fields=None):
         if self.date is None:
             qs = type(self).objects.all()
-            number = qs.aggregate(Max('number')).get('number__max')
+            number = qs.aggregate(Max('number')).get('number__max') or 0
             self.number = number + 1
 
         super().save(force_insert, force_update, using, update_fields)

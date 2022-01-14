@@ -100,6 +100,9 @@ class Task(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              verbose_name='Пользователь', null=True,
                              blank=True)
+    external_source = models.CharField(max_length=255,
+                                       verbose_name='Источник внешней системы',
+                                       blank=True)
 
 
 class TaskProduct(models.Model):
@@ -109,7 +112,7 @@ class TaskProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                 blank=True,
                                 verbose_name='Номенклатура')
-    weight = models.PositiveIntegerField(verbose_name='Вес', default=0)
+    weight = models.FloatField(verbose_name='Вес', default=0.0)
 
     class Meta:
         constraints = [UniqueConstraint(fields=['task', 'product'],

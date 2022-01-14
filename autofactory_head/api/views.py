@@ -23,7 +23,8 @@ from packing.marking_services import (
     get_marks_to_unload,
     confirm_marks_unloading,
     create_pallet,
-    change_pallet_content
+    change_pallet_content,
+    create_tasks
 )
 from packing.models import (
     MarkingOperation,
@@ -46,7 +47,10 @@ from .serializers import (
     LogSerializer,
     PalletWriteSerializer,
     PalletReadSerializer, PalletUpdateSerializer,
-    ChangePalletContentSerializer, TaskUpdateSerializer, TaskSerializer
+    ChangePalletContentSerializer,
+    TaskUpdateSerializer,
+    TaskReadSerializer,
+    TaskWriteSerializer
 )
 
 User = get_user_model()
@@ -274,11 +278,18 @@ class TaskUpdate(generics.UpdateAPIView):
         serializer.save(user=self.request.user)
 
 
-class TaskListView(generics.ListAPIView):
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
+class TasksViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = Task.objects.all()
+        queryset = queryset.filter(
+            Q(user=self.request.user) | Q(status=Task.NEW))
+        serializer = TaskReadSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-    def get_queryset(self):
-        qs = Task.objects.all()
-        qs = qs.filter(Q(user=self.request.user) | Q(status=Task.NEW))
-        return qs
+    def create(self, request):
+        serializer = TaskWriteSerializer(data=request.data, many=True)
+
+        if serializer.is_valid():
+            create_tasks(serializer.data)
+            return Response(serializer.data)
+        return Response(serializer.errors)

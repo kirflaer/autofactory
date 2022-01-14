@@ -1,5 +1,4 @@
-from django.urls import path, re_path, include
-from rest_framework.routers import SimpleRouter
+from django.urls import path, re_path
 
 from .views import (
     OrganizationList,
@@ -14,10 +13,9 @@ from .views import (
     MarkingViewSet,
     LogCreateViewSet,
     PalletListViewSet,
-    TaskListView,
     TaskUpdate,
     PalletRetrieveUpdate,
-    PalletViewSet
+    PalletViewSet, TasksViewSet
 )
 
 urlpatterns = [
@@ -45,6 +43,6 @@ urlpatterns = [
     path('v1/pallets/content/',
          PalletViewSet.as_view({'patch': 'change_content'})),
     path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
-    path('v1/tasks/', TaskListView.as_view()),
+    path('v1/tasks/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('v1/tasks/<uuid:pk>/', TaskUpdate.as_view()),
 ]

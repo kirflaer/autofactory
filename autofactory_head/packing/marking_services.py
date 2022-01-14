@@ -8,7 +8,7 @@ from .models import (
     MarkingOperation,
     MarkingOperationMark,
     PalletCode,
-    Pallet
+    Pallet, Task, TaskProduct, TaskPallet
 )
 from catalogs.models import Product
 from collections.abc import Iterable
@@ -18,6 +18,27 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 User = get_user_model()
+
+
+def create_tasks(collecting_data: Iterable) -> None:
+    for element in collecting_data:
+        task = Task.objects.create(type_task=element['type_task'],
+                                   external_source=element['external_source'])
+        for task_product in element['products']:
+            product = Product.objects.filter(
+                external_key=task_product['product']).first()
+            if product is None:
+                continue
+            TaskProduct.objects.create(task=task, product=product,
+                                       weight=task_product['weight'])
+
+        for aggregation_code in element['pallets']:
+            pallet_code = PalletCode.objects.filter(
+                code=aggregation_code).first()
+            pallet = None if pallet_code is None else pallet_code.pallet
+            if pallet is None:
+                continue
+            TaskPallet.objects.create(task=task, pallet=pallet)
 
 
 def get_dashboard_data() -> dict:
@@ -63,7 +84,8 @@ def create_pallet(collecting_data: Iterable) -> None:
         product = Product.objects.filter(guid=element['product']).first()
         pallet = Pallet.objects.create(id=element['id'], product=product)
         for code in element['codes']:
-            if not PalletCode.objects.filter(pallet=pallet, code=code).exists():
+            if not PalletCode.objects.filter(pallet=pallet,
+                                             code=code).exists():
                 PalletCode.objects.create(pallet=pallet, code=code)
 
 
@@ -85,6 +107,7 @@ def get_marks_to_unload() -> list:
         operation__unloaded=False,
         operation__closed=True,
     ).values('encoded_mark',
+             'aggregation_code',
              'product__external_key',
              'operation__production_date',
              'operation__batch_number',
@@ -97,9 +120,17 @@ def get_marks_to_unload() -> list:
              )
 
     data = []
+    aggregation_codes = [element['aggregation_code'] for element in values]
+    pallets = {element.code: element.pallet for element in
+               PalletCode.objects.filter(code__in=aggregation_codes)}
+
     for value in values:
         element = {'operation': value['operation__guid'],
                    'encoded_mark': value['encoded_mark'],
+                   'aggregation_code': value['aggregation_code'],
+                   'pallet': None if pallets.get(
+                       value['aggregation_code']) is None else pallets[
+                       value['aggregation_code']].id,
                    'product': value['product__external_key'],
                    'production_date': value[
                        'operation__production_date'].strftime(

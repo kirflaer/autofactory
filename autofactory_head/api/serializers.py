@@ -10,6 +10,7 @@ from packing.models import (
     PalletCode,
     Task,
     TaskProduct,
+    TaskPallet
 )
 
 from catalogs.models import (
@@ -249,7 +250,7 @@ class TaskPalletSerializer(serializers.ModelSerializer):
         return PalletCode.objects.filter(pallet__pk=obj.guid).count()
 
 
-class TaskSerializer(serializers.ModelSerializer):
+class TaskReadSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     pallets = TaskPalletSerializer(many=True, read_only=True)
 
@@ -266,3 +267,22 @@ class TaskSerializer(serializers.ModelSerializer):
             result.append(
                 {'name': element.product.name, 'weight': element.weight})
         return result
+
+
+class TaskProductsSerializer(serializers.Serializer):
+    product = serializers.CharField()
+    weight = serializers.FloatField()
+
+    class Meta:
+        fields = ('product', 'weight')
+
+
+class TaskWriteSerializer(serializers.Serializer):
+    pallets = serializers.ListField()
+    products = TaskProductsSerializer(many=True)
+    type_task = serializers.CharField()
+    external_source = serializers.CharField()
+
+    class Meta:
+        fields = ('type_task', 'products', 'pallets', 'external_source')
+

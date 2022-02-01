@@ -28,6 +28,14 @@ class Organization(BaseExternalModel):
     pass
 
 
+class Client(BaseExternalModel):
+    pass
+
+
+class Direction(BaseExternalModel):
+    pass
+
+
 class Storage(BaseExternalModel):
     pass
 

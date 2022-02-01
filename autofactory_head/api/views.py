@@ -283,10 +283,17 @@ class TasksViewSet(viewsets.ViewSet):
         queryset = Task.objects.all()
         queryset = queryset.filter(
             Q(user=self.request.user) | Q(status=Task.NEW))
+        if len(request.query_params):
+            filter_data = {key: value for key, value in
+                           request.query_params.items()}
+            queryset = queryset.filter(**filter_data)
+
         serializer = TaskReadSerializer(queryset, many=True)
+
         return Response(serializer.data)
 
     def create(self, request):
+
         serializer = TaskWriteSerializer(data=request.data, many=True)
 
         if serializer.is_valid():

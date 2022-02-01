@@ -9,7 +9,9 @@ from .models import (
     Product,
     Unit,
     LineProduct,
-    Log
+    Log,
+    Client,
+    Direction
 )
 
 
@@ -27,6 +29,14 @@ class UnitAdmin(admin.ModelAdmin):
 
 
 class OrganizationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'guid')
+
+
+class ClientAdmin(admin.ModelAdmin):
+    list_display = ('name', 'guid')
+
+
+class DirectionAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
@@ -63,3 +73,5 @@ admin.site.register(Product, ProductAdmin)
 admin.site.register(Unit, UnitAdmin)
 admin.site.register(LineProduct, LineProductAdmin)
 admin.site.register(Log, LogAdmin)
+admin.site.register(Client, ClientAdmin)
+admin.site.register(Direction, DirectionAdmin)

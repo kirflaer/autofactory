@@ -6,7 +6,7 @@ from django.db.models import UniqueConstraint
 
 from catalogs.models import Device, Line
 from factory_core.models import BaseModel
-from catalogs.models import Product, Organization
+from catalogs.models import Product, Organization, Direction, Client
 
 User = get_user_model()
 
@@ -82,14 +82,26 @@ class Task(BaseModel):
         (CLOSE, CLOSE),
     )
 
+    # Приемка на склад
     ACCEPTANCE_TO_STOCK = 'ACCEPTANCE_TO_STOCK'
+    # Заявки на завод
+    PLANT_APPLICATION = 'PLANT_APPLICATION'
+    # Заказы
+    ORDER = 'ORDER'
     TYPE_TASK = (
         (ACCEPTANCE_TO_STOCK, ACCEPTANCE_TO_STOCK),
+        (ORDER, ORDER),
+        (PLANT_APPLICATION, PLANT_APPLICATION),
     )
 
     type_task = models.CharField(max_length=255, choices=TYPE_TASK,
                                  default=ACCEPTANCE_TO_STOCK,
                                  verbose_name='Тип задания')
+
+    parent_task = models.ForeignKey('self', on_delete=models.CASCADE,
+                                    verbose_name='Родительское задание',
+                                    null=True,
+                                    blank=True)
 
     status = models.CharField(max_length=255, choices=STATUS, default=NEW,
                               verbose_name='Статус')
@@ -100,6 +112,12 @@ class Task(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              verbose_name='Пользователь', null=True,
                              blank=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE,
+                               verbose_name='Клиент', null=True,
+                               blank=True)
+    direction = models.ForeignKey(Direction, on_delete=models.CASCADE,
+                                  verbose_name='Направление', null=True,
+                                  blank=True)
     external_source = models.CharField(max_length=255,
                                        verbose_name='Источник внешней системы',
                                        blank=True)

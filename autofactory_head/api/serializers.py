@@ -255,7 +255,10 @@ class TaskReadSerializer(serializers.ModelSerializer):
     pallets = TaskPalletSerializer(many=True, read_only=True)
 
     class Meta:
-        fields = ('guid', 'number', 'status', 'date', 'products', 'pallets')
+        fields = (
+            'guid', 'number', 'status', 'date', 'products', 'pallets',
+            'client', 'direction', 'type_task')
+
         model = Task
 
     def get_products(self, obj):
@@ -285,4 +288,3 @@ class TaskWriteSerializer(serializers.Serializer):
 
     class Meta:
         fields = ('type_task', 'products', 'pallets', 'external_source')
-

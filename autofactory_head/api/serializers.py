@@ -10,7 +10,6 @@ from packing.models import (
     PalletCode,
     Task,
     TaskProduct,
-    TaskPallet
 )
 
 from catalogs.models import (
@@ -21,7 +20,10 @@ from catalogs.models import (
     Department,
     Storage,
     Unit,
-    Log
+    Log,
+    ExternalSource,
+    Direction,
+    Client
 )
 
 User = get_user_model()
@@ -268,7 +270,10 @@ class TaskReadSerializer(serializers.ModelSerializer):
             return result
         for element in task_products:
             result.append(
-                {'name': element.product.name, 'weight': element.weight})
+                {'name': element.product.name,
+                 'weight': element.weight,
+                 'guid': element.product.guid
+                 })
         return result
 
 
@@ -280,11 +285,42 @@ class TaskProductsSerializer(serializers.Serializer):
         fields = ('product', 'weight')
 
 
+class ProductShortSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'gtin', 'guid')
+        model = Product
+
+
+class DirectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'guid', 'external_key')
+        read_only_fields = ('guid',)
+        model = Direction
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'external_key')
+        model = Client
+
+
+class ExternalSerializer(serializers.ModelSerializer):
+    date = serializers.DateField(format="%Y-%m-%d")
+    class Meta:
+        fields = ('name', 'external_key', 'number', 'date')
+        model = ExternalSource
+
+
 class TaskWriteSerializer(serializers.Serializer):
-    pallets = serializers.ListField()
-    products = TaskProductsSerializer(many=True)
+    pallets = serializers.ListField(required=False)
+    products = TaskProductsSerializer(many=True, required=False)
     type_task = serializers.CharField()
-    external_source = serializers.CharField()
+    parent_task = ExternalSerializer(required=False)
+    client = ClientSerializer(required=False)
+    external_source = ExternalSerializer(required=False)
+    direction = DirectionSerializer(required=False)
 
     class Meta:
-        fields = ('type_task', 'products', 'pallets', 'external_source')
+        fields = (
+            'type_task', 'products', 'pallets', 'external_source', 'client',
+            'direction', 'parent_task')

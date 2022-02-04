@@ -15,7 +15,9 @@ from .views import (
     PalletListViewSet,
     TaskUpdate,
     PalletRetrieveUpdate,
-    PalletViewSet, TasksViewSet
+    PalletViewSet,
+    TasksViewSet,
+    DirectionListCreateView
 )
 
 urlpatterns = [
@@ -26,6 +28,7 @@ urlpatterns = [
     re_path(r'v[0-9]/departments/$', DepartmentList.as_view()),
     re_path(r'v[0-9]/lines/$', LineList.as_view()),
     re_path(r'v[0-9]/users/$', UserRetrieve.as_view()),
+    re_path(r'v[0-9]/direction/$', DirectionListCreateView.as_view()),
     re_path(r'v[0-9]/devices/$', DeviceViewSet.as_view(
         {'post': 'create', 'delete': 'remove'})),
     re_path(r'v[0-9]/scanners/$', DeviceViewSet.as_view(

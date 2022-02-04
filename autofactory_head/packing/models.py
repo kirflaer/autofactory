@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import UniqueConstraint
 
-from catalogs.models import Device, Line
+from catalogs.models import Device, Line, ExternalSource
 from factory_core.models import BaseModel
 from catalogs.models import Product, Organization, Direction, Client
 
@@ -118,9 +118,11 @@ class Task(BaseModel):
     direction = models.ForeignKey(Direction, on_delete=models.CASCADE,
                                   verbose_name='Направление', null=True,
                                   blank=True)
-    external_source = models.CharField(max_length=255,
-                                       verbose_name='Источник внешней системы',
-                                       blank=True)
+    external_source = models.ForeignKey(ExternalSource,
+                                        on_delete=models.CASCADE,
+                                        verbose_name='Внешний источник',
+                                        null=True,
+                                        blank=True)
 
 
 class TaskProduct(models.Model):

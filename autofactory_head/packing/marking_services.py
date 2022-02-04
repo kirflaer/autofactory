@@ -8,9 +8,18 @@ from .models import (
     MarkingOperation,
     MarkingOperationMark,
     PalletCode,
-    Pallet, Task, TaskProduct, TaskPallet
+    Pallet,
+    Task,
+    TaskProduct,
+    TaskPallet
 )
-from catalogs.models import Product
+from catalogs.models import (
+    Product,
+    ExternalSource,
+    Direction,
+    Client
+)
+
 from collections.abc import Iterable
 from typing import Optional
 import base64
@@ -22,15 +31,50 @@ User = get_user_model()
 
 def create_tasks(collecting_data: Iterable) -> None:
     for element in collecting_data:
+        external_source = ExternalSource.objects.filter(
+            external_key=element['external_source']['external_key']).first()
+        if external_source is None:
+            external_source = ExternalSource.objects.create(
+                **element['external_source'])
+
+        if Task.objects.filter(external_source=external_source).exists():
+            continue
+
+        direction = element.get('direction')
+        if not direction is None:
+            direction = Direction.objects.filter(
+                external_key=element['direction']).first()
+
+        client = element.get('client')
+        if not client is None:
+            client = Client.objects.filter(
+                external_key=element['client']['external_key']).first()
+            client = Client.objects.create(
+                **element['client']) if client is None else client
+
+        parent_task = element.get('parent_task')
+        if not parent_task is None:
+            parent_task = Task.objects.filter(
+                external_source__external_key=element['parent_task'][
+                    'external_key']).first()
+
         task = Task.objects.create(type_task=element['type_task'],
-                                   external_source=element['external_source'])
-        for task_product in element['products']:
-            product = Product.objects.filter(
-                external_key=task_product['product']).first()
+                                   external_source=external_source,
+                                   direction=direction,
+                                   client=client,
+                                   parent_task=parent_task)
+
+        if not element.get('products') is None:
+            for task_product in element['products']:
+                product = Product.objects.filter(
+                    external_key=task_product['product']).first()
             if product is None:
                 continue
             TaskProduct.objects.create(task=task, product=product,
                                        weight=task_product['weight'])
+
+        if element.get('pallets') is None:
+            continue
 
         for aggregation_code in element['pallets']:
             pallet_code = PalletCode.objects.filter(

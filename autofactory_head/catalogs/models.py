@@ -153,3 +153,14 @@ class Log(models.Model):
     date = models.DateTimeField('Дата создания', auto_now_add=True)
     level = models.CharField('Уровень логирования', max_length=255,
                              default='ERROR')
+
+
+class ExternalSource(models.Model):
+    name = models.CharField(verbose_name='Наименование', max_length=1024)
+    external_key = models.CharField(verbose_name='Идентификатор',
+                                    max_length=1024)
+    number = models.CharField(verbose_name='Идентификатор', max_length=1024)
+    date = models.CharField(verbose_name='Дата', max_length=1024)
+
+    def __str__(self):
+        return self.name

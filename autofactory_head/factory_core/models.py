@@ -28,6 +28,10 @@ class BaseModel(models.Model):
                                           verbose_name='Готова к выгрузке')
     number = models.IntegerField(default=1)
 
+    external_source = models.CharField(max_length=255,
+                                       verbose_name='Источник внешней системы',
+                                       blank=True)
+
     def __str__(self):
         return f'{self.number} - {self.date.strftime("%d.%m.%Y %H:%M:%S")}'
 

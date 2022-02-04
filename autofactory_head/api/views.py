@@ -14,7 +14,7 @@ from catalogs.models import (
     Device,
     Line,
     Department,
-    Storage
+    Storage, Direction
 )
 from packing.marking_services import (
     marking_close,
@@ -50,7 +50,8 @@ from .serializers import (
     ChangePalletContentSerializer,
     TaskUpdateSerializer,
     TaskReadSerializer,
-    TaskWriteSerializer
+    TaskWriteSerializer,
+    DirectionSerializer
 )
 
 User = get_user_model()
@@ -87,6 +88,18 @@ class DepartmentList(generics.ListCreateAPIView):
     """Список и создание подразделений"""
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
+
+
+class DirectionListCreateView(generics.ListCreateAPIView):
+    """Список и создание подразделений"""
+    queryset = Direction.objects.all()
+    serializer_class = DirectionSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.stream is None:
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return DirectionSerializer(data=self.request.data, many=True)
 
 
 class LineList(generics.ListAPIView):

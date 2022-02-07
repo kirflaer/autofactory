@@ -160,7 +160,8 @@ class ExternalSource(models.Model):
     external_key = models.CharField(verbose_name='Идентификатор',
                                     max_length=1024)
     number = models.CharField(verbose_name='Идентификатор', max_length=1024)
-    date = models.CharField(verbose_name='Дата', max_length=1024)
+    date = models.CharField(verbose_name='Дата', max_length=1024, blank=True,
+                            default="")
 
     def __str__(self):
         return self.name

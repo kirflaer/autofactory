@@ -12,10 +12,9 @@ from .views import (
     MarkingListCreateViewSet,
     MarkingViewSet,
     LogCreateViewSet,
-    PalletListViewSet,
+    PalletViewSet,
     TaskUpdate,
     PalletRetrieveUpdate,
-    PalletViewSet,
     TasksViewSet,
     DirectionListCreateView
 )
@@ -42,9 +41,9 @@ urlpatterns = [
     path('v1/marks/', MarksViewSet.as_view(
         {'get': 'marks_to_unload', 'put': 'confirm_unloading'})),
 
-    path('v1/pallets/', PalletListViewSet.as_view()),
-    path('v1/pallets/content/',
-         PalletViewSet.as_view({'patch': 'change_content'})),
+    path('v1/pallets/',
+         PalletViewSet.as_view(
+             {'get': 'list', 'post': 'create', 'patch': 'change_content'})),
     path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
     path('v1/tasks/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('v1/tasks/<uuid:pk>/', TaskUpdate.as_view()),

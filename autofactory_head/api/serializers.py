@@ -234,8 +234,13 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 
 
 class TaskUpdateSerializer(serializers.ModelSerializer):
+    pallet_ids = serializers.ListField(required=False)
+    unloaded = serializers.BooleanField(required=False)
+    ready_to_unload = serializers.BooleanField(required=False)
+    status = serializers.CharField(required=False)
+
     class Meta:
-        fields = ('status',)
+        fields = ('status', 'pallet_ids', 'unloaded', 'ready_to_unload')
         model = Task
 
 
@@ -245,44 +250,20 @@ class TaskPalletSerializer(serializers.ModelSerializer):
     count = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('id', 'is_confirmed', 'product_name', 'count')
+        fields = ('id', 'is_confirmed', 'product_name', 'count', 'guid')
         model = Pallet
 
     def get_count(self, obj):
         return PalletCode.objects.filter(pallet__pk=obj.guid).count()
 
 
-class TaskReadSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField()
-    pallets = TaskPalletSerializer(many=True, read_only=True)
-
-    class Meta:
-        fields = (
-            'guid', 'number', 'status', 'date', 'products', 'pallets',
-            'client', 'direction', 'type_task')
-
-        model = Task
-
-    def get_products(self, obj):
-        task_products = TaskProduct.objects.filter(task__guid=obj.guid)
-        result = []
-        if not task_products.exists():
-            return result
-        for element in task_products:
-            result.append(
-                {'name': element.product.name,
-                 'weight': element.weight,
-                 'guid': element.product.guid
-                 })
-        return result
-
-
 class TaskProductsSerializer(serializers.Serializer):
     product = serializers.CharField()
-    weight = serializers.FloatField()
+    weight = serializers.FloatField(required=False)
+    count = serializers.FloatField(required=False)
 
     class Meta:
-        fields = ('product', 'weight')
+        fields = ('product', 'weight', 'count')
 
 
 class ProductShortSerializer(serializers.ModelSerializer):
@@ -305,7 +286,6 @@ class ClientSerializer(serializers.ModelSerializer):
 
 
 class ExternalSerializer(serializers.ModelSerializer):
-    date = serializers.DateField(format="%Y-%m-%d")
     class Meta:
         fields = ('name', 'external_key', 'number', 'date')
         model = ExternalSource
@@ -324,3 +304,30 @@ class TaskWriteSerializer(serializers.Serializer):
         fields = (
             'type_task', 'products', 'pallets', 'external_source', 'client',
             'direction', 'parent_task')
+
+
+class TaskReadSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
+    pallets = TaskPalletSerializer(many=True, read_only=True)
+    external_source = ExternalSerializer(required=False)
+
+    class Meta:
+        fields = (
+            'guid', 'number', 'status', 'date', 'products', 'pallets',
+            'client', 'direction', 'type_task', 'external_source')
+
+        model = Task
+
+    def get_products(self, obj):
+        task_products = TaskProduct.objects.filter(task__guid=obj.guid)
+        result = []
+        if not task_products.exists():
+            return result
+        for element in task_products:
+            result.append(
+                {'name': element.product.name,
+                 'weight': element.weight,
+                 'guid': element.product.guid,
+                 'count': element.product.guid,
+                 })
+        return result

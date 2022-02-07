@@ -25,11 +25,29 @@ from typing import Optional
 import base64
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from packing.models import Task, TaskPallet, Pallet
 
 User = get_user_model()
 
 
-def create_tasks(collecting_data: Iterable) -> None:
+def update_task(task: Task, content: dict) -> None:
+    if content.get('pallet_ids') is None:
+        return
+
+    task.ready_to_unload = True
+    task.save()
+
+    for element in content['pallet_ids']:
+        pallet = Pallet.objects.filter(id=element).first()
+        if pallet is None:
+            continue
+        task_pallet = TaskPallet.objects.filter(pallet=pallet).first()
+        if task_pallet is None:
+            TaskPallet.objects.create(task=task, pallet=pallet)
+
+
+def create_tasks(collecting_data: Iterable) -> Iterable:
+    result = []
     for element in collecting_data:
         external_source = ExternalSource.objects.filter(
             external_key=element['external_source']['external_key']).first()
@@ -37,7 +55,11 @@ def create_tasks(collecting_data: Iterable) -> None:
             external_source = ExternalSource.objects.create(
                 **element['external_source'])
 
-        if Task.objects.filter(external_source=external_source).exists():
+        task = Task.objects.filter(external_source=external_source).first()
+        if not task is None:
+            external_key = task.external_source.external_key
+            result.append({'type_task': task.type_task,
+                           'external_source': external_key})
             continue
 
         direction = element.get('direction')
@@ -64,14 +86,27 @@ def create_tasks(collecting_data: Iterable) -> None:
                                    client=client,
                                    parent_task=parent_task)
 
+        external_key = task.external_source.external_key
+        result.append({'type_task': task.type_task,
+                       'external_source': external_key})
+
         if not element.get('products') is None:
             for task_product in element['products']:
                 product = Product.objects.filter(
                     external_key=task_product['product']).first()
             if product is None:
                 continue
-            TaskProduct.objects.create(task=task, product=product,
-                                       weight=task_product['weight'])
+
+            weight = 0 if task_product.get('weight') is None else task_product[
+                'weight']
+
+            count = 0 if task_product.get('count') is None else task_product[
+                'count']
+
+            TaskProduct.objects.create(task=task,
+                                       product=product,
+                                       weight=weight,
+                                       count=count)
 
         if element.get('pallets') is None:
             continue
@@ -83,6 +118,7 @@ def create_tasks(collecting_data: Iterable) -> None:
             if pallet is None:
                 continue
             TaskPallet.objects.create(task=task, pallet=pallet)
+    return result
 
 
 def get_dashboard_data() -> dict:

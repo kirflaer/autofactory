@@ -1,9 +1,10 @@
 import base64
+from typing import Iterable
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, status
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from django.db.models import Q
@@ -14,7 +15,8 @@ from catalogs.models import (
     Device,
     Line,
     Department,
-    Storage, Direction
+    Storage,
+    Direction
 )
 from packing.marking_services import (
     marking_close,
@@ -24,7 +26,8 @@ from packing.marking_services import (
     confirm_marks_unloading,
     create_pallet,
     change_pallet_content,
-    create_tasks
+    create_tasks,
+    update_task
 )
 from packing.models import (
     MarkingOperation,
@@ -134,7 +137,7 @@ class DeviceViewSet(viewsets.ViewSet):
             request.user.save()
 
             return Response(serializer.data)
-        return Response(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def remove(self, request):
         """Очищает связанное устройство у пользователя"""
@@ -235,7 +238,7 @@ class MarksViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             confirm_marks_unloading(serializer.validated_data['operations'])
             return Response(serializer.data)
-        return Response(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogCreateViewSet(generics.CreateAPIView):
@@ -250,16 +253,31 @@ class LogCreateViewSet(generics.CreateAPIView):
                         data=base64.b64decode(data))
 
 
-class PalletListViewSet(generics.CreateAPIView):
-    """Используется для создания маркировок и отображения списка паллет"""
-    serializer_class = PalletWriteSerializer
-    queryset = Pallet.objects.all()
+class PalletViewSet(viewsets.ViewSet):
+    def list(self, request):
+        queryset = Pallet.objects.all()
 
-    def get_serializer(self, *args, **kwargs):
-        return PalletWriteSerializer(data=self.request.data, many=True)
+        if len(request.query_params):
+            if not request.query_params.get('id') is None:
+                queryset = queryset.filter(id=request.query_params.get('id'))
 
-    def perform_create(self, serializer):
-        create_pallet(serializer.validated_data)
+        serializer = PalletReadSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = PalletWriteSerializer(data=request.data, many=True)
+
+        if serializer.is_valid():
+            create_pallet(serializer.validated_data)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def change_content(self, request):
+        serializer = ChangePalletContentSerializer(data=request.data)
+        if serializer.is_valid():
+            change_pallet_content(serializer.validated_data)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
@@ -274,21 +292,13 @@ class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
             return PalletUpdateSerializer
 
 
-class PalletViewSet(viewsets.ViewSet):
-    def change_content(self, request):
-        serializer = ChangePalletContentSerializer(data=request.data)
-        if serializer.is_valid():
-            change_pallet_content(serializer.validated_data)
-            return Response(serializer.data)
-        return Response(serializer.errors)
-
-
 class TaskUpdate(generics.UpdateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskUpdateSerializer
 
     def perform_update(self, serializer):
-        serializer.save(user=self.request.user)
+        instance = serializer.save(user=self.request.user)
+        update_task(instance, serializer.validated_data)
 
 
 class TasksViewSet(viewsets.ViewSet):
@@ -306,10 +316,8 @@ class TasksViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def create(self, request):
-
         serializer = TaskWriteSerializer(data=request.data, many=True)
-
         if serializer.is_valid():
-            create_tasks(serializer.data)
-            return Response(serializer.data)
-        return Response(serializer.errors)
+            result = create_tasks(serializer.data)
+            return Response(result)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

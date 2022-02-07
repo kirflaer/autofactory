@@ -24,7 +24,7 @@ class MarkingOperationAdmin(admin.ModelAdmin):
 
 class MarkingOperationMarkAdmin(admin.ModelAdmin):
     list_display = (
-    'operation', 'product', 'mark', 'encoded_mark', 'aggregation_code')
+        'operation', 'product', 'mark', 'encoded_mark', 'aggregation_code')
     list_filter = ('operation',)
 
 
@@ -37,7 +37,9 @@ class PalletCodesAdmin(admin.ModelAdmin):
 
 
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('date', 'number', 'type_task', 'status', 'external_source')
+    list_display = (
+        'date', 'guid', 'number', 'type_task', 'status', 'external_source',
+        'closed', 'ready_to_unload', 'unloaded')
 
 
 class TaskProductsAdmin(admin.ModelAdmin):

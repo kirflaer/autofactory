@@ -310,11 +310,15 @@ class TaskReadSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     pallets = TaskPalletSerializer(many=True, read_only=True)
     external_source = ExternalSerializer(required=False)
+    direction_name = serializers.StringRelatedField(read_only=True,
+                                                    source='direction')
+    client_name = serializers.StringRelatedField(read_only=True,
+                                                source='client')
 
     class Meta:
         fields = (
             'guid', 'number', 'status', 'date', 'products', 'pallets',
-            'client', 'direction', 'type_task', 'external_source')
+            'client_name', 'direction_name', 'type_task', 'external_source')
 
         model = Task
 

@@ -94,19 +94,19 @@ def create_tasks(collecting_data: Iterable) -> Iterable:
             for task_product in element['products']:
                 product = Product.objects.filter(
                     external_key=task_product['product']).first()
-            if product is None:
-                continue
+                if product is None:
+                    continue
 
-            weight = 0 if task_product.get('weight') is None else task_product[
-                'weight']
+                weight = 0 if task_product.get('weight') is None else \
+                    task_product['weight']
 
-            count = 0 if task_product.get('count') is None else task_product[
-                'count']
+                count = 0 if task_product.get('count') is None else \
+                    task_product['count']
 
-            TaskProduct.objects.create(task=task,
-                                       product=product,
-                                       weight=weight,
-                                       count=count)
+                TaskProduct.objects.create(task=task,
+                                           product=product,
+                                           weight=weight,
+                                           count=count)
 
         if element.get('pallets') is None:
             continue

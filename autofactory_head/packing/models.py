@@ -133,7 +133,7 @@ class TaskProduct(models.Model):
                                 blank=True,
                                 verbose_name='Номенклатура')
     weight = models.FloatField(verbose_name='Вес', default=0.0)
-    count = models.FloatField(verbose_name='Количество', default=0.0)
+    count = models.PositiveIntegerField(verbose_name='Количество', default=0.0)
 
     class Meta:
         constraints = [UniqueConstraint(fields=['task', 'product'],

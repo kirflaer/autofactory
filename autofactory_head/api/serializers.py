@@ -332,6 +332,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
                 {'name': element.product.name,
                  'weight': element.weight,
                  'guid': element.product.guid,
-                 'count': element.product.guid,
+                 'gtin': element.product.gtin,
+                 'count': element.count,
                  })
         return result

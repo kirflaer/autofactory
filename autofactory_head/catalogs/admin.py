@@ -57,7 +57,7 @@ class LineAdmin(admin.ModelAdmin):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid', 'gtin')
+    list_display = ('name', 'guid', 'gtin', 'external_key')
 
 
 class PropertyAdmin(admin.ModelAdmin):

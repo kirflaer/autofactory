@@ -65,7 +65,7 @@ def create_tasks(collecting_data: Iterable) -> Iterable:
         direction = element.get('direction')
         if not direction is None:
             direction = Direction.objects.filter(
-                external_key=element['direction']).first()
+                external_key=element['direction']['external_key']).first()
 
         client = element.get('client')
         if not client is None:

@@ -54,7 +54,7 @@ from .serializers import (
     TaskUpdateSerializer,
     TaskReadSerializer,
     TaskWriteSerializer,
-    DirectionSerializer
+    DirectionSerializer, ProductShortSerializer
 )
 
 User = get_user_model()
@@ -79,6 +79,12 @@ class ProductViewSet(generics.ListCreateAPIView):
     """Список и создание товаров"""
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.stream is None:
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return ProductShortSerializer(data=self.request.data, many=True)
 
 
 class StorageList(generics.ListAPIView):

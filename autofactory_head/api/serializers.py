@@ -267,8 +267,10 @@ class TaskProductsSerializer(serializers.Serializer):
 
 
 class ProductShortSerializer(serializers.ModelSerializer):
+    external_key = serializers.CharField(required=False)
+
     class Meta:
-        fields = ('name', 'gtin', 'guid')
+        fields = ('name', 'gtin', 'guid', 'external_key')
         model = Product
 
 
@@ -313,7 +315,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
     direction_name = serializers.StringRelatedField(read_only=True,
                                                     source='direction')
     client_name = serializers.StringRelatedField(read_only=True,
-                                                source='client')
+                                                 source='client')
 
     class Meta:
         fields = (

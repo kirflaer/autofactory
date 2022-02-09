@@ -124,6 +124,18 @@ class Task(BaseModel):
                                         null=True,
                                         blank=True)
 
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        if self.type_task == 'ORDER':
+            child_task_count = Task.objects.filter(
+                parent_task=self.parent_task, status='NEW').exclude(
+                guid=self.guid).count()
+            if child_task_count == 0:
+                self.parent_task.status = 'WORK'
+                self.parent_task.save()
+
+        super().save(force_insert, force_update, using, update_fields)
+
 
 class TaskProduct(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, null=True,

@@ -311,7 +311,8 @@ class TasksViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = Task.objects.all()
         queryset = queryset.filter(
-            Q(user=self.request.user) | Q(status=Task.NEW))
+            Q(user=self.request.user) | Q(status=Task.NEW)).exclude(
+            status=Task.CLOSE)
         if len(request.query_params):
             filter_data = {key: value for key, value in
                            request.query_params.items()}

@@ -126,7 +126,7 @@ class Task(BaseModel):
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
-        if self.type_task == 'ORDER':
+        if self.type_task == 'ORDER' and not self.date is None:
             child_task_count = Task.objects.filter(
                 parent_task=self.parent_task, status='NEW').exclude(
                 guid=self.guid).count()

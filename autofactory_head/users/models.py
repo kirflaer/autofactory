@@ -86,6 +86,8 @@ class User(AbstractUser):
                                           blank=True,
                                           verbose_name='Контр. тех. зрения',
                                           related_name='vision_controller')
+    use_aggregations = models.BooleanField('Использовать агрегацию',
+                                           default=False)
 
     USERNAME_FIELD = "username"
 

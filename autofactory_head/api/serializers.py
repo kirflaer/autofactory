@@ -142,7 +142,7 @@ class SettingSerializer(serializers.ModelSerializer):
     pallet_passport_template_base64 = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('use_organization', 'pallet_passport_template_base64')
+        fields = ('use_organization', 'pallet_passport_template_base64',)
         model = Setting
 
     def get_pallet_passport_template_base64(self, obj):
@@ -160,7 +160,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'pk', 'line', 'role', 'device', 'scanner', 'vision_controller',
             'settings', 'log_level', 'inactive_sound_enabled',
-            'inactive_period_in_sec')
+            'inactive_period_in_sec', 'use_aggregations')
 
         model = User
 

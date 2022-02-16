@@ -310,13 +310,17 @@ class TaskUpdate(generics.UpdateAPIView):
 class TasksViewSet(viewsets.ViewSet):
     def list(self, request):
         queryset = Task.objects.all()
-        queryset = queryset.filter(
-            Q(user=self.request.user) | Q(status=Task.NEW)).exclude(
-            status=Task.CLOSE)
-        if len(request.query_params):
-            filter_data = {key: value for key, value in
-                           request.query_params.items()}
-            queryset = queryset.filter(**filter_data)
+
+        filter_data = {key: value for key, value in
+                       request.query_params.items()}
+        if filter_data.get('only_close'):
+            queryset = queryset.filter(status=Task.CLOSE)
+            filter_data.pop('only_close')
+        else:
+            queryset = queryset.filter(
+                Q(user=self.request.user) | Q(status=Task.NEW))
+
+        queryset = queryset.filter(**filter_data)
 
         serializer = TaskReadSerializer(queryset, many=True)
 

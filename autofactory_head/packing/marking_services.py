@@ -84,7 +84,8 @@ def create_tasks(collecting_data: Iterable) -> Iterable:
                                    external_source=external_source,
                                    direction=direction,
                                    client=client,
-                                   parent_task=parent_task)
+                                   parent_task=parent_task,
+                                   status=Task.NEW)
 
         external_key = task.external_source.external_key
         result.append({'type_task': task.type_task,

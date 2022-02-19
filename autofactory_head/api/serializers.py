@@ -1,4 +1,3 @@
-from abc import ABC
 from packing.marking_services import get_base64_string
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
@@ -23,7 +22,8 @@ from catalogs.models import (
     Log,
     ExternalSource,
     Direction,
-    Client
+    Client,
+    TypeFactoryOperation
 )
 
 User = get_user_model()
@@ -58,6 +58,12 @@ class MarksSerializer(serializers.Serializer):
         return super().validate(attrs)
 
 
+class TypeFactoryOperationSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'external_key')
+        model = TypeFactoryOperation
+
+
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'guid')
@@ -82,7 +88,7 @@ class ProductSerializer(serializers.ModelSerializer):
                   'gtin', 'guid', 'is_weight', 'expiration_date', 'units',
                   'external_key')
         model = Product
-        read_only_fields = ('guid',)
+        read_only_fields = ('guid', 'expiration_date')
 
     def create(self, validated_data):
         units = validated_data.pop('units')
@@ -105,6 +111,14 @@ class DepartmentSerializer(serializers.ModelSerializer):
         fields = ('guid', 'name', 'external_key')
         read_only_fields = ('guid',)
         model = Department
+
+
+class LineCreateSerializer(serializers.Serializer):
+    products = serializers.ListField()
+    name = serializers.CharField()
+    storage = serializers.CharField(allow_blank=True)
+    department = serializers.CharField(allow_blank=True)
+    type_factory_operation = serializers.CharField(allow_blank=True)
 
 
 class LineSerializer(serializers.ModelSerializer):

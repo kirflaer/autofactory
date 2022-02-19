@@ -11,13 +11,18 @@ from .models import (
     LineProduct,
     Log,
     Client,
-    Direction
+    Direction,
+    TypeFactoryOperation
 )
 
 
 class LogAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'device', 'username', 'app_version', 'server_version')
+
+
+class TypeFactoryOperationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'external_key')
 
 
 class LineProductAdmin(admin.ModelAdmin):
@@ -65,6 +70,7 @@ class PropertyAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Organization, OrganizationAdmin)
+admin.site.register(TypeFactoryOperation, TypeFactoryOperationAdmin)
 admin.site.register(Storage, StorageAdmin)
 admin.site.register(Department, DepartmentAdmin)
 admin.site.register(Device, DeviceAdmin)

@@ -4,7 +4,7 @@ from .views import (
     OrganizationList,
     ProductViewSet,
     UserRetrieve,
-    LineList,
+    LineListCreateView,
     StorageList,
     DepartmentList,
     DeviceViewSet,
@@ -16,16 +16,18 @@ from .views import (
     TaskUpdate,
     PalletRetrieveUpdate,
     TasksViewSet,
-    DirectionListCreateView
+    DirectionListCreateView,
+    TypeFactoryOperationViewSet
 )
 
 urlpatterns = [
+    re_path(r'v[0-9]/typefactoryoperation/$', TypeFactoryOperationViewSet.as_view()),
     re_path(r'v[0-9]/logs/$', LogCreateViewSet.as_view()),
     re_path(r'v[0-9]/organizations/$', OrganizationList.as_view()),
     re_path(r'v[0-9]/products/$', ProductViewSet.as_view()),
     re_path(r'v[0-9]/storages/$', StorageList.as_view()),
     re_path(r'v[0-9]/departments/$', DepartmentList.as_view()),
-    re_path(r'v[0-9]/lines/$', LineList.as_view()),
+    re_path(r'v[0-9]/lines/$', LineListCreateView.as_view()),
     re_path(r'v[0-9]/users/$', UserRetrieve.as_view()),
     re_path(r'v[0-9]/direction/$', DirectionListCreateView.as_view()),
     re_path(r'v[0-9]/devices/$', DeviceViewSet.as_view(

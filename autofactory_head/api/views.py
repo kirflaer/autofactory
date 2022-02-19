@@ -1,5 +1,4 @@
 import base64
-from typing import Iterable
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -16,7 +15,9 @@ from catalogs.models import (
     Line,
     Department,
     Storage,
-    Direction
+    Direction,
+    TypeFactoryOperation,
+    LineProduct
 )
 from packing.marking_services import (
     marking_close,
@@ -54,7 +55,8 @@ from .serializers import (
     TaskUpdateSerializer,
     TaskReadSerializer,
     TaskWriteSerializer,
-    DirectionSerializer, ProductShortSerializer
+    DirectionSerializer,
+    LineCreateSerializer, TypeFactoryOperationSerializer
 )
 
 User = get_user_model()
@@ -75,6 +77,18 @@ class UserRetrieve(generics.RetrieveAPIView):
         return Response(serializer.data)
 
 
+class TypeFactoryOperationViewSet(generics.ListCreateAPIView):
+    queryset = TypeFactoryOperation.objects.all()
+    serializer_class = TypeFactoryOperationSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.stream is None:
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return TypeFactoryOperationSerializer(data=self.request.data,
+                                                  many=True)
+
+
 class ProductViewSet(generics.ListCreateAPIView):
     """Список и создание товаров"""
     queryset = Product.objects.all()
@@ -84,7 +98,7 @@ class ProductViewSet(generics.ListCreateAPIView):
         if self.request.stream is None:
             return super().get_serializer(*args, **kwargs)
         else:
-            return ProductShortSerializer(data=self.request.data, many=True)
+            return ProductSerializer(data=self.request.data, many=True)
 
 
 class StorageList(generics.ListAPIView):
@@ -97,6 +111,12 @@ class DepartmentList(generics.ListCreateAPIView):
     """Список и создание подразделений"""
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.stream is None:
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return DepartmentSerializer(data=self.request.data, many=True)
 
 
 class DirectionListCreateView(generics.ListCreateAPIView):
@@ -111,10 +131,37 @@ class DirectionListCreateView(generics.ListCreateAPIView):
             return DirectionSerializer(data=self.request.data, many=True)
 
 
-class LineList(generics.ListAPIView):
+class LineListCreateView(generics.ListCreateAPIView):
     """Список линий"""
     queryset = Line.objects.all()
     serializer_class = LineSerializer
+
+    def perform_create(self, serializer):
+        for element in serializer.validated_data:
+            values = {'name': element.get('name')}
+
+            managers = {'storage': Storage.objects,
+                        'department': Department.objects,
+                        'type_factory_operation': TypeFactoryOperation.objects}
+
+            for key, value in managers.items():
+                serializer_data = element.get(key)
+                values[key] = value.filter(
+                    external_key=serializer_data).first()
+
+            line = Line.objects.create(**values)
+
+            for key in element.get('products'):
+                product = Product.objects.filter(external_key=key).first()
+                if not LineProduct.objects.filter(product=product,
+                                                  line=line).exists():
+                    LineProduct.objects.create(product=product, line=line)
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.stream is None:
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return LineCreateSerializer(data=self.request.data, many=True)
 
 
 class DeviceViewSet(viewsets.ViewSet):
@@ -226,8 +273,8 @@ class MarksViewSet(viewsets.ViewSet):
             create_marking_marks(operation,
                                  [{'mark': i} for i in
                                   serializer.validated_data['marks']])
-            return Response(serializer.data)
-        return Response(serializer.errors)
+            return Response({'detail': 'success'})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def remove_marks(self, request):
         serializer = MarksSerializer(data=request.data)

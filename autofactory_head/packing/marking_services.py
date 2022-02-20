@@ -339,11 +339,14 @@ def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
                 continue
 
             marks.append(mark)
-            gtin = get_product_gtin_from_mark(mark)
-            product = products.get(gtin)
-            if product is None:
-                product = _get_product(gtin=gtin)
-                products[gtin] = product
+            product = operation.product
+
+            # временно берем из документа маркировки
+            # gtin = get_product_gtin_from_mark(mark)
+            # product = products.get(gtin)
+            # if product is None:
+            #     product = _get_product(gtin=gtin)
+            #     products[gtin] = product
 
             _create_instance_marking_marks(
                 marking_marks_instances,

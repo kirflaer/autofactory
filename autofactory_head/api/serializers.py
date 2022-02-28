@@ -23,7 +23,8 @@ from catalogs.models import (
     ExternalSource,
     Direction,
     Client,
-    TypeFactoryOperation
+    TypeFactoryOperation,
+    RegularExpression
 )
 
 User = get_user_model()
@@ -352,3 +353,9 @@ class TaskReadSerializer(serializers.ModelSerializer):
                  'count': element.count,
                  })
         return result
+
+
+class RegularExpressionSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('value', 'type_expression')
+        model = RegularExpression

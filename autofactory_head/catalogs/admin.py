@@ -1,3 +1,5 @@
+from distutils.msvc9compiler import Reg
+
 from django.contrib import admin
 
 from .models import (
@@ -12,7 +14,8 @@ from .models import (
     Log,
     Client,
     Direction,
-    TypeFactoryOperation
+    TypeFactoryOperation,
+    RegularExpression
 )
 
 
@@ -69,6 +72,11 @@ class PropertyAdmin(admin.ModelAdmin):
     list_display = ('name',)
 
 
+class RegularExpressionAdmin(admin.ModelAdmin):
+    list_display = ('value', 'type_expression')
+
+
+admin.site.register(RegularExpression, RegularExpressionAdmin)
 admin.site.register(Organization, OrganizationAdmin)
 admin.site.register(TypeFactoryOperation, TypeFactoryOperationAdmin)
 admin.site.register(Storage, StorageAdmin)

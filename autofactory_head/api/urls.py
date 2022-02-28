@@ -17,11 +17,14 @@ from .views import (
     PalletRetrieveUpdate,
     TasksViewSet,
     DirectionListCreateView,
-    TypeFactoryOperationViewSet
+    TypeFactoryOperationViewSet,
+    RegExpList
 )
 
 urlpatterns = [
-    re_path(r'v[0-9]/typefactoryoperation/$', TypeFactoryOperationViewSet.as_view()),
+    re_path(r'v[0-9]/regexp/$', RegExpList.as_view()),
+    re_path(r'v[0-9]/typefactoryoperation/$',
+            TypeFactoryOperationViewSet.as_view()),
     re_path(r'v[0-9]/logs/$', LogCreateViewSet.as_view()),
     re_path(r'v[0-9]/organizations/$', OrganizationList.as_view()),
     re_path(r'v[0-9]/products/$', ProductViewSet.as_view()),

@@ -17,7 +17,8 @@ from catalogs.models import (
     Storage,
     Direction,
     TypeFactoryOperation,
-    LineProduct
+    LineProduct,
+    RegularExpression
 )
 from packing.marking_services import (
     marking_close,
@@ -56,7 +57,9 @@ from .serializers import (
     TaskReadSerializer,
     TaskWriteSerializer,
     DirectionSerializer,
-    LineCreateSerializer, TypeFactoryOperationSerializer
+    LineCreateSerializer,
+    TypeFactoryOperationSerializer,
+    RegularExpressionSerializer
 )
 
 User = get_user_model()
@@ -379,3 +382,9 @@ class TasksViewSet(viewsets.ViewSet):
             result = create_tasks(serializer.data)
             return Response(result)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RegExpList(generics.ListAPIView):
+    """Список организаций"""
+    queryset = RegularExpression.objects.all()
+    serializer_class = RegularExpressionSerializer

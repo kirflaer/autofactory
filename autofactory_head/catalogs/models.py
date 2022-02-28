@@ -165,3 +165,21 @@ class ExternalSource(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class RegularExpression(models.Model):
+    GS1 = 'GS1'
+    VISION_STREAM = 'VISION_STREAM'
+
+    TYPE_EXPRESSION = (
+        (GS1, GS1),
+        (VISION_STREAM, VISION_STREAM),
+    )
+
+    type_expression = models.CharField(max_length=255, choices=TYPE_EXPRESSION,
+                                       default=GS1)
+    value = models.CharField(verbose_name='Значение', max_length=1024,
+                             default='(01){GS1}')
+
+    def __str__(self):
+        return self.value

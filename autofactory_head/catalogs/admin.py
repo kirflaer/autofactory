@@ -1,5 +1,3 @@
-from distutils.msvc9compiler import Reg
-
 from django.contrib import admin
 
 from .models import (

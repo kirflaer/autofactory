@@ -24,7 +24,7 @@ from catalogs.models import (
     Direction,
     Client,
     TypeFactoryOperation,
-    RegularExpression
+    RegularExpression,
 )
 
 User = get_user_model()
@@ -155,13 +155,24 @@ class LogSerializer(serializers.ModelSerializer):
 
 class SettingSerializer(serializers.ModelSerializer):
     pallet_passport_template_base64 = serializers.SerializerMethodField()
+    aggregation_codes = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('use_organization', 'pallet_passport_template_base64',)
+        fields = ('use_organization', 'pallet_passport_template_base64',
+                  'aggregation_codes')
         model = Setting
 
     def get_pallet_passport_template_base64(self, obj):
         return get_base64_string(obj.pallet_passport_template)
+
+    def get_aggregation_codes(self, obj):
+        aggregation_codes = RegularExpression.objects.filter(
+            type_expression=RegularExpression.AGGREGATON_CODE)
+        if not aggregation_codes.exists():
+            return []
+
+        return [element['value'] for element in
+                aggregation_codes.values('value')]
 
 
 class UserSerializer(serializers.ModelSerializer):

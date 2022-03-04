@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from catalogs.models import Line, Device
+from catalogs.models import Line, Device, RegularExpression
 
 
 class Setting(models.Model):

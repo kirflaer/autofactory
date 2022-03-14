@@ -252,7 +252,7 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
     """Регистрирует к обмену операцию маркировки если есть возможность
     Возвращает Истина в случае если операция зарегистрирована к обмену"""
 
-    start_date = datetime.datetime.now()
+    start_date = datetime.datetime.now() - timedelta(days=1)
     start_date = start_date.replace(hour=0, minute=0, second=0)
     end_date = datetime.datetime.now()
     end_date = end_date.replace(hour=23, minute=59, second=59)

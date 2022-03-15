@@ -1,6 +1,6 @@
-from django.db import models
 import uuid
 
+from django.db import models
 from django.db.models import UniqueConstraint
 
 
@@ -128,7 +128,7 @@ class LineProduct(models.Model):
 
 
 class Unit(BaseExternalModel):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,
+    product = models.ForeignKey('Product', on_delete=models.CASCADE,
                                 verbose_name='Номенклатура',
                                 related_name='units')
     count_in_pallet = models.PositiveIntegerField('Количество в паллете',
@@ -136,6 +136,8 @@ class Unit(BaseExternalModel):
 
     capacity = models.PositiveIntegerField('Вместимость', default=0)
     is_default = models.BooleanField('Упаковка по умолчанию', default=False)
+    gtin = models.CharField(default='', blank=True, max_length=50,
+                            verbose_name='Штрихкод')
 
 
 class Log(models.Model):

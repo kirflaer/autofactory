@@ -6,6 +6,7 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path("auth/", include("django.contrib.auth.urls")),
     path("", include("factory_core.urls")),
+    path("", include("catalogs.urls")),
 ]
 
 handler404 = "autofactory_head.views.page_not_found"

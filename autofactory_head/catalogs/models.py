@@ -66,13 +66,11 @@ class Device(BaseModel):
     identifier = models.CharField(verbose_name='IP/MAC/ID', blank=True,
                                   null=True,
                                   max_length=50)
-    mark_reg_exp = models.CharField(
-        verbose_name='Регулярное выражение для получения марки',
-        max_length=150, blank=True)
 
-    empty_mark_reg_exp = models.CharField(
-        verbose_name='Регулярное выражение пустой марки',
-        max_length=150, blank=True)
+    empty_mark_reg_exp = models.ForeignKey('RegularExpression', blank=True,
+                                           null=True,
+                                           verbose_name='Регулярное выражение пустого пакета',
+                                           on_delete=models.CASCADE)
 
     port = models.PositiveIntegerField(verbose_name='Порт', blank=True,
                                        null=True)
@@ -88,15 +86,15 @@ class Product(BaseExternalModel):
 
 
 class Line(BaseModel):
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True,
+    storage = models.ForeignKey('Storage', on_delete=models.CASCADE, null=True,
                                 blank=True, verbose_name='Склад')
-    department = models.ForeignKey(Department, on_delete=models.CASCADE,
+    department = models.ForeignKey('Department', on_delete=models.CASCADE,
                                    null=True,
                                    blank=True, verbose_name='Подразделение')
-    products = models.ManyToManyField(Product,
+    products = models.ManyToManyField('Product',
                                       through='LineProduct',
                                       verbose_name='Номенклатура')
-    type_factory_operation = models.ForeignKey(TypeFactoryOperation,
+    type_factory_operation = models.ForeignKey('TypeFactoryOperation',
                                                on_delete=models.CASCADE,
                                                null=True,
                                                blank=True,
@@ -104,10 +102,10 @@ class Line(BaseModel):
 
 
 class LineDevice(models.Model):
-    line = models.ForeignKey(Line, on_delete=models.CASCADE, null=True,
+    line = models.ForeignKey('Line', on_delete=models.CASCADE, null=True,
                              blank=True,
                              verbose_name='Линия')
-    device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True,
+    device = models.ForeignKey('Device', on_delete=models.CASCADE, null=True,
                                blank=True,
                                verbose_name='Устройство')
 
@@ -117,10 +115,10 @@ class LineDevice(models.Model):
 
 
 class LineProduct(models.Model):
-    line = models.ForeignKey(Line, on_delete=models.CASCADE, null=True,
+    line = models.ForeignKey('Line', on_delete=models.CASCADE, null=True,
                              blank=True,
                              verbose_name='Линия')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, null=True,
                                 blank=True,
                                 verbose_name='Номенклатура')
 
@@ -142,7 +140,7 @@ class Unit(BaseExternalModel):
 
 class Log(models.Model):
     data = models.TextField(verbose_name='Данные лога')
-    device = models.ForeignKey(Device, verbose_name='Устройство', null=True,
+    device = models.ForeignKey('Device', verbose_name='Устройство', null=True,
                                blank=True, on_delete=models.CASCADE)
     app_version = models.CharField(verbose_name='Версия устройства',
                                    max_length=255)
@@ -168,16 +166,18 @@ class ExternalSource(models.Model):
 
 
 class RegularExpression(models.Model):
-    AGGREGATON_CODE = 'AGGREGATON_CODE'
-    VISION_STREAM = 'VISION_STREAM'
+    AGGREGATION_CODE = 'AGGREGATION_CODE'
+    MARK = 'MARK'
+    EMPTY_DATA_STREAM = 'EMPTY_DATA_STREAM'
 
     TYPE_EXPRESSION = (
-        (AGGREGATON_CODE, AGGREGATON_CODE),
-        (VISION_STREAM, VISION_STREAM),
+        (AGGREGATION_CODE, AGGREGATION_CODE),
+        (MARK, MARK),
+        (EMPTY_DATA_STREAM, EMPTY_DATA_STREAM)
     )
 
     type_expression = models.CharField(max_length=255, choices=TYPE_EXPRESSION,
-                                       default=AGGREGATON_CODE)
+                                       default=AGGREGATION_CODE)
     value = models.CharField(verbose_name='Значение', max_length=1024,
                              default='(01){GS1}')
 

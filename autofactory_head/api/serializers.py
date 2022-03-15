@@ -73,7 +73,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'is_default', 'guid', 'capacity', 'count_in_pallet')
+        fields = (
+        'name', 'is_default', 'guid', 'capacity', 'count_in_pallet', 'gtin')
         model = Unit
 
     def create(self, validated_data):

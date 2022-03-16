@@ -171,11 +171,13 @@ class RegularExpression(models.Model):
     AGGREGATION_CODE = 'AGGREGATION_CODE'
     MARK = 'MARK'
     EMPTY_DATA_STREAM = 'EMPTY_DATA_STREAM'
+    MARK_AUTO_SCANNER = 'MARK_AUTO_SCANNER'
 
     TYPE_EXPRESSION = (
         (AGGREGATION_CODE, AGGREGATION_CODE),
         (MARK, MARK),
-        (EMPTY_DATA_STREAM, EMPTY_DATA_STREAM)
+        (EMPTY_DATA_STREAM, EMPTY_DATA_STREAM),
+        (MARK_AUTO_SCANNER, MARK_AUTO_SCANNER)
     )
 
     type_expression = models.CharField(max_length=255, choices=TYPE_EXPRESSION,

@@ -13,77 +13,79 @@ from .models import (
     Client,
     Direction,
     TypeFactoryOperation,
-    RegularExpression
+    RegularExpression,
+    ActivationKey
 )
 
 
+@admin.register(ActivationKey)
+class ActivationKeyAdmin(admin.ModelAdmin):
+    list_display = (
+        'number', 'type_activation', 'date',)
+
+
+@admin.register(Log)
 class LogAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'device', 'username', 'app_version', 'server_version')
 
 
+@admin.register(TypeFactoryOperation)
 class TypeFactoryOperationAdmin(admin.ModelAdmin):
     list_display = ('name', 'external_key')
 
 
+@admin.register(LineProduct)
 class LineProductAdmin(admin.ModelAdmin):
     list_display = ('line', 'product',)
 
 
+@admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
     list_display = ('name', 'product',)
 
 
+@admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
+@admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
+@admin.register(Direction)
 class DirectionAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
+@admin.register(Storage)
 class StorageAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
+@admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
+@admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid', 'mode')
+    list_display = ('name', 'guid', 'mode', 'activation_key')
+    list_filter = ('mode', )
 
 
+@admin.register(Line)
 class LineAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid')
 
 
+@admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid', 'gtin', 'external_key')
 
 
-class PropertyAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-
-
+@admin.register(RegularExpression)
 class RegularExpressionAdmin(admin.ModelAdmin):
     list_display = ('value', 'type_expression')
-
-
-admin.site.register(RegularExpression, RegularExpressionAdmin)
-admin.site.register(Organization, OrganizationAdmin)
-admin.site.register(TypeFactoryOperation, TypeFactoryOperationAdmin)
-admin.site.register(Storage, StorageAdmin)
-admin.site.register(Department, DepartmentAdmin)
-admin.site.register(Device, DeviceAdmin)
-admin.site.register(Line, LineAdmin)
-admin.site.register(Product, ProductAdmin)
-admin.site.register(Unit, UnitAdmin)
-admin.site.register(LineProduct, LineProductAdmin)
-admin.site.register(Log, LogAdmin)
-admin.site.register(Client, ClientAdmin)
-admin.site.register(Direction, DirectionAdmin)

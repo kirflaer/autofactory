@@ -96,7 +96,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'api.permissions.IsActivatedDevice',
     ],
 }
 
@@ -110,4 +110,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-VERSION = '1.1.0.1'
+VERSION = '1.1.2.0'

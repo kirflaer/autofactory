@@ -64,7 +64,7 @@ class StorageForm(ModelForm):
 class DeviceForm(ModelForm):
     class Meta:
         model = Device
-        exclude = ['guid']
+        exclude = ['guid', 'activation_code']
 
 
 class OrganizationForm(ModelForm):

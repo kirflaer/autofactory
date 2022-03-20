@@ -76,6 +76,9 @@ class Device(BaseModel):
                                        null=True)
     stream_splitter_code = models.PositiveIntegerField(
         'Разделитель потока сканирования марок', default=0)
+    activation_key = models.ForeignKey('ActivationKey', on_delete=models.CASCADE, null=True, blank=True,
+                                       related_name='device',
+                                       verbose_name='Код активации')
 
 
 class Product(BaseExternalModel):
@@ -187,3 +190,21 @@ class RegularExpression(models.Model):
 
     def __str__(self):
         return self.value
+
+
+class ActivationKey(models.Model):
+    PERPETUAL = 'PERPETUAL'
+    BY_DATE = 'BY_DATE'
+
+    TYPE_ACTIVATION = (
+        (PERPETUAL, PERPETUAL),
+        (BY_DATE, BY_DATE),
+    )
+
+    type_activation = models.CharField(max_length=255, choices=TYPE_ACTIVATION,
+                                       default=PERPETUAL)
+    number = models.CharField(verbose_name='Идентификатор', max_length=1024)
+    date = models.DateField('Дата окончания', blank=True, null=True)
+
+    def __str__(self):
+        return self.number

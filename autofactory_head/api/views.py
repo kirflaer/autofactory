@@ -7,6 +7,7 @@ from rest_framework import viewsets, generics, status
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from django.db.models import Q
+from rest_framework import permissions
 
 from catalogs.models import (
     Organization,
@@ -18,7 +19,9 @@ from catalogs.models import (
     Direction,
     TypeFactoryOperation,
     LineProduct,
-    RegularExpression
+    RegularExpression,
+    ActivationKey,
+    Unit
 )
 from packing.marking_services import (
     marking_close,
@@ -37,6 +40,8 @@ from packing.models import (
     Pallet,
     Task
 )
+from .exceptions import ActivationFailed
+
 from .serializers import (
     OrganizationSerializer,
     ProductSerializer,
@@ -59,7 +64,7 @@ from .serializers import (
     DirectionSerializer,
     LineCreateSerializer,
     TypeFactoryOperationSerializer,
-    RegularExpressionSerializer
+    RegularExpressionSerializer, UnitSerializer,
 )
 
 User = get_user_model()
@@ -73,6 +78,7 @@ class OrganizationList(generics.ListAPIView):
 
 class UserRetrieve(generics.RetrieveAPIView):
     """Данные пользователя"""
+    permission_classes = (permissions.IsAuthenticated,)
 
     def retrieve(self, request, *args, **kwargs):
         instance = request.user
@@ -168,6 +174,8 @@ class LineListCreateView(generics.ListCreateAPIView):
 
 
 class DeviceViewSet(viewsets.ViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+
     def list_scanners(self, request):
         """Список автоматических сканеров"""
         queryset = Device.objects.all()
@@ -184,11 +192,20 @@ class DeviceViewSet(viewsets.ViewSet):
         serializer = DeviceSerializer(data=request.data)
         if serializer.is_valid():
             identifier = serializer.validated_data.get('identifier')
+            number = serializer.validated_data.pop('activation_key')
+            activation_key = ActivationKey.objects.filter(number=number).first()
+            if activation_key is None:
+                activation_key = ActivationKey.objects.create(number=number)
             if Device.objects.filter(identifier=identifier).exists():
                 instance = Device.objects.get(identifier=identifier)
             else:
                 instance = serializer.save(mode=Device.DCT)
 
+            if activation_key.device.count() and activation_key.device != instance:
+                raise ActivationFailed('Код активирован на другом устройстве')
+
+            instance.activation_key = activation_key
+            instance.save()
             request.user.device = instance
             request.user.save()
 
@@ -198,7 +215,7 @@ class DeviceViewSet(viewsets.ViewSet):
     def remove(self, request):
         """Очищает связанное устройство у пользователя"""
         if request.user.device is None:
-            raise APIException("У пользователя не определено устройство")
+            raise APIException('У пользователя не определено устройство')
 
         request.user.device = None
         request.user.save()
@@ -388,3 +405,11 @@ class RegExpList(generics.ListAPIView):
     """Список организаций"""
     queryset = RegularExpression.objects.all()
     serializer_class = RegularExpressionSerializer
+
+
+class UnitsCreateListSet(generics.ListCreateAPIView):
+    queryset = Unit.objects.all()
+    serializer_class = UnitSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        return UnitSerializer(data=self.request.data, many=True)

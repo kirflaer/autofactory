@@ -192,20 +192,23 @@ class DeviceViewSet(viewsets.ViewSet):
         serializer = DeviceSerializer(data=request.data)
         if serializer.is_valid():
             identifier = serializer.validated_data.get('identifier')
-            number = serializer.validated_data.pop('activation_key')
-            activation_key = ActivationKey.objects.filter(number=number).first()
-            if activation_key is None:
-                activation_key = ActivationKey.objects.create(number=number)
+
             if Device.objects.filter(identifier=identifier).exists():
                 instance = Device.objects.get(identifier=identifier)
             else:
                 instance = serializer.save(mode=Device.DCT)
 
-            if activation_key.device.count() and activation_key.device != instance:
-                raise ActivationFailed('Код активирован на другом устройстве')
+            if not serializer.validated_data.get('activation_key') is None:
+                number = serializer.validated_data.pop('activation_key')
+                activation_key = ActivationKey.objects.filter(number=number).first()
+                if activation_key is None:
+                    activation_key = ActivationKey.objects.create(number=number)
 
-            instance.activation_key = activation_key
-            instance.save()
+                if activation_key.device.count() and activation_key.device != instance:
+                    raise ActivationFailed('Код активирован на другом устройстве')
+                instance.activation_key = activation_key
+                instance.save()
+
             request.user.device = instance
             request.user.save()
 

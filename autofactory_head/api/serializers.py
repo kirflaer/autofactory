@@ -74,16 +74,13 @@ class OrganizationSerializer(serializers.ModelSerializer):
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
-            'name', 'is_default', 'guid', 'capacity', 'count_in_pallet', 'gtin')
+            'product', 'name', 'is_default', 'guid', 'capacity', 'count_in_pallet', 'gtin')
         model = Unit
-
-    def create(self, validated_data):
-        return super().create(validated_data)
 
 
 class ProductSerializer(serializers.ModelSerializer):
     units = UnitSerializer(many=True)
-    external_key = serializers.CharField(write_only=True, required=False)
+    external_key = serializers.CharField(required=False)
 
     class Meta:
         fields = ('name',

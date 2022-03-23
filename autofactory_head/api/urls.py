@@ -18,7 +18,8 @@ from .views import (
     TasksViewSet,
     DirectionListCreateView,
     TypeFactoryOperationViewSet,
-    RegExpList
+    RegExpList,
+    UnitsCreateListSet
 )
 
 urlpatterns = [
@@ -37,6 +38,7 @@ urlpatterns = [
         {'post': 'create', 'delete': 'remove'})),
     re_path(r'v[0-9]/scanners/$', DeviceViewSet.as_view(
         {'get': 'list_scanners'})),
+    re_path(r'v[0-9]/units/$', UnitsCreateListSet.as_view()),
     path('v1/marking/', MarkingListCreateViewSet.as_view()),
     path('v1/marking/<uuid:pk>/', MarkingViewSet.as_view({'put': 'close'})),
 

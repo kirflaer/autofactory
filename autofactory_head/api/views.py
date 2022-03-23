@@ -20,7 +20,8 @@ from catalogs.models import (
     TypeFactoryOperation,
     LineProduct,
     RegularExpression,
-    ActivationKey
+    ActivationKey,
+    Unit
 )
 from packing.marking_services import (
     marking_close,
@@ -63,7 +64,7 @@ from .serializers import (
     DirectionSerializer,
     LineCreateSerializer,
     TypeFactoryOperationSerializer,
-    RegularExpressionSerializer,
+    RegularExpressionSerializer, UnitSerializer,
 )
 
 User = get_user_model()
@@ -404,3 +405,11 @@ class RegExpList(generics.ListAPIView):
     """Список организаций"""
     queryset = RegularExpression.objects.all()
     serializer_class = RegularExpressionSerializer
+
+
+class UnitsCreateListSet(generics.ListCreateAPIView):
+    queryset = Unit.objects.all()
+    serializer_class = UnitSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        return UnitSerializer(data=self.request.data, many=True)

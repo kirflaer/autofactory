@@ -1,6 +1,6 @@
-from django.db import models
 import uuid
 
+from django.db import models
 from django.db.models import UniqueConstraint
 
 
@@ -66,18 +66,19 @@ class Device(BaseModel):
     identifier = models.CharField(verbose_name='IP/MAC/ID', blank=True,
                                   null=True,
                                   max_length=50)
-    mark_reg_exp = models.CharField(
-        verbose_name='Регулярное выражение для получения марки',
-        max_length=150, blank=True)
 
-    empty_mark_reg_exp = models.CharField(
-        verbose_name='Регулярное выражение пустой марки',
-        max_length=150, blank=True)
+    empty_mark_reg_exp = models.ForeignKey('RegularExpression', blank=True,
+                                           null=True,
+                                           verbose_name='Регулярное выражение пустого пакета',
+                                           on_delete=models.CASCADE)
 
     port = models.PositiveIntegerField(verbose_name='Порт', blank=True,
                                        null=True)
     stream_splitter_code = models.PositiveIntegerField(
         'Разделитель потока сканирования марок', default=0)
+    activation_key = models.ForeignKey('ActivationKey', on_delete=models.CASCADE, null=True, blank=True,
+                                       related_name='device',
+                                       verbose_name='Код активации')
 
 
 class Product(BaseExternalModel):
@@ -88,15 +89,15 @@ class Product(BaseExternalModel):
 
 
 class Line(BaseModel):
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True,
+    storage = models.ForeignKey('Storage', on_delete=models.CASCADE, null=True,
                                 blank=True, verbose_name='Склад')
-    department = models.ForeignKey(Department, on_delete=models.CASCADE,
+    department = models.ForeignKey('Department', on_delete=models.CASCADE,
                                    null=True,
                                    blank=True, verbose_name='Подразделение')
-    products = models.ManyToManyField(Product,
+    products = models.ManyToManyField('Product',
                                       through='LineProduct',
                                       verbose_name='Номенклатура')
-    type_factory_operation = models.ForeignKey(TypeFactoryOperation,
+    type_factory_operation = models.ForeignKey('TypeFactoryOperation',
                                                on_delete=models.CASCADE,
                                                null=True,
                                                blank=True,
@@ -104,10 +105,10 @@ class Line(BaseModel):
 
 
 class LineDevice(models.Model):
-    line = models.ForeignKey(Line, on_delete=models.CASCADE, null=True,
+    line = models.ForeignKey('Line', on_delete=models.CASCADE, null=True,
                              blank=True,
                              verbose_name='Линия')
-    device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True,
+    device = models.ForeignKey('Device', on_delete=models.CASCADE, null=True,
                                blank=True,
                                verbose_name='Устройство')
 
@@ -117,10 +118,10 @@ class LineDevice(models.Model):
 
 
 class LineProduct(models.Model):
-    line = models.ForeignKey(Line, on_delete=models.CASCADE, null=True,
+    line = models.ForeignKey('Line', on_delete=models.CASCADE, null=True,
                              blank=True,
                              verbose_name='Линия')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
+    product = models.ForeignKey('Product', on_delete=models.CASCADE, null=True,
                                 blank=True,
                                 verbose_name='Номенклатура')
 
@@ -130,7 +131,7 @@ class LineProduct(models.Model):
 
 
 class Unit(BaseExternalModel):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,
+    product = models.ForeignKey('Product', on_delete=models.CASCADE,
                                 verbose_name='Номенклатура',
                                 related_name='units')
     count_in_pallet = models.PositiveIntegerField('Количество в паллете',
@@ -138,11 +139,13 @@ class Unit(BaseExternalModel):
 
     capacity = models.PositiveIntegerField('Вместимость', default=0)
     is_default = models.BooleanField('Упаковка по умолчанию', default=False)
+    gtin = models.CharField(default='', blank=True, max_length=50,
+                            verbose_name='Штрихкод')
 
 
 class Log(models.Model):
     data = models.TextField(verbose_name='Данные лога')
-    device = models.ForeignKey(Device, verbose_name='Устройство', null=True,
+    device = models.ForeignKey('Device', verbose_name='Устройство', null=True,
                                blank=True, on_delete=models.CASCADE)
     app_version = models.CharField(verbose_name='Версия устройства',
                                    max_length=255)
@@ -168,18 +171,40 @@ class ExternalSource(models.Model):
 
 
 class RegularExpression(models.Model):
-    AGGREGATON_CODE = 'AGGREGATON_CODE'
-    VISION_STREAM = 'VISION_STREAM'
+    AGGREGATION_CODE = 'AGGREGATION_CODE'
+    MARK = 'MARK'
+    EMPTY_DATA_STREAM = 'EMPTY_DATA_STREAM'
+    MARK_AUTO_SCANNER = 'MARK_AUTO_SCANNER'
 
     TYPE_EXPRESSION = (
-        (AGGREGATON_CODE, AGGREGATON_CODE),
-        (VISION_STREAM, VISION_STREAM),
+        (AGGREGATION_CODE, AGGREGATION_CODE),
+        (MARK, MARK),
+        (EMPTY_DATA_STREAM, EMPTY_DATA_STREAM),
+        (MARK_AUTO_SCANNER, MARK_AUTO_SCANNER)
     )
 
     type_expression = models.CharField(max_length=255, choices=TYPE_EXPRESSION,
-                                       default=AGGREGATON_CODE)
+                                       default=AGGREGATION_CODE)
     value = models.CharField(verbose_name='Значение', max_length=1024,
                              default='(01){GS1}')
 
     def __str__(self):
         return self.value
+
+
+class ActivationKey(models.Model):
+    PERPETUAL = 'PERPETUAL'
+    BY_DATE = 'BY_DATE'
+
+    TYPE_ACTIVATION = (
+        (PERPETUAL, PERPETUAL),
+        (BY_DATE, BY_DATE),
+    )
+
+    type_activation = models.CharField(max_length=255, choices=TYPE_ACTIVATION,
+                                       default=PERPETUAL)
+    number = models.CharField(verbose_name='Идентификатор', max_length=1024)
+    date = models.DateField('Дата окончания', blank=True, null=True)
+
+    def __str__(self):
+        return self.number

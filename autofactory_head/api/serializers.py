@@ -73,7 +73,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'is_default', 'guid', 'capacity', 'count_in_pallet')
+        fields = (
+            'name', 'is_default', 'guid', 'capacity', 'count_in_pallet', 'gtin')
         model = Unit
 
     def create(self, validated_data):
@@ -133,8 +134,10 @@ class LineSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
+    activation_key = serializers.CharField(write_only=True)
+
     class Meta:
-        fields = ('guid', 'name', 'identifier', 'port')
+        fields = ('guid', 'name', 'identifier', 'port', 'activation_key')
         read_only_fields = ('guid', 'port')
         model = Device
 
@@ -155,24 +158,22 @@ class LogSerializer(serializers.ModelSerializer):
 
 class SettingSerializer(serializers.ModelSerializer):
     pallet_passport_template_base64 = serializers.SerializerMethodField()
-    aggregation_codes = serializers.SerializerMethodField()
+    reg_exp = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('use_organization', 'pallet_passport_template_base64',
-                  'aggregation_codes')
+                  'reg_exp')
         model = Setting
 
     def get_pallet_passport_template_base64(self, obj):
         return get_base64_string(obj.pallet_passport_template)
 
-    def get_aggregation_codes(self, obj):
-        aggregation_codes = RegularExpression.objects.filter(
-            type_expression=RegularExpression.AGGREGATON_CODE)
-        if not aggregation_codes.exists():
+    def get_reg_exp(self, obj):
+        expressions = RegularExpression.objects.filter().values(
+            'type_expression', 'value')
+        if not expressions.exists():
             return []
-
-        return [element['value'] for element in
-                aggregation_codes.values('value')]
+        return expressions
 
 
 class UserSerializer(serializers.ModelSerializer):

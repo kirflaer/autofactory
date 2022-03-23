@@ -131,7 +131,7 @@ class LineSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
-    activation_key = serializers.CharField(write_only=True)
+    activation_key = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         fields = ('guid', 'name', 'identifier', 'port', 'activation_key')

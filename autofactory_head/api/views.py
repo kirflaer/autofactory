@@ -104,7 +104,7 @@ class ProductViewSet(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
 
     def get_serializer(self, *args, **kwargs):
-        if self.request.stream is None:
+        if self.request.META['REQUEST_METHOD'] == 'GET':
             return super().get_serializer(*args, **kwargs)
         else:
             return ProductSerializer(data=self.request.data, many=True)

@@ -74,7 +74,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
-        'name', 'is_default', 'guid', 'capacity', 'count_in_pallet', 'gtin')
+            'name', 'is_default', 'guid', 'capacity', 'count_in_pallet', 'gtin')
         model = Unit
 
     def create(self, validated_data):
@@ -134,8 +134,10 @@ class LineSerializer(serializers.ModelSerializer):
 
 
 class DeviceSerializer(serializers.ModelSerializer):
+    activation_key = serializers.CharField(write_only=True)
+
     class Meta:
-        fields = ('guid', 'name', 'identifier', 'port')
+        fields = ('guid', 'name', 'identifier', 'port', 'activation_key')
         read_only_fields = ('guid', 'port')
         model = Device
 

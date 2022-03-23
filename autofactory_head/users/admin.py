@@ -4,7 +4,7 @@ from .models import User, Setting, ConfigEvent
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'settings', 'line', 'role', 'scanner')
+    list_display = ('username', 'settings', 'line', 'role', 'scanner', 'device')
 
 
 class ConfigEventAdmin(admin.ModelAdmin):

@@ -192,14 +192,16 @@ class DeviceViewSet(viewsets.ViewSet):
         serializer = DeviceSerializer(data=request.data)
         if serializer.is_valid():
             identifier = serializer.validated_data.get('identifier')
+            number = None
+            if not serializer.validated_data.get('activation_key') is None:
+                number = serializer.validated_data.pop('activation_key')
 
             if Device.objects.filter(identifier=identifier).exists():
                 instance = Device.objects.get(identifier=identifier)
             else:
                 instance = serializer.save(mode=Device.DCT)
 
-            if not serializer.validated_data.get('activation_key') is None:
-                number = serializer.validated_data.pop('activation_key')
+            if number is not None:
                 activation_key = ActivationKey.objects.filter(number=number).first()
                 if activation_key is None:
                     activation_key = ActivationKey.objects.create(number=number)

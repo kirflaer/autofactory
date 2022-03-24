@@ -40,6 +40,7 @@ class CatalogBasicListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
     ordering = 'name'
     template_name = 'base_catalogs_list.html'
+    paginate_by = 50
 
     def get_context_data(self, *, object_list=None, **kwargs):
         data = super().get_context_data(object_list=object_list, **kwargs)

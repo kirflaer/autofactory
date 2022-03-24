@@ -206,7 +206,7 @@ class DeviceViewSet(viewsets.ViewSet):
                 if activation_key is None:
                     activation_key = ActivationKey.objects.create(number=number)
 
-                if activation_key.device.count() and activation_key.device != instance:
+                if activation_key.device.count() and activation_key.device.first() != instance:
                     raise ActivationFailed('Код активирован на другом устройстве')
                 instance.activation_key = activation_key
                 instance.save()

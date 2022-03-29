@@ -104,7 +104,7 @@ class ProductViewSet(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
 
     def get_serializer(self, *args, **kwargs):
-        if self.request.stream is None:
+        if self.request.META['REQUEST_METHOD'] == 'GET':
             return super().get_serializer(*args, **kwargs)
         else:
             return ProductSerializer(data=self.request.data, many=True)
@@ -192,19 +192,21 @@ class DeviceViewSet(viewsets.ViewSet):
         serializer = DeviceSerializer(data=request.data)
         if serializer.is_valid():
             identifier = serializer.validated_data.get('identifier')
+            number = None
+            if not serializer.validated_data.get('activation_key') is None:
+                number = serializer.validated_data.pop('activation_key')
 
             if Device.objects.filter(identifier=identifier).exists():
                 instance = Device.objects.get(identifier=identifier)
             else:
                 instance = serializer.save(mode=Device.DCT)
 
-            if not serializer.validated_data.get('activation_key') is None:
-                number = serializer.validated_data.pop('activation_key')
+            if number is not None:
                 activation_key = ActivationKey.objects.filter(number=number).first()
                 if activation_key is None:
                     activation_key = ActivationKey.objects.create(number=number)
 
-                if activation_key.device.count() and activation_key.device != instance:
+                if activation_key.device.count() and activation_key.device.first() != instance:
                     raise ActivationFailed('Код активирован на другом устройстве')
                 instance.activation_key = activation_key
                 instance.save()

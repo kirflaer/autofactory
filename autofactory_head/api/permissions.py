@@ -1,15 +1,21 @@
-from rest_framework import permissions, status
-from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from rest_framework import permissions
 from .exceptions import ActivationFailed
-from catalogs.models import ActivationKey, Device
+from catalogs.models import ActivationKey
 from datetime import datetime
+
+User = get_user_model()
 
 
 class IsActivatedDevice(permissions.IsAuthenticated):
 
     def has_permission(self, request, view):
-        token = request.META.get('HTTP_TOKEN')  # временно пока не переведем все девайсы на новую версию
+        token = request.META.get(
+            'HTTP_TOKEN')  # временно пока не переведем все девайсы на новую версию
         if token is None:
+            return super().has_permission(request, view)
+
+        if request.user.role == User.VISION_OPERATOR:
             return super().has_permission(request, view)
 
         token = ActivationKey.objects.filter(number=token).first()

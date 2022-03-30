@@ -41,7 +41,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            {% for element in pie_data %}
+                            {% for element in week_marking_table_data %}
                                 <tr>
                                     <td> {{ element.operation__line__name|default_if_none:"-" }} </td>
                                     <td> {{ element.count }} </td>

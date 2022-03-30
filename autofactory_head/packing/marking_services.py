@@ -146,7 +146,8 @@ def _get_report_week_marking() -> Dict:
         labels.append(element['operation__line__name'])
         data.append(element['count'])
     return {'week_marking_labels': labels,
-            'week_marking_data': data}
+            'week_marking_data': data,
+            'week_marking_table_data': report_data}
 
 
 def _get_report_marking_dynamics() -> Dict:
@@ -158,19 +159,21 @@ def _get_report_marking_dynamics() -> Dict:
     lines = MarkingOperation.objects.filter(date__range=[start_prev_month, today]).values_list('line__name', flat=True)
     lines = list(set(lines))[:12]
 
-    return {'marking_dynamics_labels': [line for line in lines],
-            'data_current_month': _get_data_report_marking_dynamics(start_current_month, today, lines),
-            'data_prev_month': _get_data_report_marking_dynamics(start_prev_month, start_current_month, lines)
-            }
+    result = {'marking_dynamics_labels': [line for line in lines],
+              'data_current_month': _get_data_report_marking_dynamics(start_current_month, today, lines),
+              'data_prev_month': _get_data_report_marking_dynamics(start_prev_month, start_current_month, lines)
+              }
+
+    return result
 
 
 def _get_data_report_marking_dynamics(start: datetime, end: datetime, lines: List) -> Iterable:
     result = []
     query_set = MarkingOperationMark.objects.filter(operation__date__range=[start, end])
     for line in lines:
-        line_data = query_set.filter(operation__line__name=line).annotate(count=Count('operation')).values_list('count',
-                                                                                                          flat=True)
-        result.append(0 if not len(line_data) else line_data[0])
+        line_data = query_set.filter(operation__line__name=line).values('operation__line__name').annotate(
+            count=Count('operation'))
+        result.append(0 if not len(line_data) else line_data[0]['count'])
     return result
 
 

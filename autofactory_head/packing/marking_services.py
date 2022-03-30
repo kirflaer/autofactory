@@ -156,10 +156,18 @@ def _get_report_marking_dynamics() -> Dict:
     start_current_month = today - timedelta(days=30)
     start_prev_month = today - timedelta(days=60)
 
-    lines = MarkingOperation.objects.filter(date__range=[start_prev_month, today]).values_list('line__name', flat=True)
-    lines = list(set(lines))[:12]
+    lines_query_set = MarkingOperation.objects.prefetch_related('line').filter(
+        date__range=[start_prev_month, today]).values('line', 'line__name')
 
-    result = {'marking_dynamics_labels': [line for line in lines],
+    lines = []
+    label_lines = []
+    for line in lines_query_set:
+        if lines.count(line['line']):
+            continue
+        lines.append(line['line'])
+        label_lines.append(line['line__name'])
+
+    result = {'marking_dynamics_labels': label_lines,
               'data_current_month': _get_data_report_marking_dynamics(start_current_month, today, lines),
               'data_prev_month': _get_data_report_marking_dynamics(start_prev_month, start_current_month, lines)
               }
@@ -169,9 +177,9 @@ def _get_report_marking_dynamics() -> Dict:
 
 def _get_data_report_marking_dynamics(start: datetime, end: datetime, lines: List) -> Iterable:
     result = []
-    query_set = MarkingOperationMark.objects.filter(operation__date__range=[start, end])
+    query_set = MarkingOperationMark.objects.prefetch_related('operation').filter(operation__date__range=[start, end])
     for line in lines:
-        line_data = query_set.filter(operation__line__name=line).values('operation__line__name').annotate(
+        line_data = query_set.filter(operation__line=line).values('operation__line__name').annotate(
             count=Count('operation'))
         result.append(0 if not len(line_data) else line_data[0]['count'])
     return result

@@ -179,7 +179,7 @@ def _get_data_report_marking_dynamics(start: datetime, end: datetime, lines: Lis
     result = []
     query_set = MarkingOperationMark.objects.prefetch_related('operation').filter(operation__date__range=[start, end])
     for line in lines:
-        line_data = query_set.filter(operation__line=line).values('operation__line__name').annotate(
+        line_data = query_set.filter(operation__line=line).values('operation__line').annotate(
             count=Count('operation'))
         result.append(0 if not len(line_data) else line_data[0]['count'])
     return result

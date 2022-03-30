@@ -64,7 +64,8 @@ from .serializers import (
     DirectionSerializer,
     LineCreateSerializer,
     TypeFactoryOperationSerializer,
-    RegularExpressionSerializer, UnitSerializer,
+    RegularExpressionSerializer,
+    UnitSerializer,
 )
 
 User = get_user_model()

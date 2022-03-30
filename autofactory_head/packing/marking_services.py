@@ -21,7 +21,7 @@ from catalogs.models import (
 )
 
 from collections.abc import Iterable
-from typing import Optional
+from typing import Optional, Dict, List
 import base64
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -122,32 +122,59 @@ def create_tasks(collecting_data: Iterable) -> Iterable:
     return result
 
 
-def get_dashboard_data() -> dict:
-    raw_marks_data = RawMark.objects.all().values('operation__line__name',
-                                                  'operation__batch_number',
-                                                  'operation__date',
-                                                  'operation__number').annotate(
-        count=Count('operation'))
+def get_dashboard_data() -> Dict:
+    result = {}
+    for key, value in _get_report_week_marking().items():
+        result[key] = value
 
+    for key, value in _get_report_marking_dynamics().items():
+        result[key] = value
+    return result
+
+
+def _get_report_week_marking() -> Dict:
     labels = []
     data = []
-
     today = dt.today()
     monday = today - timedelta(dt.weekday(today))
     monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
     sunday = today + timedelta(6 - dt.weekday(today))
-    pie_data = MarkingOperationMark.objects.filter(
+    report_data = MarkingOperationMark.objects.filter(
         operation__date__range=[monday, sunday]).values(
         'operation__line__name').annotate(count=Count('operation'))
-    for element in pie_data:
+    for element in report_data:
         labels.append(element['operation__line__name'])
         data.append(element['count'])
+    return {'week_marking_labels': labels,
+            'week_marking_data': data}
 
-    return {'raw_marks_data': raw_marks_data, 'labels': labels, 'data': data,
-            'pie_data': pie_data}
+
+def _get_report_marking_dynamics() -> Dict:
+    """ Функция возвращает данные для формирования отчета "Динамика загрузки линий" """
+    today = dt.today()
+    start_current_month = today - timedelta(days=30)
+    start_prev_month = today - timedelta(days=60)
+
+    lines = MarkingOperation.objects.filter(date__range=[start_prev_month, today]).values_list('line__name', flat=True)
+    lines = list(set(lines))[:12]
+
+    return {'marking_dynamics_labels': [line for line in lines],
+            'data_current_month': _get_data_report_marking_dynamics(start_current_month, today, lines),
+            'data_prev_month': _get_data_report_marking_dynamics(start_prev_month, start_current_month, lines)
+            }
 
 
-def change_pallet_content(content: dict) -> None:
+def _get_data_report_marking_dynamics(start: datetime, end: datetime, lines: List) -> Iterable:
+    result = []
+    query_set = MarkingOperationMark.objects.filter(operation__date__range=[start, end])
+    for line in lines:
+        line_data = query_set.filter(operation__line__name=line).annotate(count=Count('operation')).values_list('count',
+                                                                                                          flat=True)
+        result.append(0 if not len(line_data) else line_data[0])
+    return result
+
+
+def change_pallet_content(content: Dict) -> None:
     source = Pallet.objects.get(id=content['source'])
     destination = Pallet.objects.get(id=content['destination'])
 

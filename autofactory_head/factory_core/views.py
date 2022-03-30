@@ -46,13 +46,16 @@ class OperationBasicListView(LoginRequiredMixin, ListView):
 
 class MarkingOperationListView(OperationBasicListView):
     model = MarkingOperation
-    paginate_by = 40
+    paginate_by = 50
     template_name = 'marking.html'
     extra_context = {
         'title': 'Маркировка',
         'element_new_link': 'organization_new',
         'lines': Line.objects.all()
     }
+
+    def get_queryset(self):
+        return MarkingOperation.objects.all().order_by('-date')[:100]
 
 
 class MarkingOperationRemoveView(LoginRequiredMixin, DeleteView):

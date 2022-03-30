@@ -72,7 +72,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid', 'mode', 'activation_key')
+    list_display = ('name', 'guid', 'mode', 'activation_key', 'identifier')
     list_filter = ('mode', )
 
 

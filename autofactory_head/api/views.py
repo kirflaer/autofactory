@@ -289,6 +289,8 @@ class MarkingViewSet(viewsets.ViewSet):
 
 
 class MarksViewSet(viewsets.ViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+
     """Добавляет марки в существующую операцию маркировки"""
 
     def add_marks(self, request):

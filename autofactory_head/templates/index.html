@@ -35,66 +35,53 @@
 
                         <table class="table mb-0">
                             <thead>
-                    <tr>
-                        <th style="width:12%;">Линия</th>
-                        <th style="width:12%;">Количество</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for element in pie_data %}
-                        <tr>
-                            <td> {{ element.operation__line__name|default_if_none:"-" }} </td>
-                            <td> {{ element.count }} </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
+                            <tr>
+                                <th style="width:12%;">Линия</th>
+                                <th style="width:12%;">Количество</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for element in pie_data %}
+                                <tr>
+                                    <td> {{ element.operation__line__name|default_if_none:"-" }} </td>
+                                    <td> {{ element.count }} </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
+
         <div class="col-12 col-lg-7 col-xl-8 d-flex">
             <div class="card flex-fill">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Марки в незакрытых маркировках</h5>
+                    <h5 class="card-title">Динамика загрузки линий за последние два месяца</h5>
                 </div>
-                <table id="datatables-dashboard-traffic"
-                       class="table table-striped my-0">
-                    <thead>
-                    <tr>
-                        <th style="width:12%;">Номер маркировки</th>
-                        <th style="width:12%;">Дата маркировки</th>
-                        <th style="width:8%;">Номер партии</th>
-                        <th style="width:15%;">Линия</th>
-                        <th style="width:10%;">Количество</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for element in raw_marks_data %}
-                        <tr>
-                            <td> {{ element.operation__number|default_if_none:"-" }} </td>
-                            <td> {{ element.operation__date|default_if_none:"-" }} </td>
-                            <td> {{ element.operation__batch_number|default_if_none:"-" }} </td>
-                            <td> {{ element.operation__line__name|default_if_none:"-" }} </td>
-                            <td> {{ element.count }} </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div class="card-body">
+                    <div class="chart">
+                        <canvas id="chartjs-line"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 
-   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // Pie chart
             new Chart(document.getElementById("chartjs-dashboard-pie"), {
                 type: "pie",
                 data: {
-                    labels: {{ labels|safe }},
+                    labels: {{ week_marking_labels|safe }},
                     datasets: [{
-                        data: {{ data|safe }},
+                        data: {{ week_marking_data|safe }},
                         backgroundColor: [
                             window.theme.primary,
                             window.theme.warning,
@@ -112,6 +99,123 @@
                     legend: {
                         display: false
                     }
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Line chart
+            new Chart(document.getElementById("chartjs-line"), {
+                type: "line",
+                data: {
+                    labels: {{ marking_dynamics_labels|safe }},
+                    datasets: [{
+                        label: "Текущий месяц",
+                        fill: true,
+                        backgroundColor: "transparent",
+                        borderColor: window.theme.primary,
+                        data: {{ data_current_month|safe }}
+                    }, {
+                        label: "Предыдущий месяц",
+                        fill: true,
+                        backgroundColor: "transparent",
+                        borderColor: window.theme["primary-dark"],
+                        borderDash: [4, 4],
+                        data: {{ data_prev_month|safe }}
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    legend: {
+                        display: false
+                    },
+                    tooltips: {
+                        intersect: false
+                    },
+                    hover: {
+                        intersect: true
+                    },
+                    plugins: {
+                        filler: {
+                            propagate: false
+                        }
+                    },
+                    scales: {
+                        xAxes: [{
+                            reverse: true,
+                            gridLines: {
+                                color: "rgba(0,0,0,0.05)"
+                            }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                stepSize: 500
+                            },
+                            display: true,
+                            borderDash: [5, 5],
+                            gridLines: {
+                                color: "rgba(0,0,0,0)",
+                                fontColor: "#fff"
+                            }
+                        }]
+                    }
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Doughnut chart
+            new Chart(document.getElementById("chartjs-doughnut"), {
+                type: "doughnut",
+                data: {
+                    labels: ["Social", "Search Engines", "Direct", "Other"],
+                    datasets: [{
+                        data: [260, 125, 54, 146],
+                        backgroundColor: [
+                            window.theme.primary,
+                            window.theme.success,
+                            window.theme.warning,
+                            "#E8EAED"
+                        ],
+                        borderColor: "transparent"
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutoutPercentage: 65,
+                    legend: {
+                        display: false
+                    }
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Polar Area chart
+            new Chart(document.getElementById("chartjs-polar-area"), {
+                type: "polarArea",
+                data: {
+                    labels: ["Speed", "Reliability", "Comfort", "Safety", "Efficiency"],
+                    datasets: [{
+                        label: "Model S",
+                        data: [35, 38, 65, 70, 24],
+                        backgroundColor: [
+                            window.theme.primary,
+                            window.theme.success,
+                            window.theme.danger,
+                            window.theme.warning,
+                            window.theme.info
+                        ]
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false
                 }
             });
         });

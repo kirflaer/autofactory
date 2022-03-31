@@ -127,8 +127,8 @@ def get_dashboard_data() -> Dict:
     for key, value in _get_report_week_marking().items():
         result[key] = value
 
-    for key, value in _get_report_marking_dynamics().items():
-        result[key] = value
+    # for key, value in _get_report_marking_dynamics().items():
+    #     result[key] = value
     return result
 
 

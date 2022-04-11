@@ -112,10 +112,8 @@ def create_tasks(collecting_data: Iterable) -> Iterable:
         if element.get('pallets') is None:
             continue
 
-        for aggregation_code in element['pallets']:
-            pallet_code = PalletCode.objects.filter(
-                code=aggregation_code).first()
-            pallet = None if pallet_code is None else pallet_code.pallet
+        for pallet_id in element['pallets']:
+            pallet = Pallet.objects.filter(id=pallet_id).first()
             if pallet is None:
                 continue
             TaskPallet.objects.create(task=task, pallet=pallet)

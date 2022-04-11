@@ -37,6 +37,7 @@ class MarkingOperationMarkAdmin(admin.ModelAdmin):
 @admin.register(Pallet)
 class PalletAdmin(admin.ModelAdmin):
     list_display = ('date', 'guid', 'id', 'product')
+    search_fields = ('id',)
 
 
 @admin.register(PalletCode)

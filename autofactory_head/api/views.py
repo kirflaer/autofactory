@@ -392,6 +392,9 @@ class TasksViewSet(viewsets.ViewSet):
         if filter_data.get('not_closed'):
             queryset = queryset.exclude(status=Task.CLOSE)
             filter_data.pop('not_closed')
+        elif filter_data.get('only_close'):
+            queryset = queryset.filter(status=Task.CLOSE)
+            filter_data.pop('only_close')
         else:
             queryset = queryset.filter(
                 Q(user=self.request.user) | Q(status=Task.NEW))

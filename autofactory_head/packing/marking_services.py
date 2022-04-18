@@ -31,19 +31,21 @@ User = get_user_model()
 
 
 def update_task(task: Task, content: dict) -> None:
-    if content.get('pallet_ids') is None:
-        return
-
     task.ready_to_unload = True
     task.save()
 
-    for element in content['pallet_ids']:
-        pallet = Pallet.objects.filter(id=element).first()
-        if pallet is None:
-            continue
-        task_pallet = TaskPallet.objects.filter(pallet=pallet).first()
-        if task_pallet is None:
-            TaskPallet.objects.create(task=task, pallet=pallet)
+    # Код по добавлению паллет к заданию используется для сборки заказа
+    #
+    # if content.get('pallet_ids') is None:
+    #     return
+    #
+    # for element in content['pallet_ids']:
+    #     pallet = Pallet.objects.filter(id=element).first()
+    #     if pallet is None:
+    #         continue
+    #     task_pallet = TaskPallet.objects.filter(pallet=pallet).first()
+    #     if task_pallet is None:
+    #         TaskPallet.objects.create(task=task, pallet=pallet)
 
 
 def create_tasks(collecting_data: Iterable) -> Iterable:
@@ -112,10 +114,8 @@ def create_tasks(collecting_data: Iterable) -> Iterable:
         if element.get('pallets') is None:
             continue
 
-        for aggregation_code in element['pallets']:
-            pallet_code = PalletCode.objects.filter(
-                code=aggregation_code).first()
-            pallet = None if pallet_code is None else pallet_code.pallet
+        for pallet_id in element['pallets']:
+            pallet = Pallet.objects.filter(id=pallet_id).first()
             if pallet is None:
                 continue
             TaskPallet.objects.create(task=task, pallet=pallet)

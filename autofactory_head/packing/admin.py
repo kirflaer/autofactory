@@ -29,19 +29,21 @@ class MarkingOperationAdmin(admin.ModelAdmin):
 @admin.register(MarkingOperationMark)
 class MarkingOperationMarkAdmin(admin.ModelAdmin):
     list_display = (
-        'operation', 'product', 'mark', 'encoded_mark', 'aggregation_code')
-    list_filter = ('operation',)
-
+        'operation', 'product', 'mark', 'aggregation_code', )
+    list_filter = ('operation__line',)
+    search_fields = ('operation__number',)
 
 
 @admin.register(Pallet)
 class PalletAdmin(admin.ModelAdmin):
-    list_display = ('date', 'guid', 'id',)
+    list_display = ('date', 'guid', 'id', 'product')
+    search_fields = ('id',)
 
 
 @admin.register(PalletCode)
 class PalletCodesAdmin(admin.ModelAdmin):
-    list_display = ('pallet', 'code')
+    list_display = ('pallet', 'code',)
+    search_fields = ('pallet__guid',)
 
 
 @admin.register(Task)

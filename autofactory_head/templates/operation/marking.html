@@ -1,7 +1,39 @@
 {% extends "list_base.html" %}
 {% load static %}
 
+{% block filter %}
+    <div class="card-body">
+        <form class="row row-cols-md-auto align-items-center" action="{% url 'marking' %}" method="get">
+            {% csrf_token %}
 
+            <div class="col-12">
+                <select class="form-control mb-2 mr-sm-2"
+                        id="user" placeholder="Jane Doe" name="user">
+                    <option value="none"> ----</option>
+                    {% for user in users %}
+                        <option value="{{ user.pk }}" {% if user.pk|slugify == user_filter|slugify %}
+                                selected="selected" {% endif %} >{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
+                <div class="input-group mb-2 mr-sm-2">
+                    <input type="date" class="form-control" id="date_source"
+                           name="date_source"
+                           placeholder="Search projects…" aria-label="Search">
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="form-control mb-2">Отобрать
+                </button>
+            </div>
+
+        </form>
+    </div>
+{% endblock %}
 
 {% block table %}
     <thead>
@@ -9,9 +41,9 @@
         <th style="width:5%;">Номер</th>
         <th style="width:20%;">Дата</th>
         <th style="width:20%;">Линия</th>
+        <th style="width:20%;">Автор</th>
         <th style="width:10%;">Номер партии</th>
         <th style="width:15%;">Дата выработки</th>
-        <th style="width:5%;">Ручная корректировка</th>
         <th style="width:5%;">Закрыта</th>
         <th style="width:5%;">Готова в выгрузке</th>
         <th style="width:5%;">Выгружена</th>
@@ -24,16 +56,40 @@
             <td> {{ element.number }} </td>
             <td> {{ element.date }} </td>
             <td> {{ element.line|default_if_none:"-" }} </td>
+            <td> {{ element.author }} </td>
             <td> {{ element.batch_number|default_if_none:"-" }} </td>
             <td> {{ element.production_date }} </td>
-            <td> {{ element.manual_editing|yesno:"Да,Нет,-" }} </td>
-            <td> {{ element.closed|yesno:"Да,Нет,-" }} </td>
-            <td> {{ element.ready_to_unload|yesno:"Да,Нет,-" }} </td>
-            <td> {{ element.unloaded|yesno:"Да,Нет,-" }} </td>
+            <td>
+                {% if element.closed %}
+                    <span class="badge bg-success">V</span>
+                {% else %}
+                    <span class="badge bg-warning">X</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if element.ready_to_unload %}
+                    <span class="badge bg-success">V</span>
+                {% else %}
+                    <span class="badge bg-warning">X</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if element.unloaded %}
+                    <span class="badge bg-success">V</span>
+                {% else %}
+                    <span class="badge bg-warning">X</span>
+                {% endif %}
+            </td>
             <td class="table-action">
+                <a href="{% url  'marking_pallets' element.guid %}"><i
+                        class="align-middle"
+                        data-feather="box"></i></a>
                 <a href="{% url  'marking_detail' element.guid %}"><i
                         class="align-middle"
                         data-feather="grid"></i></a>
+                <a href="{% url  'marking_detail' element.guid %}"><i
+                        class="align-middle"
+                        data-feather="log-in"></i></a>
             </td>
         </tr>
     {% endfor %}

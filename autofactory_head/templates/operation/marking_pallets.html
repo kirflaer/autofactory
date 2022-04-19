@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block menu %}
+    {% include './include/top_menu.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid p-0">
+        <h1 class="h3 mb-3">Паллеты</h1>
+        <div class="row">
+            <div class="col-12 col-xl-12">
+                <div class="card">
+                    <div class="card-body">
+                        <a href="{% url 'marking' %}"
+                           class="btn btn-outline-secondary">Назад к документам</a>
+                    </div>
+                    <table class="table table-striped ">
+                        <thead>
+                        <tr>
+                            <th style="width:40%;">Номер паллеты</th>
+                            <th style="width:40%;">Количество коробок</th>
+                            <th>Коробки</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for element in page_obj %}
+                            <tr>
+                                <td> {{ element.pallet__id }} </td>
+                                <td> {{ element.count }} </td>
+                                <td class="table-action">
+                                    <a href="{% url 'marking_pallets_detail' operation element.pallet__id %}"><i
+                                            class="align-middle"
+                                            data-feather="grid"></i></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation example">
+                <ul class="pagination pagination-md">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i
+                                class="fas fa-angle-left"></i></a></li>
+                    {% endif %}
+                    {% for i in paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == i %}active{% endif %}"><a class="page-link"
+                                                                                                href="?page={{ i }}">{{ i }}</a>
+                        </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}"><i
+                                class="fas fa-angle-right"></i></a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+
+{% endblock %}
+
+

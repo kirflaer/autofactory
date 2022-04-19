@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.core.paginator import Paginator
+from django.db.models import Count
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy
@@ -18,8 +19,6 @@ from packing.models import (
     Pallet,
     Task
 )
-
-from catalogs.models import Line
 
 from django.views.generic import (
     ListView, DeleteView,
@@ -51,11 +50,32 @@ class MarkingOperationListView(OperationBasicListView):
     extra_context = {
         'title': 'Маркировка',
         'element_new_link': 'organization_new',
-        'lines': Line.objects.all()
     }
 
     def get_queryset(self):
-        return MarkingOperation.objects.all().order_by('-date')[:100]
+        queryset = MarkingOperation.objects.all()
+        if len(self.request.GET):
+            marking_filter = {}
+            user = self.request.GET.get('user')
+            date_source = self.request.GET.get('date_source')
+            if user is not None and user != 'none':
+                marking_filter['author_id'] = user
+            if date_source is not None and len(date_source):
+                date_parse = date_source.split('-')
+                marking_filter['date__year'] = int(date_parse[0])
+                marking_filter['date__month'] = int(date_parse[1])
+                marking_filter['date__day'] = int(date_parse[2])
+
+            if len(marking_filter):
+                queryset = queryset.filter(**marking_filter)
+        return queryset.order_by('-date')[:100]
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context_data = super().get_context_data(object_list=object_list, **kwargs)
+        context_data['users'] = User.objects.filter(is_local_admin=False, is_active=True, is_superuser=False).order_by(
+            'username')
+        context_data['user_filter'] = self.request.GET.get('user')
+        return context_data
 
 
 class MarkingOperationRemoveView(LoginRequiredMixin, DeleteView):
@@ -68,6 +88,31 @@ class MarkRemoveView(LoginRequiredMixin, DeleteView):
     model = MarkingOperationMark
     success_url = reverse_lazy('marking')
     template_name = 'confirm_base.html'
+
+
+@login_required
+def marking_pallets(request, operation):
+    operation = get_object_or_404(MarkingOperation, pk=operation)
+    codes = MarkingOperationMark.objects.filter(operation=operation).values_list('aggregation_code', flat=True)
+    pallets = PalletCode.objects.filter(code__in=codes).values('pallet__id').annotate(count=Count('code'))
+    paginator = Paginator(pallets, 30)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'marking_pallets.html',
+                  {'page_obj': page_obj, 'paginator': paginator, 'operation': operation.guid})
+
+
+@login_required
+def marking_pallets_detail(request, operation, pallet):
+    operation = get_object_or_404(MarkingOperation, pk=operation)
+    aggregation_code = PalletCode.objects.filter(pallet__id=pallet).values_list('code', flat=True)
+    marks = MarkingOperationMark.objects.filter(operation=operation, aggregation_code__in=aggregation_code).values(
+        'aggregation_code').annotate(count=Count('mark'))
+
+    paginator = Paginator(marks, 30)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'marking_pallets_detail.html', {'page_obj': page_obj, 'paginator': paginator})
 
 
 @login_required

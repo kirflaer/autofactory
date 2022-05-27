@@ -90,7 +90,7 @@ class UserListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = User.objects.all()
-        queryset = queryset.filter(is_superuser=False)
+        queryset = queryset.filter(is_superuser=False, is_active=True)
         return queryset
 
 

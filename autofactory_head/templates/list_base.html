@@ -9,6 +9,10 @@
     <div class="container-fluid p-0">
         <h1 class="h3 mb-3">{{ title }}</h1>
         <div class="row">
+
+            {% block filter %}
+            {% endblock %}
+
             <div class="col-12 col-xl-12">
                 <div class="card">
                     {% if possibility_of_adding %}
@@ -19,9 +23,6 @@
                             </div>
                         {% endblock %}
                     {% endif %}
-
-                    {% block filter %}
-                    {% endblock %}
 
                     <table class="table table-striped ">
                         {% block table %}

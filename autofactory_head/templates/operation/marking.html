@@ -2,37 +2,71 @@
 {% load static %}
 
 {% block filter %}
-    <div class="card-body">
-        <form class="row row-cols-md-auto align-items-center" action="{% url 'marking' %}" method="get">
-            {% csrf_token %}
 
-            <div class="col-12">
-                <select class="form-control mb-2 mr-sm-2"
-                        id="user" placeholder="Jane Doe" name="user">
-                    <option value="none"> ----</option>
-                    {% for user in users %}
-                        <option value="{{ user.pk }}" {% if user.pk|slugify == user_filter|slugify %}
-                                selected="selected" {% endif %} >{{ user.username }}</option>
-                    {% endfor %}
-                </select>
+    <div class="col-12 col-xl-6">
+        <div class="card">
+            <div class="card-header pb-sm-0">
+                <h5 class="card-title">Фильтрация</h5>
             </div>
+            <div class="card-body">
+                <form action="{% url 'marking' %}" method="get">
+                    {% csrf_token %}
 
-            <div class="col-12">
-                <label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
-                <div class="input-group mb-2 mr-sm-2">
-                    <input type="date" class="form-control" id="date_source"
-                           name="date_source"
-                           placeholder="Search projects…" aria-label="Search">
-                </div>
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Пользователь</label>
+                        <div class="col-sm-5">
+                        <select class="form-control " id="user" placeholder="Jane Doe" name="user">
+                            <option value="none"> ----</option>
+                            {% for user in users %}
+                                <option value="{{ user.pk }}" {% if user.pk|slugify == user_filter|slugify %}
+                                        selected="selected" {% endif %} >{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Дата</label>
+                        <div class="col-sm-5">
+                            <input type="date" class="form-control" id="date_source"
+                                   name="date_source"
+                                   placeholder="Search projects…" aria-label="Search">
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Номер партии</label>
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" id="batch_number"
+                                   name="batch_number"
+                                   placeholder="" aria-label="Search"
+                                   value={{ batch_number|default_if_none:"" }}>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Линия</label>
+                        <div class="col-sm-5">
+                        <select class="form-control " id="line" placeholder="Jane Doe" name="line">
+                            <option value="none"> ----</option>
+                            {% for line in lines %}
+                                <option value="{{ line.pk }}" {% if line.pk|slugify == line_filter|slugify %}
+                                        selected="selected" {% endif %} >{{ line.name }}</option>
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <div class="col-sm-10 ml-sm-auto">
+                            <button type="submit" class="btn btn-primary">Отобрать</button>
+                        </div>
+                    </div>
+                </form>
             </div>
-
-            <div class="col-12">
-                <button type="submit" class="form-control mb-2">Отобрать
-                </button>
-            </div>
-
-        </form>
+        </div>
     </div>
+
 {% endblock %}
 
 {% block table %}
@@ -87,9 +121,9 @@
                 <a href="{% url  'marking_detail' element.guid %}"><i
                         class="align-middle"
                         data-feather="grid"></i></a>
-                <a href="{% url  'marking_detail' element.guid %}"><i
+                <a href="{% url  'marking_operation_edit' element.guid %}"><i
                         class="align-middle"
-                        data-feather="log-in"></i></a>
+                        data-feather="edit"></i></a>
             </td>
         </tr>
     {% endfor %}

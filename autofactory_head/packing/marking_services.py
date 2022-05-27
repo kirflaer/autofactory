@@ -1,31 +1,27 @@
+import base64
 import datetime
-
+from collections.abc import Iterable
 from datetime import datetime as dt, timedelta
+from typing import Optional, Dict, List
+
+from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Count
 
-from .models import (
-    RawMark,
-    MarkingOperation,
-    MarkingOperationMark,
-    PalletCode,
-    Pallet,
-    Task,
-    TaskProduct,
-    TaskPallet
-)
 from catalogs.models import (
     Product,
     ExternalSource,
     Direction,
     Client
 )
-
-from collections.abc import Iterable
-from typing import Optional, Dict, List
-import base64
-from django.contrib.auth import get_user_model
-from django.db import transaction
 from packing.models import Task, TaskPallet, Pallet
+from .models import (
+    RawMark,
+    MarkingOperation,
+    MarkingOperationMark,
+    PalletCode,
+    TaskProduct
+)
 
 User = get_user_model()
 
@@ -33,19 +29,6 @@ User = get_user_model()
 def update_task(task: Task, content: dict) -> None:
     task.ready_to_unload = True
     task.save()
-
-    # Код по добавлению паллет к заданию используется для сборки заказа
-    #
-    # if content.get('pallet_ids') is None:
-    #     return
-    #
-    # for element in content['pallet_ids']:
-    #     pallet = Pallet.objects.filter(id=element).first()
-    #     if pallet is None:
-    #         continue
-    #     task_pallet = TaskPallet.objects.filter(pallet=pallet).first()
-    #     if task_pallet is None:
-    #         TaskPallet.objects.create(task=task, pallet=pallet)
 
 
 def create_tasks(collecting_data: Iterable) -> Iterable:
@@ -126,9 +109,6 @@ def get_dashboard_data() -> Dict:
     result = {}
     for key, value in _get_report_week_marking().items():
         result[key] = value
-
-    # for key, value in _get_report_marking_dynamics().items():
-    #     result[key] = value
     return result
 
 
@@ -436,3 +416,28 @@ def _create_instance_marking_marks(marking_marks_instances: Iterable,
                                  encoded_mark=get_base64_string(mark),
                                  product=product,
                                  aggregation_code=aggregation_code))
+
+
+def get_marking_filters(request_data: dict) -> dict:
+    """ Формирует словарь для получения """
+    marking_filter = {}
+
+    filters = dict()
+    filters['author_id'] = 'user'
+    filters['line_id'] = 'line'
+    filters['batch_number'] = 'batch_number'
+
+    date_source = request_data.get('date_source')
+
+    for filter_field_name, request_field_name in filters.items():
+        value = request_data.get(request_field_name)
+        if value is not None and value != 'none' and len(value):
+            marking_filter[filter_field_name] = value
+
+    if date_source is not None and len(date_source):
+        date_parse = date_source.split('-')
+        marking_filter['date__year'] = int(date_parse[0])
+        marking_filter['date__month'] = int(date_parse[1])
+        marking_filter['date__day'] = int(date_parse[2])
+
+    return marking_filter

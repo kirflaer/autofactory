@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from datetime import datetime as dt, timedelta
 from typing import Optional, Dict, List
 
+import pytz
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count
@@ -117,8 +118,9 @@ def _get_report_week_marking() -> Dict:
     data = []
     today = dt.today()
     monday = today - timedelta(dt.weekday(today))
-    monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
-    sunday = today + timedelta(6 - dt.weekday(today))
+    monday = monday.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=pytz.UTC)
+    sunday = (today + timedelta(6 - dt.weekday(today))).replace(tzinfo=pytz.UTC)
+
     report_data = MarkingOperationMark.objects.filter(
         operation__date__range=[monday, sunday]).values(
         'operation__line__name').annotate(count=Count('operation'))

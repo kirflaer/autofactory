@@ -2,72 +2,39 @@ import base64
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, generics, status
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
-from django.db.models import Q
-from rest_framework import permissions
 
-from catalogs.models import (
-    Organization,
-    Product,
-    Device,
-    Line,
-    Department,
-    Storage,
-    Direction,
-    TypeFactoryOperation,
-    LineProduct,
-    RegularExpression,
-    ActivationKey,
-    Unit
-)
-from packing.marking_services import (
-    marking_close,
-    create_marking_marks,
-    remove_marks,
-    get_marks_to_unload,
-    confirm_marks_unloading,
-    create_pallet,
-    change_pallet_content,
-    create_tasks,
-    update_task
-)
-from packing.models import (
-    MarkingOperation,
-    RawMark,
-    Pallet,
-    Task
-)
+from catalogs.models import (ActivationKey, Department, Device, Direction,
+                             Line, LineProduct, Organization, Product,
+                             RegularExpression, Storage, TypeFactoryOperation,
+                             Unit)
+from packing.marking_services import (confirm_marks_unloading,
+                                      create_marking_marks, get_marks_to_unload,
+                                      marking_close, remove_marks, )
+from packing.models import MarkingOperation, RawMark
+
 from .exceptions import ActivationFailed
-
-from .serializers import (
-    OrganizationSerializer,
-    ProductSerializer,
-    MarkingSerializer,
-    UserSerializer,
-    StorageSerializer,
-    DepartmentSerializer,
-    LineSerializer,
-    AggregationsSerializer,
-    DeviceSerializer,
-    MarksSerializer,
-    ConfirmUnloadingSerializer,
-    LogSerializer,
-    PalletWriteSerializer,
-    PalletReadSerializer,
-    PalletUpdateSerializer,
-    ChangePalletContentSerializer,
-    TaskUpdateSerializer,
-    TaskReadSerializer,
-    TaskWriteSerializer,
-    DirectionSerializer,
-    LineCreateSerializer,
-    TypeFactoryOperationSerializer,
-    RegularExpressionSerializer,
-    UnitSerializer,
-)
+from .serializers import (AggregationsSerializer,
+                          ChangePalletContentSerializer,
+                          ConfirmUnloadingSerializer,
+                          DepartmentSerializer,
+                          DeviceSerializer,
+                          DirectionSerializer,
+                          LineCreateSerializer,
+                          LogSerializer,
+                          MarkingSerializer,
+                          MarksSerializer,
+                          OrganizationSerializer,
+                          PalletUpdateSerializer,
+                          ProductSerializer, RegularExpressionSerializer,
+                          StorageSerializer,
+                          TypeFactoryOperationSerializer,
+                          UnitSerializer,
+                          UserSerializer, LineSerializer)
 
 User = get_user_model()
 
@@ -336,81 +303,85 @@ class LogCreateViewSet(generics.CreateAPIView):
 
 
 class PalletViewSet(viewsets.ViewSet):
-    def list(self, request):
-        queryset = Pallet.objects.all()
-
-        if len(request.query_params):
-            if not request.query_params.get('id') is None:
-                queryset = queryset.filter(id=request.query_params.get('id'))
-
-        serializer = PalletReadSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def create(self, request):
-        serializer = PalletWriteSerializer(data=request.data, many=True)
-
-        if serializer.is_valid():
-            create_pallet(serializer.validated_data)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def change_content(self, request):
-        serializer = ChangePalletContentSerializer(data=request.data)
-        if serializer.is_valid():
-            change_pallet_content(serializer.validated_data)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    pass
+    # def list(self, request):
+    #     queryset = Pallet.objects.all()
+    #
+    #     if len(request.query_params):
+    #         if not request.query_params.get('id') is None:
+    #             queryset = queryset.filter(id=request.query_params.get('id'))
+    #
+    #     serializer = PalletReadSerializer(queryset, many=True)
+    #     return Response(serializer.data)
+    #
+    # def create(self, request):
+    #     serializer = PalletWriteSerializer(data=request.data, many=True)
+    #
+    #     if serializer.is_valid():
+    #         create_pallet(serializer.validated_data)
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #
+    # def change_content(self, request):
+    #     serializer = ChangePalletContentSerializer(data=request.data)
+    #     if serializer.is_valid():
+    #         change_pallet_content(serializer.validated_data)
+    #         return Response(serializer.data)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
-    queryset = Pallet.objects.all()
-    lookup_field = 'id'
-    serializer_class = PalletReadSerializer
-
-    def get_serializer_class(self):
-        if self.request.stream is None:
-            return PalletReadSerializer
-        else:
-            return PalletUpdateSerializer
+    pass
+    # queryset = Pallet.objects.all()
+    # lookup_field = 'id'
+    # serializer_class = PalletReadSerializer
+    #
+    # def get_serializer_class(self):
+    #     if self.request.stream is None:
+    #         return PalletReadSerializer
+    #     else:
+    #         return PalletUpdateSerializer
 
 
 class TaskUpdate(generics.UpdateAPIView):
-    queryset = Task.objects.all()
-    serializer_class = TaskUpdateSerializer
-
-    def perform_update(self, serializer):
-        instance = serializer.save(user=self.request.user)
-        update_task(instance, serializer.validated_data)
+    pass
+    # queryset = Task.objects.all()
+    # serializer_class = TaskUpdateSerializer
+    #
+    # def perform_update(self, serializer):
+    #     instance = serializer.save(user=self.request.user)
+    #     update_task(instance, serializer.validated_data)
 
 
 class TasksViewSet(viewsets.ViewSet):
-    def list(self, request):
-        queryset = Task.objects.all()
-
-        filter_data = {key: value for key, value in
-                       request.query_params.items()}
-        if filter_data.get('not_closed'):
-            queryset = queryset.exclude(status=Task.CLOSE)
-            filter_data.pop('not_closed')
-        elif filter_data.get('only_close'):
-            queryset = queryset.filter(status=Task.CLOSE)
-            filter_data.pop('only_close')
-        else:
-            queryset = queryset.filter(
-                Q(user=self.request.user) | Q(status=Task.NEW))
-
-        queryset = queryset.filter(**filter_data)
-
-        serializer = TaskReadSerializer(queryset, many=True)
-
-        return Response(serializer.data)
-
-    def create(self, request):
-        serializer = TaskWriteSerializer(data=request.data, many=True)
-        if serializer.is_valid():
-            result = create_tasks(serializer.data)
-            return Response(result)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    pass
+    # def list(self, request):
+    #     queryset = Task.objects.all()
+    #
+    #     filter_data = {key: value for key, value in
+    #                    request.query_params.items()}
+    #     if filter_data.get('not_closed'):
+    #         queryset = queryset.exclude(status=Task.CLOSE)
+    #         filter_data.pop('not_closed')
+    #     elif filter_data.get('only_close'):
+    #         queryset = queryset.filter(status=Task.CLOSE)
+    #         filter_data.pop('only_close')
+    #     else:
+    #         queryset = queryset.filter(
+    #             Q(user=self.request.user) | Q(status=Task.NEW))
+    #
+    #     queryset = queryset.filter(**filter_data)
+    #
+    #     serializer = TaskReadSerializer(queryset, many=True)
+    #
+    #     return Response(serializer.data)
+    #
+    # def create(self, request):
+    #     serializer = TaskWriteSerializer(data=request.data, many=True)
+    #     if serializer.is_valid():
+    #         result = create_tasks(serializer.data)
+    #         return Response(result)
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RegExpList(generics.ListAPIView):

@@ -15,95 +15,95 @@ from catalogs.models import (
     Direction,
     Client
 )
-from packing.models import Task, TaskPallet, Pallet
+
 from .models import (
     RawMark,
     MarkingOperation,
     MarkingOperationMark,
-    PalletCode,
-    TaskProduct
+    # PalletCode,
+    # TaskProduct
 )
 
 User = get_user_model()
 
 
-def update_task(task: Task, content: dict) -> None:
-    task.ready_to_unload = True
-    task.save()
+# def update_task(task: Task, content: dict) -> None:
+#     task.ready_to_unload = True
+#     task.save()
 
 
-def create_tasks(collecting_data: Iterable) -> Iterable:
-    result = []
-    for element in collecting_data:
-        external_source = ExternalSource.objects.filter(
-            external_key=element['external_source']['external_key']).first()
-        if external_source is None:
-            external_source = ExternalSource.objects.create(
-                **element['external_source'])
-
-        task = Task.objects.filter(external_source=external_source).first()
-        if not task is None:
-            external_key = task.external_source.external_key
-            result.append({'type_task': task.type_task,
-                           'external_source': external_key})
-            continue
-
-        direction = element.get('direction')
-        if not direction is None:
-            direction = Direction.objects.filter(
-                external_key=element['direction']['external_key']).first()
-
-        client = element.get('client')
-        if not client is None:
-            client = Client.objects.filter(
-                external_key=element['client']['external_key']).first()
-            client = Client.objects.create(
-                **element['client']) if client is None else client
-
-        parent_task = element.get('parent_task')
-        if not parent_task is None:
-            parent_task = Task.objects.filter(
-                external_source__external_key=element['parent_task'][
-                    'external_key']).first()
-
-        task = Task.objects.create(type_task=element['type_task'],
-                                   external_source=external_source,
-                                   direction=direction,
-                                   client=client,
-                                   parent_task=parent_task,
-                                   status=Task.NEW)
-
-        external_key = task.external_source.external_key
-        result.append({'type_task': task.type_task,
-                       'external_source': external_key})
-
-        if not element.get('products') is None:
-            for task_product in element['products']:
-                product = Product.objects.filter(
-                    external_key=task_product['product']).first()
-                if product is None:
-                    continue
-
-                weight = 0 if task_product.get('weight') is None else \
-                    task_product['weight']
-
-                count = 0 if task_product.get('count') is None else \
-                    task_product['count']
-
-                TaskProduct.objects.create(task=task,
-                                           product=product,
-                                           weight=weight,
-                                           count=count)
-
-        if element.get('pallets') is None:
-            continue
-
-        for pallet_id in element['pallets']:
-            pallet = Pallet.objects.filter(id=pallet_id).first()
-            if pallet is None:
-                continue
-            TaskPallet.objects.create(task=task, pallet=pallet)
-    return result
+# def create_tasks(collecting_data: Iterable) -> Iterable:
+#     result = []
+#     for element in collecting_data:
+#         external_source = ExternalSource.objects.filter(
+#             external_key=element['external_source']['external_key']).first()
+#         if external_source is None:
+#             external_source = ExternalSource.objects.create(
+#                 **element['external_source'])
+#
+#         task = Task.objects.filter(external_source=external_source).first()
+#         if not task is None:
+#             external_key = task.external_source.external_key
+#             result.append({'type_task': task.type_task,
+#                            'external_source': external_key})
+#             continue
+#
+#         direction = element.get('direction')
+#         if not direction is None:
+#             direction = Direction.objects.filter(
+#                 external_key=element['direction']['external_key']).first()
+#
+#         client = element.get('client')
+#         if not client is None:
+#             client = Client.objects.filter(
+#                 external_key=element['client']['external_key']).first()
+#             client = Client.objects.create(
+#                 **element['client']) if client is None else client
+#
+#         parent_task = element.get('parent_task')
+#         if not parent_task is None:
+#             parent_task = Task.objects.filter(
+#                 external_source__external_key=element['parent_task'][
+#                     'external_key']).first()
+#
+#         task = Task.objects.create(type_task=element['type_task'],
+#                                    external_source=external_source,
+#                                    direction=direction,
+#                                    client=client,
+#                                    parent_task=parent_task,
+#                                    status=Task.NEW)
+#
+#         external_key = task.external_source.external_key
+#         result.append({'type_task': task.type_task,
+#                        'external_source': external_key})
+#
+#         if not element.get('products') is None:
+#             for task_product in element['products']:
+#                 product = Product.objects.filter(
+#                     external_key=task_product['product']).first()
+#                 if product is None:
+#                     continue
+#
+#                 weight = 0 if task_product.get('weight') is None else \
+#                     task_product['weight']
+#
+#                 count = 0 if task_product.get('count') is None else \
+#                     task_product['count']
+#
+#                 TaskProduct.objects.create(task=task,
+#                                            product=product,
+#                                            weight=weight,
+#                                            count=count)
+#
+#         if element.get('pallets') is None:
+#             continue
+#
+#         for pallet_id in element['pallets']:
+#             pallet = Pallet.objects.filter(id=pallet_id).first()
+#             if pallet is None:
+#                 continue
+#             TaskPallet.objects.create(task=task, pallet=pallet)
+#     return result
 
 
 def get_dashboard_data() -> Dict:
@@ -167,27 +167,27 @@ def _get_data_report_marking_dynamics(start: datetime, end: datetime, lines: Lis
     return result
 
 
-def change_pallet_content(content: Dict) -> None:
-    source = Pallet.objects.get(id=content['source'])
-    destination = Pallet.objects.get(id=content['destination'])
+# def change_pallet_content(content: Dict) -> None:
+#     source = Pallet.objects.get(id=content['source'])
+#     destination = Pallet.objects.get(id=content['destination'])
+#
+#     for code in content['codes']:
+#         pallet_code = PalletCode.objects.filter(pallet=source,
+#                                                 code=code).first()
+#         if not pallet_code is None:
+#             pallet_code.pallet = destination
+#             pallet_code.save()
 
-    for code in content['codes']:
-        pallet_code = PalletCode.objects.filter(pallet=source,
-                                                code=code).first()
-        if not pallet_code is None:
-            pallet_code.pallet = destination
-            pallet_code.save()
 
-
-def create_pallet(collecting_data: Iterable) -> None:
-    """ Создает паллету и наполняет ее кодами агрегации"""
-    for element in collecting_data:
-        product = Product.objects.filter(guid=element['product']).first()
-        pallet = Pallet.objects.create(id=element['id'], product=product)
-        for code in element['codes']:
-            if not PalletCode.objects.filter(pallet=pallet,
-                                             code=code).exists():
-                PalletCode.objects.create(pallet=pallet, code=code)
+# def create_pallet(collecting_data: Iterable) -> None:
+#     """ Создает паллету и наполняет ее кодами агрегации"""
+#     for element in collecting_data:
+#         product = Product.objects.filter(guid=element['product']).first()
+#         pallet = Pallet.objects.create(id=element['id'], product=product)
+#         for code in element['codes']:
+#             if not PalletCode.objects.filter(pallet=pallet,
+#                                              code=code).exists():
+#                 PalletCode.objects.create(pallet=pallet, code=code)
 
 
 def confirm_marks_unloading(operations: list) -> None:
@@ -200,57 +200,58 @@ def confirm_marks_unloading(operations: list) -> None:
 
 
 def get_marks_to_unload() -> list:
-    """ Возвращает список марок для выгрузки. Марки по закрытым маркировкам
-    С отметкой ready_to_unload"""
+    pass
+    # """ Возвращает список марок для выгрузки. Марки по закрытым маркировкам
+    # С отметкой ready_to_unload"""
+    #
+    # values = MarkingOperationMark.objects.filter(
+    #     operation__ready_to_unload=True,
+    #     operation__unloaded=False,
+    #     operation__closed=True,
+    # ).values('encoded_mark',
+    #          'aggregation_code',
+    #          'product__external_key',
+    #          'operation__production_date',
+    #          'operation__batch_number',
+    #          'operation__guid',
+    #          'operation__organization__external_key',
+    #          'operation__line',
+    #          'operation__line__storage__external_key',
+    #          'operation__line__department__external_key',
+    #          'operation__line__type_factory_operation__external_key',
+    #          )
+    #
+    # data = []
+    # aggregation_codes = [element['aggregation_code'] for element in values]
+    # pallets = {element.code: element.pallet for element in
+    #            PalletCode.objects.filter(code__in=aggregation_codes)}
+    #
+    # for value in values:
+    #     element = {'operation': value['operation__guid'],
+    #                'encoded_mark': value['encoded_mark'],
+    #                'aggregation_code': value['aggregation_code'],
+    #                'pallet': None if pallets.get(
+    #                    value['aggregation_code']) is None else pallets[
+    #                    value['aggregation_code']].id,
+    #                'product': value['product__external_key'],
+    #                'production_date': value[
+    #                    'operation__production_date'].strftime(
+    #                    "%d.%m.%Y"),
+    #                'batch_number': value['operation__batch_number'],
+    #                'organization': value[
+    #                    'operation__organization__external_key'],
+    #                'storage': value[
+    #                    'operation__line__storage__external_key'],
+    #                'line': value[
+    #                    'operation__line'],
+    #                'department': value[
+    #                    'operation__line__department__external_key'],
+    #                'type_factory_operation': value[
+    #                    'operation__line__type_factory_operation__external_key']
+    #                }
+    #     data.append(element)
 
-    values = MarkingOperationMark.objects.filter(
-        operation__ready_to_unload=True,
-        operation__unloaded=False,
-        operation__closed=True,
-    ).values('encoded_mark',
-             'aggregation_code',
-             'product__external_key',
-             'operation__production_date',
-             'operation__batch_number',
-             'operation__guid',
-             'operation__organization__external_key',
-             'operation__line',
-             'operation__line__storage__external_key',
-             'operation__line__department__external_key',
-             'operation__line__type_factory_operation__external_key',
-             )
-
-    data = []
-    aggregation_codes = [element['aggregation_code'] for element in values]
-    pallets = {element.code: element.pallet for element in
-               PalletCode.objects.filter(code__in=aggregation_codes)}
-
-    for value in values:
-        element = {'operation': value['operation__guid'],
-                   'encoded_mark': value['encoded_mark'],
-                   'aggregation_code': value['aggregation_code'],
-                   'pallet': None if pallets.get(
-                       value['aggregation_code']) is None else pallets[
-                       value['aggregation_code']].id,
-                   'product': value['product__external_key'],
-                   'production_date': value[
-                       'operation__production_date'].strftime(
-                       "%d.%m.%Y"),
-                   'batch_number': value['operation__batch_number'],
-                   'organization': value[
-                       'operation__organization__external_key'],
-                   'storage': value[
-                       'operation__line__storage__external_key'],
-                   'line': value[
-                       'operation__line'],
-                   'department': value[
-                       'operation__line__department__external_key'],
-                   'type_factory_operation': value[
-                       'operation__line__type_factory_operation__external_key']
-                   }
-        data.append(element)
-
-    return data
+    return None
 
 
 def remove_marks(marks: list) -> None:

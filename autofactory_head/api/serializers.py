@@ -1,31 +1,18 @@
-from packing.marking_services import get_base64_string
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
-from django.contrib.auth import get_user_model
-from users.models import Setting
-from packing.models import (
-    MarkingOperation,
-    Pallet,
-    PalletCode,
-    Task,
-    TaskProduct,
-)
 
-from catalogs.models import (
-    Organization,
-    Product,
-    Device,
-    Line,
-    Department,
-    Storage,
-    Unit,
-    Log,
-    ExternalSource,
-    Direction,
-    Client,
-    TypeFactoryOperation,
-    RegularExpression,
+from catalogs.models import (Client, Department, Device, Direction,
+                             ExternalSource, Line, Log, Organization, Product,
+                             RegularExpression, Storage, TypeFactoryOperation,
+                             Unit)
+from packing.marking_services import get_base64_string
+from packing.models import MarkingOperation
+from warehouse_management.models import (
+    Pallet,
+    PalletContent
 )
+from users.models import Setting
 
 User = get_user_model()
 
@@ -216,18 +203,18 @@ class ProductShortSerializer(serializers.ModelSerializer):
         model = Product
 
 
-class PalletReadSerializer(serializers.Serializer):
-    codes = serializers.SerializerMethodField()
-    id = serializers.CharField()
-    product = ProductShortSerializer()
-    is_confirmed = serializers.BooleanField()
-
-    def get_codes(self, obj):
-        pallet_codes = PalletCode.objects.filter(pallet=obj)
-        if pallet_codes.exists():
-            return [i.code for i in pallet_codes]
-        else:
-            return []
+# class PalletReadSerializer(serializers.Serializer):
+#     codes = serializers.SerializerMethodField()
+#     id = serializers.CharField()
+#     product = ProductShortSerializer()
+#     is_confirmed = serializers.BooleanField()
+#
+#     def get_codes(self, obj):
+#         pallet_codes = PalletCode.objects.filter(pallet=obj)
+#         if pallet_codes.exists():
+#             return [i.code for i in pallet_codes]
+#         else:
+#             return []
 
 
 class PalletWriteSerializer(serializers.Serializer):
@@ -257,37 +244,37 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         model = Pallet
 
 
-class TaskUpdateSerializer(serializers.ModelSerializer):
-    pallet_ids = serializers.ListField(required=False)
-    unloaded = serializers.BooleanField(required=False)
-    ready_to_unload = serializers.BooleanField(required=False)
-    status = serializers.CharField(required=False)
-
-    class Meta:
-        fields = ('status', 'pallet_ids', 'unloaded', 'ready_to_unload')
-        model = Task
-
-
-class TaskPalletSerializer(serializers.ModelSerializer):
-    product_name = serializers.StringRelatedField(read_only=True,
-                                                  source='product')
-    count = serializers.SerializerMethodField()
-
-    class Meta:
-        fields = ('id', 'is_confirmed', 'product_name', 'count', 'guid')
-        model = Pallet
-
-    def get_count(self, obj):
-        return PalletCode.objects.filter(pallet__pk=obj.guid).count()
+# class TaskUpdateSerializer(serializers.ModelSerializer):
+#     pallet_ids = serializers.ListField(required=False)
+#     unloaded = serializers.BooleanField(required=False)
+#     ready_to_unload = serializers.BooleanField(required=False)
+#     status = serializers.CharField(required=False)
+#
+#     class Meta:
+#         fields = ('status', 'pallet_ids', 'unloaded', 'ready_to_unload')
+#         model = Task
 
 
-class TaskProductsSerializer(serializers.Serializer):
-    product = serializers.CharField()
-    weight = serializers.FloatField(required=False)
-    count = serializers.FloatField(required=False)
-
-    class Meta:
-        fields = ('product', 'weight', 'count')
+# class TaskPalletSerializer(serializers.ModelSerializer):
+#     product_name = serializers.StringRelatedField(read_only=True,
+#                                                   source='product')
+#     count = serializers.SerializerMethodField()
+#
+#     class Meta:
+#         fields = ('id', 'is_confirmed', 'product_name', 'count', 'guid')
+#         model = Pallet
+#
+#     def get_count(self, obj):
+#         return PalletCode.objects.filter(pallet__pk=obj.guid).count()
+#
+#
+# class TaskProductsSerializer(serializers.Serializer):
+#     product = serializers.CharField()
+#     weight = serializers.FloatField(required=False)
+#     count = serializers.FloatField(required=False)
+#
+#     class Meta:
+#         fields = ('product', 'weight', 'count')
 
 
 class ProductShortSerializer(serializers.ModelSerializer):
@@ -317,51 +304,51 @@ class ExternalSerializer(serializers.ModelSerializer):
         model = ExternalSource
 
 
-class TaskWriteSerializer(serializers.Serializer):
-    pallets = serializers.ListField(required=False)
-    products = TaskProductsSerializer(many=True, required=False)
-    type_task = serializers.CharField()
-    parent_task = ExternalSerializer(required=False)
-    client = ClientSerializer(required=False)
-    external_source = ExternalSerializer(required=False)
-    direction = DirectionSerializer(required=False)
-
-    class Meta:
-        fields = (
-            'type_task', 'products', 'pallets', 'external_source', 'client',
-            'direction', 'parent_task')
-
-
-class TaskReadSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField()
-    pallets = TaskPalletSerializer(many=True, read_only=True)
-    external_source = ExternalSerializer(required=False)
-    direction_name = serializers.StringRelatedField(read_only=True,
-                                                    source='direction')
-    client_name = serializers.StringRelatedField(read_only=True,
-                                                 source='client')
-
-    class Meta:
-        fields = (
-            'guid', 'number', 'status', 'date', 'products', 'pallets',
-            'client_name', 'direction_name', 'type_task', 'external_source')
-
-        model = Task
-
-    def get_products(self, obj):
-        task_products = TaskProduct.objects.filter(task__guid=obj.guid)
-        result = []
-        if not task_products.exists():
-            return result
-        for element in task_products:
-            result.append(
-                {'name': element.product.name,
-                 'weight': element.weight,
-                 'guid': element.product.guid,
-                 'gtin': element.product.gtin,
-                 'count': element.count,
-                 })
-        return result
+# class TaskWriteSerializer(serializers.Serializer):
+#     pallets = serializers.ListField(required=False)
+#     products = TaskProductsSerializer(many=True, required=False)
+#     type_task = serializers.CharField()
+#     parent_task = ExternalSerializer(required=False)
+#     client = ClientSerializer(required=False)
+#     external_source = ExternalSerializer(required=False)
+#     direction = DirectionSerializer(required=False)
+#
+#     class Meta:
+#         fields = (
+#             'type_task', 'products', 'pallets', 'external_source', 'client',
+#             'direction', 'parent_task')
+#
+#
+# class TaskReadSerializer(serializers.ModelSerializer):
+#     products = serializers.SerializerMethodField()
+#     pallets = TaskPalletSerializer(many=True, read_only=True)
+#     external_source = ExternalSerializer(required=False)
+#     direction_name = serializers.StringRelatedField(read_only=True,
+#                                                     source='direction')
+#     client_name = serializers.StringRelatedField(read_only=True,
+#                                                  source='client')
+#
+#     class Meta:
+#         fields = (
+#             'guid', 'number', 'status', 'date', 'products', 'pallets',
+#             'client_name', 'direction_name', 'type_task', 'external_source')
+#
+#         model = Task
+#
+#     def get_products(self, obj):
+#         task_products = TaskProduct.objects.filter(task__guid=obj.guid)
+#         result = []
+#         if not task_products.exists():
+#             return result
+#         for element in task_products:
+#             result.append(
+#                 {'name': element.product.name,
+#                  'weight': element.weight,
+#                  'guid': element.product.guid,
+#                  'gtin': element.product.gtin,
+#                  'count': element.count,
+#                  })
+#         return result
 
 
 class RegularExpressionSerializer(serializers.ModelSerializer):

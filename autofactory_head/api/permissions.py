@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
 from rest_framework import permissions
-from .exceptions import ActivationFailed
+
 from catalogs.models import ActivationKey
-from datetime import datetime
+
+from .exceptions import ActivationFailed
 
 User = get_user_model()
 

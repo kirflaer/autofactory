@@ -1,21 +1,8 @@
 from django.contrib import admin
 
-from .models import (
-    Organization,
-    Storage,
-    Department,
-    Device,
-    Line,
-    Product,
-    Unit,
-    LineProduct,
-    Log,
-    Client,
-    Direction,
-    TypeFactoryOperation,
-    RegularExpression,
-    ActivationKey
-)
+from .models import (ActivationKey, Client, Department, Device, Direction,
+                     Line, LineProduct, Log, Organization, Product,
+                     RegularExpression, Storage, TypeFactoryOperation, Unit)
 
 
 @admin.register(ActivationKey)

@@ -1,26 +1,12 @@
 from django.urls import path, re_path
 
-from .views import (
-    OrganizationList,
-    ProductViewSet,
-    UserRetrieve,
-    LineListCreateView,
-    StorageList,
-    DepartmentList,
-    DeviceViewSet,
-    MarksViewSet,
-    MarkingListCreateViewSet,
-    MarkingViewSet,
-    LogCreateViewSet,
-    PalletViewSet,
-    TaskUpdate,
-    PalletRetrieveUpdate,
-    TasksViewSet,
-    DirectionListCreateView,
-    TypeFactoryOperationViewSet,
-    RegExpList,
-    UnitsCreateListSet
-)
+from .views import (DepartmentList, DeviceViewSet, DirectionListCreateView,
+                    LineListCreateView, LogCreateViewSet,
+                    MarkingListCreateViewSet, MarkingViewSet, MarksViewSet,
+                    OrganizationList, PalletRetrieveUpdate, PalletViewSet,
+                    ProductViewSet, RegExpList, StorageList, TasksViewSet,
+                    TaskUpdate, TypeFactoryOperationViewSet,
+                    UnitsCreateListSet, UserRetrieve)
 
 urlpatterns = [
     re_path(r'v[0-9]/regexp/$', RegExpList.as_view()),

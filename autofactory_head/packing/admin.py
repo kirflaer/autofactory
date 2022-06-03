@@ -3,11 +3,11 @@ from .models import (
     RawMark,
     MarkingOperation,
     MarkingOperationMark,
-    PalletCode,
-    Pallet,
-    Task,
-    TaskProduct,
-    TaskPallet
+    # PalletCode,
+    # Pallet,
+    # Task,
+    # TaskProduct,
+    # TaskPallet
 )
 
 
@@ -34,30 +34,31 @@ class MarkingOperationMarkAdmin(admin.ModelAdmin):
     search_fields = ('operation__number',)
 
 
-@admin.register(Pallet)
-class PalletAdmin(admin.ModelAdmin):
-    list_display = ('date', 'guid', 'id', 'product')
-    search_fields = ('id',)
-
-
-@admin.register(PalletCode)
-class PalletCodesAdmin(admin.ModelAdmin):
-    list_display = ('pallet', 'code',)
-    search_fields = ('pallet__guid',)
-
-
-@admin.register(Task)
-class TaskAdmin(admin.ModelAdmin):
-    list_display = (
-        'date', 'guid', 'number', 'type_task', 'status', 'external_source',
-        'closed', 'ready_to_unload', 'unloaded')
-
-
-@admin.register(TaskProduct)
-class TaskProductsAdmin(admin.ModelAdmin):
-    list_display = ('task', 'product', 'weight')
-
-
-@admin.register(TaskPallet)
-class TaskPalletsAdmin(admin.ModelAdmin):
-    list_display = ('task', 'pallet')
+# TODO: Вынести в отдельное приложение
+# @admin.register(Pallet)
+# class PalletAdmin(admin.ModelAdmin):
+#     list_display = ('date', 'guid', 'id', 'product')
+#     search_fields = ('id',)
+#
+#
+# @admin.register(PalletCode)
+# class PalletCodesAdmin(admin.ModelAdmin):
+#     list_display = ('pallet', 'code',)
+#     search_fields = ('pallet__guid',)
+#
+#
+# @admin.register(Task)
+# class TaskAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'date', 'guid', 'number', 'type_task', 'status', 'external_source',
+#         'closed', 'ready_to_unload', 'unloaded')
+#
+#
+# @admin.register(TaskProduct)
+# class TaskProductsAdmin(admin.ModelAdmin):
+#     list_display = ('task', 'product', 'weight')
+#
+#
+# @admin.register(TaskPallet)
+# class TaskPalletsAdmin(admin.ModelAdmin):
+#     list_display = ('task', 'pallet')

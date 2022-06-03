@@ -6,8 +6,6 @@ from .views import (
     MarkingOperationListView,
     MarkingOperationRemoveView,
     MarkRemoveView,
-    PalletListView,
-    TaskListView,
     MarkingOperationUpdateView
 )
 
@@ -27,10 +25,4 @@ urlpatterns = [
     path('marking/remove-mark/<int:pk>', MarkRemoveView.as_view(),
          name='mark-remove'),
 
-    path('pallets/', PalletListView.as_view(),
-         name='pallets'),
-    path('pallets/detail/<uuid:pk>', views.pallet_detail,
-         name='pallet_detail'),
-
-    path('tasks/', TaskListView.as_view(), name='tasks'),
 ]

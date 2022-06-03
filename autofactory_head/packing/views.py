@@ -10,10 +10,9 @@ from packing.marking_services import get_marking_filters
 from packing.models import (
     MarkingOperation,
     MarkingOperationMark,
-    PalletCode,
-    Pallet,
-    Task
 )
+
+from warehouse_management.models import PalletContent
 
 from catalogs.models import Line
 
@@ -81,8 +80,10 @@ class MarkRemoveView(LoginRequiredMixin, DeleteView):
 @login_required
 def marking_pallets(request, operation):
     operation = get_object_or_404(MarkingOperation, pk=operation)
-    codes = MarkingOperationMark.objects.filter(operation=operation).values_list('aggregation_code', flat=True)
-    pallets = PalletCode.objects.filter(code__in=codes).values('pallet__id').annotate(count=Count('code'))
+    aggregation_codes = MarkingOperationMark.objects.filter(operation=operation).values_list('aggregation_code',
+                                                                                             flat=True)
+    pallets = PalletContent.objects.filter(aggregation_code__in=aggregation_codes).values(
+        'pallet__id').annotate(count=Count('aggregation_code'))
     paginator = Paginator(pallets, 30)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -93,7 +94,7 @@ def marking_pallets(request, operation):
 @login_required
 def marking_pallets_detail(request, operation, pallet):
     operation = get_object_or_404(MarkingOperation, pk=operation)
-    aggregation_code = PalletCode.objects.filter(pallet__id=pallet).values_list('code', flat=True)
+    aggregation_code = PalletContent.objects.filter(pallet__id=pallet).values_list('code', flat=True)
     marks = MarkingOperationMark.objects.filter(operation=operation, aggregation_code__in=aggregation_code).values(
         'aggregation_code').annotate(count=Count('mark'))
 
@@ -115,24 +116,3 @@ def marking_detail(request, pk):
     return render(request, 'marking_detail.html', {'page_obj': page_obj, 'paginator': paginator})
 
 
-class PalletListView(OperationBasicListView):
-    model = Pallet
-    template_name = 'pallet.html'
-    extra_context = {
-        'title': 'Собранные паллеты',
-    }
-
-
-@login_required
-def pallet_detail(request, pk):
-    pallet = get_object_or_404(Pallet, pk=pk)
-    codes = PalletCode.objects.all().filter(pallet=pallet)
-    return render(request, 'pallet_codes.html', {'data': codes})
-
-
-class TaskListView(OperationBasicListView):
-    model = Task
-    template_name = 'tasks.html'
-    extra_context = {
-        'title': 'Задания',
-    }

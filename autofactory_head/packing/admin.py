@@ -3,11 +3,6 @@ from .models import (
     RawMark,
     MarkingOperation,
     MarkingOperationMark,
-    # PalletCode,
-    # Pallet,
-    # Task,
-    # TaskProduct,
-    # TaskPallet
 )
 
 
@@ -47,11 +42,6 @@ class MarkingOperationMarkAdmin(admin.ModelAdmin):
 #     search_fields = ('pallet__guid',)
 #
 #
-# @admin.register(Task)
-# class TaskAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'date', 'guid', 'number', 'type_task', 'status', 'external_source',
-#         'closed', 'ready_to_unload', 'unloaded')
 #
 #
 # @admin.register(TaskProduct)

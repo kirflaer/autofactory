@@ -1,8 +1,10 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 
+from tasks.models import Task
 
-class PalletListView(LoginRequiredMixin, ListView):
+
+class TaskListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
     ordering = '-date'
     model = Task

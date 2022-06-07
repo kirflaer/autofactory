@@ -9,7 +9,7 @@ urlpatterns = [
     path("", include("catalogs.urls")),
     path("", include("packing.urls")),
     path("", include("warehouse_management.urls")),
-   # path("", include("tasks.urls")),
+    path("", include("tasks.urls")),
 
 ]
 

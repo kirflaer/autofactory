@@ -37,7 +37,7 @@ class Direction(BaseExternalModel):
 
 
 class Storage(BaseExternalModel):
-    pass
+    store_semi_product = models.BooleanField('Хранит полуфабрикаты', default=False)
 
 
 class Department(BaseExternalModel):
@@ -84,8 +84,8 @@ class Device(BaseModel):
 class Product(BaseExternalModel):
     gtin = models.CharField(default='', blank=True, max_length=50)
     expiration_date = models.PositiveIntegerField('Срок годности', default=0)
-    is_weight = models.BooleanField(default=False,
-                                    verbose_name='Весовой товар')
+    is_weight = models.BooleanField('Весовой товар', default=False)
+    semi_product = models.BooleanField('Полуфабрикат', default=False)
 
 
 class Line(BaseModel):

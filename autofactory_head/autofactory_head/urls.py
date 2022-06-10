@@ -9,8 +9,6 @@ urlpatterns = [
     path("", include("catalogs.urls")),
     path("", include("packing.urls")),
     path("", include("warehouse_management.urls")),
-    path("", include("tasks.urls")),
-
 ]
 
 handler404 = "autofactory_head.views.page_not_found"

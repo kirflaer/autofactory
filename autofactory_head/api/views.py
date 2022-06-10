@@ -2,39 +2,26 @@ import base64
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
-from catalogs.models import (ActivationKey, Department, Device, Direction,
-                             Line, LineProduct, Organization, Product,
-                             RegularExpression, Storage, TypeFactoryOperation,
-                             Unit)
-from packing.marking_services import (confirm_marks_unloading,
-                                      create_marking_marks, get_marks_to_unload,
+from catalogs.models import (ActivationKey, Department, Device, Direction, Line, LineProduct, Organization, Product,
+                             RegularExpression, Storage, TypeFactoryOperation, Unit)
+from packing.marking_services import (confirm_marks_unloading, create_marking_marks, get_marks_to_unload,
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
+from tasks.task_services import get_task_queryset, TaskException
+from warehouse_management.models import Pallet
+from warehouse_management.warehouse_services import get_content_router, create_pallets
 
 from .exceptions import ActivationFailed
-from .serializers import (AggregationsSerializer,
-                          ChangePalletContentSerializer,
-                          ConfirmUnloadingSerializer,
-                          DepartmentSerializer,
-                          DeviceSerializer,
-                          DirectionSerializer,
-                          LineCreateSerializer,
-                          LogSerializer,
-                          MarkingSerializer,
-                          MarksSerializer,
-                          OrganizationSerializer,
-                          PalletUpdateSerializer,
-                          ProductSerializer, RegularExpressionSerializer,
-                          StorageSerializer,
-                          TypeFactoryOperationSerializer,
-                          UnitSerializer,
-                          UserSerializer, LineSerializer)
+from .serializers import (AggregationsSerializer, ConfirmUnloadingSerializer, DepartmentSerializer,
+                          DeviceSerializer, DirectionSerializer, LineCreateSerializer, LogSerializer,
+                          MarkingSerializer, MarksSerializer, OrganizationSerializer, ProductSerializer,
+                          RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
+                          UnitSerializer, UserSerializer, LineSerializer, PalletWriteSerializer, PalletReadSerializer)
 
 User = get_user_model()
 
@@ -56,6 +43,7 @@ class UserRetrieve(generics.RetrieveAPIView):
 
 
 class TypeFactoryOperationViewSet(generics.ListCreateAPIView):
+    """ Типы производственных операций"""
     queryset = TypeFactoryOperation.objects.all()
     serializer_class = TypeFactoryOperationSerializer
 
@@ -145,17 +133,19 @@ class LineListCreateView(generics.ListCreateAPIView):
 class DeviceViewSet(viewsets.ViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def list_scanners(self, request):
+    @staticmethod
+    def list_scanners(request):
         """Список автоматических сканеров"""
         queryset = Device.objects.all()
         queryset = queryset.filter(mode=Device.AUTO_SCANNER)
         serializer = DeviceSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    def create(self, request):
+    @staticmethod
+    def create(request):
         """Создает устройство пользователя и связывает с пользователем
         Если устройство найдено по идентификатору то просто связывает"""
-        if not request.user.device is None:
+        if request.user.device is not None:
             raise APIException("У пользователя уже определено устройство")
 
         serializer = DeviceSerializer(data=request.data)
@@ -186,7 +176,8 @@ class DeviceViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def remove(self, request):
+    @staticmethod
+    def remove(request):
         """Очищает связанное устройство у пользователя"""
         if request.user.device is None:
             raise APIException('У пользователя не определено устройство')
@@ -211,11 +202,11 @@ class MarkingListCreateViewSet(generics.ListCreateAPIView):
                   'line': line}
 
         product = serializer.validated_data.get('product')
-        if not product is None:
+        if product is not None:
             values['product'] = Product.objects.filter(pk=product).first()
 
         organization = serializer.validated_data.get('organization')
-        if not organization is None:
+        if organization is not None:
             values['organization'] = Organization.objects.filter(
                 pk=organization).first()
 
@@ -303,31 +294,33 @@ class LogCreateViewSet(generics.CreateAPIView):
 
 
 class PalletViewSet(viewsets.ViewSet):
-    pass
-    # def list(self, request):
-    #     queryset = Pallet.objects.all()
+    @staticmethod
+    def list(request):
+        queryset = Pallet.objects.all()
+
+        if len(request.query_params):
+            if request.query_params.get('id') is None:
+                queryset = queryset.filter(id=request.query_params.get('id'))
+
+        serializer = PalletReadSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = PalletWriteSerializer(data=request.data, many=True)
+
+        if serializer.is_valid():
+            create_pallets(serializer.validated_data)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     #
-    #     if len(request.query_params):
-    #         if not request.query_params.get('id') is None:
-    #             queryset = queryset.filter(id=request.query_params.get('id'))
-    #
-    #     serializer = PalletReadSerializer(queryset, many=True)
-    #     return Response(serializer.data)
-    #
-    # def create(self, request):
-    #     serializer = PalletWriteSerializer(data=request.data, many=True)
-    #
-    #     if serializer.is_valid():
-    #         create_pallet(serializer.validated_data)
-    #         return Response(serializer.data)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    #
-    # def change_content(self, request):
-    #     serializer = ChangePalletContentSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         change_pallet_content(serializer.validated_data)
-    #         return Response(serializer.data)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def change_content(self, request):
+        pass
+        # serializer = ChangePalletContentSerializer(data=request.data)
+        # if serializer.is_valid():
+        #     change_pallet_content(serializer.validated_data)
+        #     return Response(serializer.data)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
@@ -354,34 +347,45 @@ class TaskUpdate(generics.UpdateAPIView):
 
 
 class TasksViewSet(viewsets.ViewSet):
-    pass
-    # def list(self, request):
-    #     queryset = Task.objects.all()
-    #
-    #     filter_data = {key: value for key, value in
-    #                    request.query_params.items()}
-    #     if filter_data.get('not_closed'):
-    #         queryset = queryset.exclude(status=Task.CLOSE)
-    #         filter_data.pop('not_closed')
-    #     elif filter_data.get('only_close'):
-    #         queryset = queryset.filter(status=Task.CLOSE)
-    #         filter_data.pop('only_close')
-    #     else:
-    #         queryset = queryset.filter(
-    #             Q(user=self.request.user) | Q(status=Task.NEW))
-    #
-    #     queryset = queryset.filter(**filter_data)
-    #
-    #     serializer = TaskReadSerializer(queryset, many=True)
-    #
-    #     return Response(serializer.data)
-    #
-    # def create(self, request):
-    #     serializer = TaskWriteSerializer(data=request.data, many=True)
-    #     if serializer.is_valid():
-    #         result = create_tasks(serializer.data)
-    #         return Response(result)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def list(self, request, type_task):
+        # TODO: все роутеры вынести в голобальный синглтон
+        # в router будут добавлены роутеры всех сервисов
+        warehouse_router = get_content_router()
+        router = warehouse_router | {}
+
+        task_router = router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+
+        filter_task = {key: value for key, value in request.query_params.items()}
+        filter_task['user'] = self.request.user
+
+        try:
+            task_queryset = get_task_queryset(task_router.task, filter_task)
+        except TaskException:
+            raise APIException('Не найден переданный фильтр')
+
+        serializer = task_router.read_serializer(task_queryset, many=True)
+        return Response(serializer.data)
+
+    @staticmethod
+    def create(request, type_task):
+        # TODO: все роутеры вынести в голобальный синглтон
+        # в router будут добавлены роутеры всех сервисов
+        warehouse_router = get_content_router()
+        router = warehouse_router | {}
+
+        task_router = router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+
+        serializer = task_router.write_serializer(data=request.data, many=True)
+        if serializer.is_valid():
+            # TODO: обработать ошибку создания
+            result = task_router.create_function(serializer.data, request.user)
+            return Response({'type_task': type_task, 'guids': result})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RegExpList(generics.ListAPIView):

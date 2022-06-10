@@ -38,6 +38,6 @@ urlpatterns = [
          PalletViewSet.as_view(
              {'get': 'list', 'post': 'create', 'patch': 'change_content'})),
     path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
-    path('v1/tasks/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('v1/tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('v1/tasks/<uuid:pk>/', TaskUpdate.as_view()),
 ]

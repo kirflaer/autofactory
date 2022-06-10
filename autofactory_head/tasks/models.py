@@ -2,8 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 from catalogs.models import ExternalSource
-from factory_core.models import BaseModel, ExternalSystemExchangeMixin
-from rest_framework import serializers
+from factory_core.models import ExternalSystemExchangeMixin
 
 User = get_user_model()
 
@@ -14,7 +13,7 @@ class TaskStatus(models.TextChoices):
     CLOSE = 'CLOSE'
 
 
-class Task(BaseModel, ExternalSystemExchangeMixin):
+class Task(ExternalSystemExchangeMixin):
     type_task = models.CharField(max_length=255, verbose_name='Тип задания')
 
     parent_task = models.ForeignKey('self', on_delete=models.CASCADE,
@@ -35,5 +34,5 @@ class Task(BaseModel, ExternalSystemExchangeMixin):
                                         null=True,
                                         blank=True)
 
-    serializer: serializers
-    content_manager = models.Manager()
+    class Meta:
+        abstract = True

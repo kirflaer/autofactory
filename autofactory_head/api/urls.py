@@ -1,11 +1,8 @@
 from django.urls import path, re_path
 
-from .views import (DepartmentList, DeviceViewSet, DirectionListCreateView,
-                    LineListCreateView, LogCreateViewSet,
-                    MarkingListCreateViewSet, MarkingViewSet, MarksViewSet,
-                    OrganizationList, PalletRetrieveUpdate, PalletViewSet,
-                    ProductViewSet, RegExpList, StorageList, TasksViewSet,
-                    TaskUpdate, TypeFactoryOperationViewSet,
+from .views import (DepartmentList, DeviceViewSet, DirectionListCreateView, LineListCreateView, LogCreateViewSet,
+                    MarkingListCreateViewSet, MarkingViewSet, MarksViewSet, OrganizationList, PalletRetrieveUpdate,
+                    PalletViewSet, ProductViewSet, RegExpList, StorageList, TasksViewSet, TypeFactoryOperationViewSet,
                     UnitsCreateListSet, UserRetrieve)
 
 urlpatterns = [
@@ -39,5 +36,5 @@ urlpatterns = [
              {'get': 'list', 'post': 'create', 'patch': 'change_content'})),
     path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
     path('v1/tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('v1/tasks/<uuid:pk>/', TaskUpdate.as_view()),
+    path('v1/tasks/status/<str:type_task>/<uuid:guid>/', TasksViewSet.as_view({'patch': 'change_status'})),
 ]

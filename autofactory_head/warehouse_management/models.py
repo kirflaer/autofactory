@@ -3,7 +3,7 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from catalogs.models import Product
+from catalogs.models import Product, Storage
 from factory_core.models import BaseModel
 from tasks.models import Task
 
@@ -29,6 +29,7 @@ class Pallet(models.Model):
     weight = models.FloatField('Вес', default=0)
     content_count = models.PositiveIntegerField('Количество позиций внутри паллеты', default=0)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -60,6 +61,8 @@ class BaseOperation(BaseModel, Task):
 
 class MovementOperation(BaseOperation):
     type_task = 'PRODUCT_MOVEMENT'
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Перемещение товаров'

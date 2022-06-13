@@ -12,7 +12,7 @@ User = get_user_model()
 
 class RouterContent(NamedTuple):
     task: type(Task)
-    create_function: Callable[[Iterable, type(User)], Iterable[str]]
+    create_function: Callable[[Iterable[dict[str, str]], type(User)], Iterable[str]]
     read_serializer: type(serializers.Serializer)
     write_serializer: type(serializers.Serializer)
 

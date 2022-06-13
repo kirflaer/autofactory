@@ -7,7 +7,7 @@ from catalogs.models import (Client, Department, Device, Direction, Line, Log, O
 from packing.marking_services import get_base64_string
 from packing.models import MarkingOperation
 from users.models import Setting
-from warehouse_management.models import PalletContent
+from warehouse_management.models import PalletContent, Pallet
 
 User = get_user_model()
 
@@ -262,6 +262,7 @@ class PalletReadSerializer(serializers.Serializer):
     status = serializers.CharField()
     batch_number = serializers.CharField()
     weight = serializers.IntegerField()
+    production_date = serializers.DateField(format="%Y-%m-%d")
 
     @staticmethod
     def get_codes(obj):
@@ -276,3 +277,9 @@ class PalletReadSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         pass
+
+
+class PalletUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('status',)
+        model = Pallet

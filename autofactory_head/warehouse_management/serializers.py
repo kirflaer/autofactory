@@ -80,6 +80,7 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     storage = StorageSerializer()
     production_date = serializers.DateField(format="%Y-%m-%d")
+    date = serializers.DateTimeField(format="%Y-%m-%d")
     pallets = serializers.SerializerMethodField()
     pallets_count = serializers.SerializerMethodField()
 

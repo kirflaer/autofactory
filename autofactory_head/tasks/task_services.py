@@ -32,7 +32,7 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
      В роутере содержатся модели наследуемые от Task """
     queryset = task.objects.all()
 
-    class_keys = set(dir(Task))
+    class_keys = set(dir(Task)) | {'not_closed', 'only_close'}
     filter_keys = set(filter_task.keys())
 
     if len(filter_keys.difference(class_keys)):

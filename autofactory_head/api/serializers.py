@@ -243,10 +243,12 @@ class RegularExpressionSerializer(serializers.ModelSerializer):
 
 
 class PalletWriteSerializer(serializers.Serializer):
-    codes = serializers.ListField()
+    codes = serializers.ListField(required=False)
     id = serializers.CharField()
     product = serializers.CharField()
     batch_number = serializers.CharField(required=False)
+    production_date = serializers.DateField(format="%Y-%m-%d", required=False)
+    content_count = serializers.IntegerField(required=False)
 
     def create(self, validated_data):
         pass

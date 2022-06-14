@@ -105,14 +105,11 @@ def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
         if not pallet:
             product = element['product']
             element['product'] = Product.objects.filter(guid=product).first()
+
             serializer_keys = set(element.keys())
-            serializer_keys.remove('codes')
             class_keys = set(dir(Pallet))
             fields = {key: element[key] for key in (class_keys & serializer_keys)}
             pallet = Pallet.objects.create(**fields, status=PalletStatus.CONFIRMED)
 
-            for code in element['codes']:
-                if not PalletContent.objects.filter(pallet=pallet, aggregation_code=code).exists():
-                    PalletContent.objects.create(pallet=pallet, aggregation_code=code)
         result.append(pallet.id)
     return result

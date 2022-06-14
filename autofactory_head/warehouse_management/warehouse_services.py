@@ -6,10 +6,10 @@ from django.db import transaction
 from catalogs.models import ExternalSource, Product
 from tasks.models import TaskStatus
 from tasks.task_services import RouterContent
-from warehouse_management.models import MovementOperation, Pallet, BaseOperation, OperationPallet, OperationProduct, \
-    PalletContent, PalletStatus, PalletCollectOperation
-from warehouse_management.serializers import MovementOperationReadSerializer, MovementOperationWriteSerializer, \
-    PalletCollectOperationWriteSerializer
+from warehouse_management.models import (AcceptanceOperation, Pallet, BaseOperation, OperationPallet, OperationProduct,
+                                         PalletContent, PalletStatus, PalletCollectOperation)
+from warehouse_management.serializers import (
+    AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer)
 
 User = get_user_model()
 
@@ -18,10 +18,10 @@ def get_content_router() -> dict[str: RouterContent]:
     """ Возвращает роутер для потомков Task.
     В зависимости от переданного типа задания формируется класс и сериализаторы"""
 
-    return {'PRODUCT_MOVEMENT': RouterContent(task=MovementOperation,
-                                              create_function=create_movement_operation,
-                                              read_serializer=MovementOperationReadSerializer,
-                                              write_serializer=MovementOperationWriteSerializer),
+    return {'ACCEPTANCE_TO_STOCK': RouterContent(task=AcceptanceOperation,
+                                                 create_function=create_acceptance_operation,
+                                                 read_serializer=AcceptanceOperationReadSerializer,
+                                                 write_serializer=AcceptanceOperationWriteSerializer),
             'PALLET_COLLECT': RouterContent(task=PalletCollectOperation,
                                             create_function=create_collect_operation,
                                             read_serializer=PalletCollectOperationWriteSerializer,
@@ -42,17 +42,17 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
 
 
 @transaction.atomic
-def create_movement_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения. Возвращает идентификаторы внешнего источника """
 
     result = []
     for element in serializer_data:
         external_source = get_or_create_external_source(element)
         result.append(external_source.external_key)
-        operation = MovementOperation.objects.filter(external_source=external_source).first()
+        operation = AcceptanceOperation.objects.filter(external_source=external_source).first()
         if operation is not None:
             continue
-        operation = MovementOperation.objects.create(external_source=external_source)
+        operation = AcceptanceOperation.objects.create(external_source=external_source)
         fill_operation_pallets(operation, element['pallets'])
         fill_operation_products(operation, element['products'])
 

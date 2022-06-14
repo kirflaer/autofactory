@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from warehouse_management.models import (
-    MovementOperation,
+    AcceptanceOperation,
     Pallet,
     OperationPallet,
     OperationProduct,
@@ -9,8 +9,8 @@ from warehouse_management.models import (
 )
 
 
-@admin.register(MovementOperation)
-class MovementOperationAdmin(admin.ModelAdmin):
+@admin.register(AcceptanceOperation)
+class AcceptanceOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')

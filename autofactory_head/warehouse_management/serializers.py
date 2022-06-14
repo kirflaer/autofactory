@@ -3,7 +3,7 @@ from rest_framework import serializers
 #TODO убрать зависимость от модуля api
 from api.serializers import PalletWriteSerializer, StorageSerializer
 from catalogs.serializers import ExternalSerializer
-from warehouse_management.models import MovementOperation, OperationProduct
+from warehouse_management.models import AcceptanceOperation, OperationProduct
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -44,7 +44,7 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
         pass
 
 
-class MovementOperationWriteSerializer(OperationBaseSerializer):
+class AcceptanceOperationWriteSerializer(OperationBaseSerializer):
     products = OperationProductsSerializer(many=True)
     pallets = serializers.ListField()
     storage = serializers.CharField(required=False)
@@ -54,13 +54,13 @@ class MovementOperationWriteSerializer(OperationBaseSerializer):
         fields = ('external_source', 'products', 'pallets', 'storage', 'production_date')
 
 
-class MovementOperationReadSerializer(serializers.ModelSerializer):
+class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     storage = StorageSerializer()
     production_date = serializers.DateField(format="%Y-%m-%d")
 
     class Meta:
-        model = MovementOperation
+        model = AcceptanceOperation
         fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products')
 
     @staticmethod

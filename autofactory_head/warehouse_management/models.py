@@ -59,14 +59,14 @@ class BaseOperation(BaseModel, Task):
         abstract = True
 
 
-class MovementOperation(BaseOperation):
-    type_task = 'PRODUCT_MOVEMENT'
+class AcceptanceOperation(BaseOperation):
+    type_task = 'ACCEPTANCE_TO_STOCK'
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
     production_date = models.DateField('Дата выработки', blank=True, null=True)
 
     class Meta:
-        verbose_name = 'Перемещение товаров'
-        verbose_name_plural = 'Операции перемещения товаров'
+        verbose_name = 'Приемка на склад'
+        verbose_name_plural = 'Операции приемки товаров'
 
 
 class PalletCollectOperation(BaseOperation):

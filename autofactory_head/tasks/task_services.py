@@ -48,6 +48,7 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
         queryset = queryset.filter(Q(user=filter_task['user']) | Q(status=TaskStatus.NEW))
         filter_task.pop('user')
 
+    filter_task.pop('user')
     if len(filter_task):
         queryset = queryset.filter(**filter_task)
 

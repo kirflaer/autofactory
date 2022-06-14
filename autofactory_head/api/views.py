@@ -13,7 +13,7 @@ from packing.marking_services import (confirm_marks_unloading, create_marking_ma
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
 from tasks.serializers import TaskUpdateSerializer
-from tasks.task_services import get_task_queryset, TaskException
+from tasks.task_services import get_task_queryset, TaskException, change_task_properties
 from warehouse_management.models import Pallet
 from warehouse_management.warehouse_services import get_content_router, create_pallets
 
@@ -392,7 +392,7 @@ class TasksViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def change_status(self, request, type_task, guid):
+    def change_task(self, request, type_task, guid):
         task_router = self.router.get(type_task.upper())
         if not task_router:
             raise APIException('Тип задачи не найден')
@@ -402,11 +402,9 @@ class TasksViewSet(viewsets.ViewSet):
             raise APIException('Задача не найдена')
 
         serializer = TaskUpdateSerializer(data=request.data)
-
         if serializer.is_valid():
-            instance.status = serializer.validated_data.get('status')
-            instance.save()
-            return Response({'status': instance.status})
+            change_task_properties(instance, serializer.validated_data)
+            return Response({'status': serializer.validated_data})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

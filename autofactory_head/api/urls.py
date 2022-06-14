@@ -36,5 +36,5 @@ urlpatterns = [
              {'get': 'list', 'post': 'create', 'patch': 'change_content'})),
     path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
     path('v1/tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('v1/tasks/status/<str:type_task>/<uuid:guid>/', TasksViewSet.as_view({'patch': 'change_status'})),
+    path('v1/tasks/<str:type_task>/<uuid:guid>/', TasksViewSet.as_view({'patch': 'change_task'})),
 ]

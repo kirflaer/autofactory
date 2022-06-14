@@ -5,13 +5,15 @@ from .models import TaskStatus
 
 
 class TaskUpdateSerializer(serializers.Serializer):
-    status = serializers.CharField()
+    status = serializers.CharField(required=False)
+    unloaded = serializers.BooleanField(required=False)
 
     class Meta:
-        fields = ('status',)
+        fields = ('status', 'unloaded')
 
     def validate(self, attrs):
-        if not attrs.get('status').upper() in TaskStatus:
+        status = attrs.get('status')
+        if status is not None and not status.upper() in TaskStatus:
             raise APIException('Переданный статус не найден')
         return super().validate(attrs)
 

@@ -17,6 +17,16 @@ class RouterContent(NamedTuple):
     write_serializer: type(serializers.Serializer)
 
 
+def change_task_properties(instance: Task, serializer_data: dict[str: str]) -> None:
+    """ Сохраняет свойства инстанса из базового класса: статус, флаги выгрузки... """
+    keys = set(instance.__dict__.keys()) & set(serializer_data.keys())
+    if not len(keys):
+        return None
+
+    fields = {key: serializer_data[key] for key in keys}
+    type(instance).objects.filter(pk=instance.pk).update(**fields)
+
+
 def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
     """ Получает выборку из стандартного менеджера модели и сериализатор по типу задачи из роутера.
      В роутере содержатся модели наследуемые от Task """

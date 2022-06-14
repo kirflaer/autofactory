@@ -7,9 +7,10 @@ from catalogs.models import ExternalSource, Product
 from tasks.models import TaskStatus
 from tasks.task_services import RouterContent
 from warehouse_management.models import (AcceptanceOperation, Pallet, BaseOperation, OperationPallet, OperationProduct,
-                                         PalletContent, PalletStatus, PalletCollectOperation)
+                                         PalletStatus, PalletCollectOperation)
 from warehouse_management.serializers import (
-    AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer)
+    AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
+    PalletCollectOperationReadSerializer)
 
 User = get_user_model()
 
@@ -24,7 +25,7 @@ def get_content_router() -> dict[str: RouterContent]:
                                                  write_serializer=AcceptanceOperationWriteSerializer),
             'PALLET_COLLECT': RouterContent(task=PalletCollectOperation,
                                             create_function=create_collect_operation,
-                                            read_serializer=PalletCollectOperationWriteSerializer,
+                                            read_serializer=PalletCollectOperationReadSerializer,
                                             write_serializer=PalletCollectOperationWriteSerializer)}
 
 

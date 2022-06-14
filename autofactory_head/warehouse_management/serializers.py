@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-#TODO убрать зависимость от модуля api
+# TODO убрать зависимость от модуля api
 from api.serializers import PalletWriteSerializer, StorageSerializer
 from catalogs.serializers import ExternalSerializer
-from warehouse_management.models import AcceptanceOperation, OperationProduct
+from warehouse_management.models import AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -42,6 +42,27 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         pass
+
+
+class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
+    pallets = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PalletCollectOperation
+        fields = ('guid', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj):
+        pallets = OperationPallet.objects.filter(operation=obj.guid)
+        result = []
+        for element in pallets:
+            result.append(
+                {'product': element.pallet.product.external_key,
+                 'count': element.pallet.content_count,
+                 'batch_number': element.pallet.batch_number,
+                 'production_date': element.pallet.production_date,
+                 })
+        return result
 
 
 class AcceptanceOperationWriteSerializer(OperationBaseSerializer):

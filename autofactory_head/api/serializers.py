@@ -247,7 +247,7 @@ class PalletWriteSerializer(serializers.Serializer):
     id = serializers.CharField()
     product = serializers.CharField()
     batch_number = serializers.CharField(required=False)
-    production_date = serializers.DateField(format="%d.%m.%Y", required=False)
+    production_date = serializers.DateField(required=False)
     content_count = serializers.IntegerField(required=False)
 
     def create(self, validated_data):

@@ -247,7 +247,7 @@ class PalletWriteSerializer(serializers.Serializer):
     id = serializers.CharField()
     product = serializers.CharField()
     batch_number = serializers.CharField(required=False)
-    production_date = serializers.DateField(format="%Y-%m-%d", required=False)
+    production_date = serializers.DateField(format="%d.%m.%Y", required=False)
     content_count = serializers.IntegerField(required=False)
 
     def create(self, validated_data):
@@ -264,7 +264,7 @@ class PalletReadSerializer(serializers.Serializer):
     status = serializers.CharField()
     batch_number = serializers.CharField()
     weight = serializers.IntegerField()
-    production_date = serializers.DateField(format="%Y-%m-%d")
+    production_date = serializers.DateField(format="%d.%m.%Y")
 
     @staticmethod
     def get_codes(obj):

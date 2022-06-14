@@ -87,7 +87,7 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = AcceptanceOperation
         fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products', 'pallets',
-                  'pallets_count')
+                  'pallets_count', 'batch_number')
 
     @staticmethod
     def get_pallets_count(obj):

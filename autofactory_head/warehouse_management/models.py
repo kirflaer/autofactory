@@ -63,6 +63,7 @@ class AcceptanceOperation(BaseOperation):
     type_task = 'ACCEPTANCE_TO_STOCK'
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
     production_date = models.DateField('Дата выработки', blank=True, null=True)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Приемка на склад'

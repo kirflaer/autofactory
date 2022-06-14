@@ -1,9 +1,10 @@
 from rest_framework import serializers
 
 # TODO убрать зависимость от модуля api
-from api.serializers import PalletWriteSerializer, StorageSerializer
+from api.serializers import PalletWriteSerializer, StorageSerializer, PalletReadSerializer
 from catalogs.serializers import ExternalSerializer
-from warehouse_management.models import AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet
+from warehouse_management.models import AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet, \
+    Pallet
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -79,10 +80,24 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     storage = StorageSerializer()
     production_date = serializers.DateField(format="%Y-%m-%d")
+    pallets = serializers.SerializerMethodField()
+    pallets_count = serializers.SerializerMethodField()
 
     class Meta:
         model = AcceptanceOperation
-        fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products')
+        fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products', 'pallets',
+                  'pallets_count')
+
+    @staticmethod
+    def get_pallets_count(obj):
+        return OperationPallet.objects.filter(operation=obj.guid).count()
+
+    @staticmethod
+    def get_pallets(obj):
+        pallets_ids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
+        pallets = Pallet.objects.filter(guid__in=pallets_ids)
+        serializer = PalletReadSerializer(pallets, many=True)
+        return serializer.data
 
     @staticmethod
     def get_products(obj):

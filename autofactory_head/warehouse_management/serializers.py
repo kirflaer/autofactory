@@ -45,25 +45,38 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
         pass
 
 
+class PalletShortSerializer(serializers.ModelSerializer):
+    product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
+
+    class Meta:
+        model = Pallet
+        fields = ('id', 'product', 'content_count', 'batch_number', 'production_date')
+
+
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
-    pallets = serializers.SerializerMethodField()
+    pallets_semi = serializers.SerializerMethodField()
+    pallets_complete = serializers.SerializerMethodField()
 
     class Meta:
         model = PalletCollectOperation
-        fields = ('guid', 'pallets')
+        fields = ('guid', 'pallets_semi', 'pallets_complete')
 
     @staticmethod
-    def get_pallets(obj):
-        pallets = OperationPallet.objects.filter(operation=obj.guid)
-        result = []
-        for element in pallets:
-            result.append(
-                {'product': element.pallet.product.external_key,
-                 'count': element.pallet.content_count,
-                 'batch_number': element.pallet.batch_number,
-                 'production_date': element.pallet.production_date,
-                 })
-        return result
+    def get_pallets_complete(obj):
+        return PalletCollectOperationReadSerializer.get_pallets_data(obj.guid, False)
+
+    @staticmethod
+    def get_pallets_semi(obj):
+        return PalletCollectOperationReadSerializer.get_pallets_data(obj.guid, True)
+
+    @staticmethod
+    def get_pallets_data(operation, semi_product):
+        pallets_ids = OperationPallet.objects.filter(operation=operation,
+                                                     pallet__product__semi_product=semi_product).values_list(
+            'pallet', flat=True)
+        pallets = Pallet.objects.filter(guid__in=pallets_ids)
+        serializer = PalletShortSerializer(pallets, many=True)
+        return serializer.data
 
 
 class AcceptanceOperationWriteSerializer(OperationBaseSerializer):

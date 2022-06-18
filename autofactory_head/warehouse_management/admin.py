@@ -5,7 +5,7 @@ from warehouse_management.models import (
     Pallet,
     OperationPallet,
     OperationProduct,
-    PalletCollectOperation
+    PalletCollectOperation, PlacementToCellsOperation
 )
 
 
@@ -17,6 +17,13 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 
 
 @admin.register(PalletCollectOperation)
+class PalletCollectOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',
+        'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(PlacementToCellsOperation)
 class PalletCollectOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',

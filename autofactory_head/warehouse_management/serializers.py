@@ -32,6 +32,21 @@ class OperationProductsSerializer(serializers.Serializer):
         pass
 
 
+class OperationCellsSerializer(serializers.Serializer):
+    product = serializers.CharField()
+    cell = serializers.CharField()
+    count = serializers.FloatField(required=False)
+
+    class Meta:
+        fields = ('product', 'cell', 'count')
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
     pallets = PalletWriteSerializer(many=True)
 
@@ -84,9 +99,10 @@ class AcceptanceOperationWriteSerializer(OperationBaseSerializer):
     pallets = serializers.ListField()
     storage = serializers.CharField(required=False)
     production_date = serializers.CharField(required=False)
+    batch_number = serializers.CharField(required=False)
 
     class Meta:
-        fields = ('external_source', 'products', 'pallets', 'storage', 'production_date')
+        fields = ('external_source', 'products', 'pallets', 'storage', 'production_date', 'batch_number')
 
 
 class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
@@ -126,3 +142,11 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
                  'count': element.count,
                  })
         return result
+
+
+class PlacementToCellsOperationWriteSerializer(OperationBaseSerializer):
+    cells = OperationCellsSerializer(many=True)
+    storage = serializers.CharField(required=False)
+
+    class Meta:
+        fields = ('external_source', 'cells', 'storage')

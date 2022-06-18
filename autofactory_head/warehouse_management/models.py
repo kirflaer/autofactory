@@ -3,7 +3,7 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from catalogs.models import Product, Storage
+from catalogs.models import Product, Storage, StorageCell
 from factory_core.models import BaseModel
 from tasks.models import Task
 
@@ -59,25 +59,6 @@ class BaseOperation(BaseModel, Task):
         abstract = True
 
 
-class AcceptanceOperation(BaseOperation):
-    type_task = 'ACCEPTANCE_TO_STOCK'
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
-    production_date = models.DateField('Дата выработки', blank=True, null=True)
-    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
-
-    class Meta:
-        verbose_name = 'Приемка на склад'
-        verbose_name_plural = 'Операции приемки товаров'
-
-
-class PalletCollectOperation(BaseOperation):
-    type_task = 'PALLET_COLLECT'
-
-    class Meta:
-        verbose_name = 'Сбор паллет'
-        verbose_name_plural = 'Операции сбора паллет'
-
-
 class ManyToManyOperationMixin(models.Model):
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
@@ -113,3 +94,39 @@ class OperationProduct(ManyToManyOperationMixin):
     class Meta:
         verbose_name = 'Номенклатура операции'
         verbose_name_plural = 'Номенклатура операций'
+
+
+class OperationCell(OperationProduct):
+    cell = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка')
+
+    class Meta:
+        verbose_name = 'Складские ячейки операции'
+        verbose_name_plural = 'Складские ячейки операций'
+
+
+class AcceptanceOperation(BaseOperation):
+    type_task = 'ACCEPTANCE_TO_STOCK'
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Приемка на склад'
+        verbose_name_plural = 'Операции приемки товаров'
+
+
+class PalletCollectOperation(BaseOperation):
+    type_task = 'PALLET_COLLECT'
+
+    class Meta:
+        verbose_name = 'Сбор паллет'
+        verbose_name_plural = 'Операции сбора паллет'
+
+
+class PlacementToCellsOperation(BaseOperation):
+    type_task = 'PLACEMENT_TO_CELLS'
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+
+    class Meta:
+        verbose_name = 'Размещение в ячейки'
+        verbose_name_plural = 'Операции размещения в ячейки'

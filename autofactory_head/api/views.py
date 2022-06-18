@@ -8,7 +8,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 from catalogs.models import (ActivationKey, Department, Device, Direction, Line, LineProduct, Organization, Product,
-                             RegularExpression, Storage, TypeFactoryOperation, Unit)
+                             RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
 from packing.marking_services import (confirm_marks_unloading, create_marking_marks, get_marks_to_unload,
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
@@ -23,7 +23,7 @@ from .serializers import (AggregationsSerializer, ConfirmUnloadingSerializer, De
                           MarkingSerializer, MarksSerializer, OrganizationSerializer, ProductSerializer,
                           RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
                           UnitSerializer, UserSerializer, LineSerializer, PalletWriteSerializer, PalletReadSerializer,
-                          PalletUpdateSerializer)
+                          PalletUpdateSerializer, StorageCellsSerializer)
 
 User = get_user_model()
 
@@ -421,3 +421,15 @@ class UnitsCreateListSet(generics.ListCreateAPIView):
 
     def get_serializer(self, *args, **kwargs):
         return UnitSerializer(data=self.request.data, many=True)
+
+
+class StorageCellsListCreateViewSet(generics.ListCreateAPIView):
+    """Список и создание складских ячеек"""
+    queryset = StorageCell.objects.all()
+    serializer_class = StorageCellsSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.META['REQUEST_METHOD'] == 'GET':
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return StorageCellsSerializer(data=self.request.data, many=True)

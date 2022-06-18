@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from catalogs.models import (Client, Department, Device, Direction, Line, Log, Organization, Product, RegularExpression,
-                             Storage, TypeFactoryOperation, Unit)
+                             Storage, TypeFactoryOperation, Unit, StorageCell)
 from packing.marking_services import get_base64_string
 from packing.models import MarkingOperation
 from users.models import Setting
@@ -285,3 +285,10 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('status',)
         model = Pallet
+
+
+class StorageCellsSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('guid', 'name', 'external_key')
+        model = StorageCell
+        read_only_fields = ('guid',)

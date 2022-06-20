@@ -35,7 +35,7 @@ def get_content_router() -> dict[str: RouterContent]:
 
 
 @transaction.atomic
-def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_placement_operation(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
     """ Создает операцию размещение в ячейках"""
     result = []
     for element in serializer_data:
@@ -60,7 +60,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
 
 
 @transaction.atomic
-def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_acceptance_operation(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
     """ Создает операцию перемещения. Возвращает идентификаторы внешнего источника """
 
     result = []

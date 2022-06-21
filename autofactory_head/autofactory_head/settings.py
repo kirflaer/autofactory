@@ -28,6 +28,9 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'django_filters',
+    'tests',
+    'tasks',
+    'warehouse_management'
 ]
 
 MIDDLEWARE = [
@@ -110,4 +113,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-VERSION = '1.1.2.26'
+VERSION = '1.1.4.2'

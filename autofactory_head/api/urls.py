@@ -1,26 +1,9 @@
 from django.urls import path, re_path
 
-from .views import (
-    OrganizationList,
-    ProductViewSet,
-    UserRetrieve,
-    LineListCreateView,
-    StorageList,
-    DepartmentList,
-    DeviceViewSet,
-    MarksViewSet,
-    MarkingListCreateViewSet,
-    MarkingViewSet,
-    LogCreateViewSet,
-    PalletViewSet,
-    TaskUpdate,
-    PalletRetrieveUpdate,
-    TasksViewSet,
-    DirectionListCreateView,
-    TypeFactoryOperationViewSet,
-    RegExpList,
-    UnitsCreateListSet
-)
+from .views import (DepartmentList, DeviceViewSet, DirectionListCreateView, LineListCreateView, LogCreateViewSet,
+                    MarkingListCreateViewSet, MarkingViewSet, MarksViewSet, OrganizationList, PalletRetrieveUpdate,
+                    PalletViewSet, ProductViewSet, RegExpList, StorageList, TasksViewSet, TypeFactoryOperationViewSet,
+                    UnitsCreateListSet, UserRetrieve, StorageCellsListCreateViewSet)
 
 urlpatterns = [
     re_path(r'v[0-9]/regexp/$', RegExpList.as_view()),
@@ -33,6 +16,7 @@ urlpatterns = [
     re_path(r'v[0-9]/departments/$', DepartmentList.as_view()),
     re_path(r'v[0-9]/lines/$', LineListCreateView.as_view()),
     re_path(r'v[0-9]/users/$', UserRetrieve.as_view()),
+    re_path(r'v[0-9]/cells/$', StorageCellsListCreateViewSet.as_view()),
     re_path(r'v[0-9]/direction/$', DirectionListCreateView.as_view()),
     re_path(r'v[0-9]/devices/$', DeviceViewSet.as_view(
         {'post': 'create', 'delete': 'remove'})),
@@ -52,6 +36,6 @@ urlpatterns = [
          PalletViewSet.as_view(
              {'get': 'list', 'post': 'create', 'patch': 'change_content'})),
     path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
-    path('v1/tasks/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('v1/tasks/<uuid:pk>/', TaskUpdate.as_view()),
+    path('v1/tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('v1/tasks/<str:type_task>/<uuid:guid>/', TasksViewSet.as_view({'patch': 'change_task'})),
 ]

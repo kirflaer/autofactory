@@ -3,41 +3,45 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 
-from catalogs.models import Organization, Product, Line
-
 User = get_user_model()
 
 
-class BaseModel(models.Model):
-    """ Базовая модель для операций
+class ExternalSystemExchangeMixin(models.Model):
+    """Расширение для моделей добавлющие возможность контролировать статус обмена
     Во внешнюю систему отправляются все ready_to_unload
     После выгрузки внешним запросом помечаются unloaded"""
-
-    class Meta:
-        abstract = True
-
-    date = models.DateTimeField('Дата создания', auto_now_add=True)
-    guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
-                            editable=False)
-
-    closed = models.BooleanField(default=False,
-                                 verbose_name='Закрыта')
 
     unloaded = models.BooleanField(default=False, verbose_name='Выгружена')
     ready_to_unload = models.BooleanField(default=False,
                                           verbose_name='Готова к выгрузке')
-    number = models.IntegerField(default=1)
 
     external_source = models.CharField(max_length=255,
                                        verbose_name='Источник внешней системы',
                                        blank=True)
+    closed = models.BooleanField(default=False,
+                                 verbose_name='Закрыта')
 
-    def __str__(self):
-        return f'{self.number} - {self.date.strftime("%d.%m.%Y %H:%M:%S")}'
+    class Meta:
+        abstract = True
 
     def close(self):
         self.closed = True
         self.save()
+
+
+class BaseModel(models.Model):
+    """ Базовая модель для операций """
+
+    number = models.IntegerField(default=1)
+    date = models.DateTimeField('Дата создания', auto_now_add=True)
+    guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'{self.number} - {self.date.strftime("%d.%m.%Y %H:%M:%S")}'
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):

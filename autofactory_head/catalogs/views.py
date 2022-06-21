@@ -2,36 +2,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from catalogs.models import (
-    Organization,
-    Department,
-    Storage,
-    Device,
-    Product,
-    Line,
-    TypeFactoryOperation,
-    Unit,
-)
-
 from django.urls import reverse_lazy
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from django.views.generic import (
-    ListView,
-    CreateView,
-    DeleteView,
-    UpdateView
-)
+from catalogs.models import (Department, Device, Line, Organization, Product,
+                             Storage, TypeFactoryOperation, Unit)
 
-from .forms import (
-    ProductForm,
-    LineForm,
-    DepartmentForm,
-    DeviceForm,
-    OrganizationForm,
-    StorageForm,
-    TypeFactoryOperationForm,
-    CustomUserForm, UnitForm
-)
+from .forms import (CustomUserForm, DepartmentForm, DeviceForm, LineForm,
+                    OrganizationForm, ProductForm, StorageForm,
+                    TypeFactoryOperationForm, UnitForm)
 
 User = get_user_model()
 
@@ -90,7 +69,7 @@ class UserListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = User.objects.all()
-        queryset = queryset.filter(is_superuser=False)
+        queryset = queryset.filter(is_superuser=False, is_active=True)
         return queryset
 
 

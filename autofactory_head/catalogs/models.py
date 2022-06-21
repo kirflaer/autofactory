@@ -25,27 +25,43 @@ class BaseExternalModel(BaseModel):
 
 
 class Organization(BaseExternalModel):
-    pass
+    class Meta:
+        verbose_name = 'Организация'
+        verbose_name_plural = 'Оранизации'
 
 
 class Client(BaseExternalModel):
-    pass
+    class Meta:
+        verbose_name = 'Клиент'
+        verbose_name_plural = 'Клиенты'
 
 
 class Direction(BaseExternalModel):
-    pass
+    class Meta:
+        verbose_name = 'Направление'
+        verbose_name_plural = 'Направления'
 
 
 class Storage(BaseExternalModel):
-    pass
+    store_semi_product = models.BooleanField('Хранит полуфабрикаты', default=False)
+
+    class Meta:
+        verbose_name = 'Склад'
+        verbose_name_plural = 'Склады'
 
 
 class Department(BaseExternalModel):
-    pass
+    class Meta:
+        verbose_name = 'Подразделение'
+        verbose_name_plural = 'Подразделения'
 
 
 class TypeFactoryOperation(BaseExternalModel):
     order = models.PositiveIntegerField('Порядок', default=0)
+
+    class Meta:
+        verbose_name = 'Тип производственной операции'
+        verbose_name_plural = 'Типы производственных операций'
 
 
 class Device(BaseModel):
@@ -80,12 +96,20 @@ class Device(BaseModel):
                                        related_name='device',
                                        verbose_name='Код активации')
 
+    class Meta:
+        verbose_name = 'Устройство'
+        verbose_name_plural = 'Устройства'
+
 
 class Product(BaseExternalModel):
     gtin = models.CharField(default='', blank=True, max_length=50)
     expiration_date = models.PositiveIntegerField('Срок годности', default=0)
-    is_weight = models.BooleanField(default=False,
-                                    verbose_name='Весовой товар')
+    is_weight = models.BooleanField('Весовой товар', default=False)
+    semi_product = models.BooleanField('Полуфабрикат', default=False)
+
+    class Meta:
+        verbose_name = 'Номенклаутра'
+        verbose_name_plural = 'Номенклатура'
 
 
 class Line(BaseModel):
@@ -102,6 +126,10 @@ class Line(BaseModel):
                                                null=True,
                                                blank=True,
                                                verbose_name='Тип пр. операции')
+
+    class Meta:
+        verbose_name = 'Линия производства'
+        verbose_name_plural = 'Линии производства'
 
 
 class LineDevice(models.Model):
@@ -142,6 +170,10 @@ class Unit(BaseExternalModel):
     gtin = models.CharField(default='', blank=True, max_length=50,
                             verbose_name='Штрихкод')
 
+    class Meta:
+        verbose_name = 'Единица измерения'
+        verbose_name_plural = 'Единицы измерения'
+
 
 class Log(models.Model):
     data = models.TextField(verbose_name='Данные лога')
@@ -165,6 +197,10 @@ class ExternalSource(models.Model):
     number = models.CharField(verbose_name='Идентификатор', max_length=1024)
     date = models.CharField(verbose_name='Дата', max_length=1024, blank=True,
                             default="")
+
+    class Meta:
+        verbose_name = 'Внешний источник'
+        verbose_name_plural = 'Внешние источники'
 
     def __str__(self):
         return self.name
@@ -206,5 +242,15 @@ class ActivationKey(models.Model):
     number = models.CharField(verbose_name='Идентификатор', max_length=1024)
     date = models.DateField('Дата окончания', blank=True, null=True)
 
+    class Meta:
+        verbose_name = 'Ключ активации'
+        verbose_name_plural = 'Ключи активации'
+
     def __str__(self):
         return self.number
+
+
+class StorageCell(BaseExternalModel):
+    class Meta:
+        verbose_name = 'Складская ячейка'
+        verbose_name_plural = 'Складские ячейки'

@@ -1,16 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.forms import ModelForm, CharField, PasswordInput
+from django.forms import CharField, ModelForm, PasswordInput
 
-from catalogs.models import (
-    Organization,
-    Department,
-    Storage,
-    Device,
-    Product,
-    Line,
-    TypeFactoryOperation,
-    Unit
-)
+from catalogs.models import (Department, Device, Line, Organization, Product,
+                             Storage, TypeFactoryOperation, Unit)
 
 User = get_user_model()
 

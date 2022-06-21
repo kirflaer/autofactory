@@ -1,21 +1,8 @@
 from django.contrib import admin
 
-from .models import (
-    Organization,
-    Storage,
-    Department,
-    Device,
-    Line,
-    Product,
-    Unit,
-    LineProduct,
-    Log,
-    Client,
-    Direction,
-    TypeFactoryOperation,
-    RegularExpression,
-    ActivationKey
-)
+from .models import (ActivationKey, Client, Department, Device, Direction,
+                     Line, LineProduct, Log, Organization, Product,
+                     RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
 
 
 @admin.register(ActivationKey)
@@ -73,7 +60,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid', 'mode', 'activation_key', 'identifier')
-    list_filter = ('mode', )
+    list_filter = ('mode',)
 
 
 @admin.register(Line)
@@ -89,3 +76,8 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(RegularExpression)
 class RegularExpressionAdmin(admin.ModelAdmin):
     list_display = ('value', 'type_expression')
+
+
+@admin.register(StorageCell)
+class CellsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'guid', 'external_key')

@@ -1,31 +1,13 @@
-from packing.marking_services import get_base64_string
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
-from django.contrib.auth import get_user_model
-from users.models import Setting
-from packing.models import (
-    MarkingOperation,
-    Pallet,
-    PalletCode,
-    Task,
-    TaskProduct,
-)
 
-from catalogs.models import (
-    Organization,
-    Product,
-    Device,
-    Line,
-    Department,
-    Storage,
-    Unit,
-    Log,
-    ExternalSource,
-    Direction,
-    Client,
-    TypeFactoryOperation,
-    RegularExpression,
-)
+from catalogs.models import (Client, Department, Device, Direction, Line, Log, Organization, Product, RegularExpression,
+                             Storage, TypeFactoryOperation, Unit, StorageCell)
+from packing.marking_services import get_base64_string
+from packing.models import MarkingOperation
+from users.models import Setting
+from warehouse_management.models import PalletContent, Pallet
 
 User = get_user_model()
 
@@ -38,6 +20,12 @@ class ConfirmUnloadingSerializer(serializers.Serializer):
             if not MarkingOperation.objects.filter(guid=operation).exists():
                 raise APIException('Операция маркировки не обнаружена')
         return super().validate(attrs)
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class MarksSerializer(serializers.Serializer):
@@ -57,6 +45,12 @@ class MarksSerializer(serializers.Serializer):
                 raise APIException('Нельзя изменять выгруженную маркировку')
 
         return super().validate(attrs)
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class TypeFactoryOperationSerializer(serializers.ModelSerializer):
@@ -83,11 +77,9 @@ class ProductSerializer(serializers.ModelSerializer):
     external_key = serializers.CharField(required=False)
 
     class Meta:
-        fields = ('name',
-                  'gtin', 'guid', 'is_weight', 'expiration_date', 'units',
-                  'external_key')
+        fields = ('name', 'gtin', 'guid', 'is_weight', 'expiration_date', 'units', 'external_key', 'semi_product')
         model = Product
-        read_only_fields = ('guid', 'expiration_date')
+        read_only_fields = ('guid', 'expiration_date', 'store_semi_product')
 
     def create(self, validated_data):
         units = validated_data.pop('units')
@@ -99,8 +91,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class StorageSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('guid', 'name')
+        fields = ('guid', 'name', 'store_semi_product')
         model = Storage
+        read_only_fields = ('store_semi_product',)
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -118,6 +111,12 @@ class LineCreateSerializer(serializers.Serializer):
     storage = serializers.CharField(allow_blank=True)
     department = serializers.CharField(allow_blank=True)
     type_factory_operation = serializers.CharField(allow_blank=True)
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
 
 
 class LineSerializer(serializers.ModelSerializer):
@@ -162,10 +161,12 @@ class SettingSerializer(serializers.ModelSerializer):
                   'reg_exp')
         model = Setting
 
-    def get_pallet_passport_template_base64(self, obj):
+    @staticmethod
+    def get_pallet_passport_template_base64(obj):
         return get_base64_string(obj.pallet_passport_template)
 
-    def get_reg_exp(self, obj):
+    @staticmethod
+    def get_reg_exp(obj):
         expressions = RegularExpression.objects.filter().values(
             'type_expression', 'value')
         if not expressions.exists():
@@ -194,6 +195,12 @@ class AggregationsSerializer(serializers.Serializer):
     product = serializers.CharField(required=False)
     marks = serializers.ListField()
 
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
 
 class MarkingSerializer(serializers.ModelSerializer):
     aggregations = AggregationsSerializer(required=False, many=True)
@@ -216,88 +223,6 @@ class ProductShortSerializer(serializers.ModelSerializer):
         model = Product
 
 
-class PalletReadSerializer(serializers.Serializer):
-    codes = serializers.SerializerMethodField()
-    id = serializers.CharField()
-    product = ProductShortSerializer()
-    is_confirmed = serializers.BooleanField()
-
-    def get_codes(self, obj):
-        pallet_codes = PalletCode.objects.filter(pallet=obj)
-        if pallet_codes.exists():
-            return [i.code for i in pallet_codes]
-        else:
-            return []
-
-
-class PalletWriteSerializer(serializers.Serializer):
-    codes = serializers.ListField()
-    id = serializers.CharField()
-    product = serializers.CharField()
-
-
-class ChangePalletContentSerializer(serializers.Serializer):
-    codes = serializers.ListField()
-    source = serializers.CharField()
-    destination = serializers.CharField()
-
-    def validate(self, attrs):
-        if not Pallet.objects.filter(id=attrs.get('source')).exists():
-            raise APIException('Паллета источник не обнаружена')
-
-        if not Pallet.objects.filter(id=attrs.get('destination')).exists():
-            raise APIException('Паллета назначения не обнаружена')
-
-        return super().validate(attrs)
-
-
-class PalletUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('is_confirmed',)
-        model = Pallet
-
-
-class TaskUpdateSerializer(serializers.ModelSerializer):
-    pallet_ids = serializers.ListField(required=False)
-    unloaded = serializers.BooleanField(required=False)
-    ready_to_unload = serializers.BooleanField(required=False)
-    status = serializers.CharField(required=False)
-
-    class Meta:
-        fields = ('status', 'pallet_ids', 'unloaded', 'ready_to_unload')
-        model = Task
-
-
-class TaskPalletSerializer(serializers.ModelSerializer):
-    product_name = serializers.StringRelatedField(read_only=True,
-                                                  source='product')
-    count = serializers.SerializerMethodField()
-
-    class Meta:
-        fields = ('id', 'is_confirmed', 'product_name', 'count', 'guid')
-        model = Pallet
-
-    def get_count(self, obj):
-        return PalletCode.objects.filter(pallet__pk=obj.guid).count()
-
-
-class TaskProductsSerializer(serializers.Serializer):
-    product = serializers.CharField()
-    weight = serializers.FloatField(required=False)
-    count = serializers.FloatField(required=False)
-
-    class Meta:
-        fields = ('product', 'weight', 'count')
-
-
-class ProductShortSerializer(serializers.ModelSerializer):
-    external_key = serializers.CharField(required=False)
-
-    class Meta:
-        fields = ('name', 'gtin', 'guid', 'external_key')
-        model = Product
-
-
 class DirectionSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'guid', 'external_key')
@@ -311,60 +236,59 @@ class ClientSerializer(serializers.ModelSerializer):
         model = Client
 
 
-class ExternalSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('name', 'external_key', 'number', 'date')
-        model = ExternalSource
-
-
-class TaskWriteSerializer(serializers.Serializer):
-    pallets = serializers.ListField(required=False)
-    products = TaskProductsSerializer(many=True, required=False)
-    type_task = serializers.CharField()
-    parent_task = ExternalSerializer(required=False)
-    client = ClientSerializer(required=False)
-    external_source = ExternalSerializer(required=False)
-    direction = DirectionSerializer(required=False)
-
-    class Meta:
-        fields = (
-            'type_task', 'products', 'pallets', 'external_source', 'client',
-            'direction', 'parent_task')
-
-
-class TaskReadSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField()
-    pallets = TaskPalletSerializer(many=True, read_only=True)
-    external_source = ExternalSerializer(required=False)
-    direction_name = serializers.StringRelatedField(read_only=True,
-                                                    source='direction')
-    client_name = serializers.StringRelatedField(read_only=True,
-                                                 source='client')
-
-    class Meta:
-        fields = (
-            'guid', 'number', 'status', 'date', 'products', 'pallets',
-            'client_name', 'direction_name', 'type_task', 'external_source')
-
-        model = Task
-
-    def get_products(self, obj):
-        task_products = TaskProduct.objects.filter(task__guid=obj.guid)
-        result = []
-        if not task_products.exists():
-            return result
-        for element in task_products:
-            result.append(
-                {'name': element.product.name,
-                 'weight': element.weight,
-                 'guid': element.product.guid,
-                 'gtin': element.product.gtin,
-                 'count': element.count,
-                 })
-        return result
-
-
 class RegularExpressionSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('value', 'type_expression')
         model = RegularExpression
+
+
+class PalletWriteSerializer(serializers.Serializer):
+    codes = serializers.ListField(required=False)
+    id = serializers.CharField()
+    product = serializers.CharField()
+    batch_number = serializers.CharField(required=False)
+    production_date = serializers.DateField(required=False)
+    content_count = serializers.IntegerField(required=False)
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class PalletReadSerializer(serializers.Serializer):
+    codes = serializers.SerializerMethodField()
+    id = serializers.CharField()
+    product = ProductShortSerializer()
+    status = serializers.CharField()
+    batch_number = serializers.CharField()
+    weight = serializers.IntegerField()
+    production_date = serializers.DateField(format="%d.%m.%Y")
+
+    @staticmethod
+    def get_codes(obj):
+        pallet_codes = PalletContent.objects.filter(pallet=obj)
+        if pallet_codes.exists():
+            return [i.aggregation_code for i in pallet_codes]
+        else:
+            return []
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class PalletUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('status',)
+        model = Pallet
+
+
+class StorageCellsSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('guid', 'name', 'external_key')
+        model = StorageCell
+        read_only_fields = ('guid',)

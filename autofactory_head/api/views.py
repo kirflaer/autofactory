@@ -12,18 +12,18 @@ from catalogs.models import (ActivationKey, Department, Device, Direction, Line,
 from packing.marking_services import (confirm_marks_unloading, create_marking_marks, get_marks_to_unload,
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
-from tasks.serializers import TaskUpdateSerializer
-from tasks.task_services import get_task_queryset, TaskException, change_task_properties
+from tasks.task_services import get_task_queryset, TaskException
 from warehouse_management.models import Pallet
+from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer, PalletUpdateSerializer
+
 from warehouse_management.warehouse_services import get_content_router, create_pallets
 
-from .exceptions import ActivationFailed
+from api.exceptions import ActivationFailed
 from .serializers import (AggregationsSerializer, ConfirmUnloadingSerializer, DepartmentSerializer,
                           DeviceSerializer, DirectionSerializer, LineCreateSerializer, LogSerializer,
                           MarkingSerializer, MarksSerializer, OrganizationSerializer, ProductSerializer,
                           RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
-                          UnitSerializer, UserSerializer, LineSerializer, PalletWriteSerializer, PalletReadSerializer,
-                          PalletUpdateSerializer, StorageCellsSerializer)
+                          UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer)
 
 User = get_user_model()
 
@@ -331,15 +331,6 @@ class PalletViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    #
-    def change_content(self, request):
-        pass
-        # serializer = ChangePalletContentSerializer(data=request.data)
-        # if serializer.is_valid():
-        #     change_pallet_content(serializer.validated_data)
-        #     return Response(serializer.data)
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = Pallet.objects.all()
@@ -389,22 +380,6 @@ class TasksViewSet(viewsets.ViewSet):
             # TODO: обработать ошибку создания
             result = task_router.create_function(serializer.data, request.user)
             return Response({'type_task': type_task, 'guids': result})
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def change_task(self, request, type_task, guid):
-        task_router = self.router.get(type_task.upper())
-        if not task_router:
-            raise APIException('Тип задачи не найден')
-
-        instance = task_router.task.objects.filter(guid=guid).first()
-        if instance is None:
-            raise APIException('Задача не найдена')
-
-        serializer = TaskUpdateSerializer(data=request.data)
-        if serializer.is_valid():
-            change_task_properties(instance, serializer.validated_data)
-            return Response({'status': serializer.validated_data})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

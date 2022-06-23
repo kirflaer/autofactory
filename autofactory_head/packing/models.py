@@ -2,13 +2,13 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 from catalogs.models import Device, Line, ExternalSource
-from factory_core.models import BaseModel, ExternalSystemExchangeMixin
+from factory_core.models import OperationBaseModel, ExternalSystemExchangeMixin
 from catalogs.models import Product, Organization, Direction, Client
 
 User = get_user_model()
 
 
-class MarkingOperation(BaseModel, ExternalSystemExchangeMixin):
+class MarkingOperation(OperationBaseModel, ExternalSystemExchangeMixin):
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                verbose_name='Автор', null=True)
 

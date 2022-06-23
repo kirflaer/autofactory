@@ -242,51 +242,6 @@ class RegularExpressionSerializer(serializers.ModelSerializer):
         model = RegularExpression
 
 
-class PalletWriteSerializer(serializers.Serializer):
-    codes = serializers.ListField(required=False)
-    id = serializers.CharField()
-    product = serializers.CharField()
-    batch_number = serializers.CharField(required=False)
-    production_date = serializers.DateField(required=False)
-    content_count = serializers.IntegerField(required=False)
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
-
-class PalletReadSerializer(serializers.Serializer):
-    codes = serializers.SerializerMethodField()
-    id = serializers.CharField()
-    product = ProductShortSerializer()
-    status = serializers.CharField()
-    batch_number = serializers.CharField()
-    weight = serializers.IntegerField()
-    production_date = serializers.DateField(format="%d.%m.%Y")
-
-    @staticmethod
-    def get_codes(obj):
-        pallet_codes = PalletContent.objects.filter(pallet=obj)
-        if pallet_codes.exists():
-            return [i.aggregation_code for i in pallet_codes]
-        else:
-            return []
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
-
-class PalletUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('status',)
-        model = Pallet
-
-
 class StorageCellsSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('guid', 'name', 'external_key')

@@ -1,14 +1,47 @@
 from rest_framework import serializers
 
-# TODO убрать зависимость от модуля api
-from api.serializers import PalletWriteSerializer, StorageSerializer, PalletReadSerializer
+from api.serializers import ProductShortSerializer, StorageSerializer
 from catalogs.serializers import ExternalSerializer
-from warehouse_management.models import AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet, \
-    Pallet
+from tasks.serialisers import TaskPropertiesSerializer
+from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
+                                         Pallet, PalletContent, PlacementToCellsOperation, OperationCell)
+
+
+class PalletWriteSerializer(serializers.Serializer):
+    codes = serializers.ListField(required=False)
+    id = serializers.CharField()
+    product = serializers.CharField()
+    batch_number = serializers.CharField(required=False)
+    production_date = serializers.DateField(required=False)
+    content_count = serializers.IntegerField(required=False)
+
+
+class PalletReadSerializer(serializers.Serializer):
+    codes = serializers.SerializerMethodField()
+    id = serializers.CharField()
+    product = ProductShortSerializer()
+    status = serializers.CharField()
+    batch_number = serializers.CharField()
+    weight = serializers.IntegerField()
+    production_date = serializers.DateField(format="%d.%m.%Y")
+
+    @staticmethod
+    def get_codes(obj):
+        pallet_codes = PalletContent.objects.filter(pallet=obj)
+        if pallet_codes.exists():
+            return [i.aggregation_code for i in pallet_codes]
+        else:
+            return []
+
+
+class PalletUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('status',)
+        model = Pallet
 
 
 class OperationBaseSerializer(serializers.Serializer):
-    external_source = ExternalSerializer(required=False)
+    external_source = ExternalSerializer()
 
     def create(self, validated_data):
         pass
@@ -25,12 +58,6 @@ class OperationProductsSerializer(serializers.Serializer):
     class Meta:
         fields = ('product', 'weight', 'count')
 
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
 
 class OperationCellsSerializer(serializers.Serializer):
     product = serializers.CharField()
@@ -40,24 +67,12 @@ class OperationCellsSerializer(serializers.Serializer):
     class Meta:
         fields = ('product', 'cell', 'count')
 
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
     pallets = PalletWriteSerializer(many=True)
 
     class Meta:
         fields = 'pallets',
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
 
 
 class PalletShortSerializer(serializers.ModelSerializer):
@@ -148,5 +163,25 @@ class PlacementToCellsOperationWriteSerializer(OperationBaseSerializer):
     cells = OperationCellsSerializer(many=True)
     storage = serializers.CharField(required=False)
 
+
+class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
+    storage = StorageSerializer()
+    date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
+    cells = serializers.SerializerMethodField()
+
     class Meta:
-        fields = ('external_source', 'cells', 'storage')
+        model = PlacementToCellsOperation
+        fields = ('guid', 'number', 'status', 'date', 'storage', 'cells')
+
+    @staticmethod
+    def get_cells(obj):
+        cells = OperationCell.objects.filter(operation=obj.guid)
+        result = []
+        for element in cells:
+            result.append(
+                {'cell': element.cell.guid if element.cell is not None else None,
+                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
+                 'count': element.count,
+                 'product': element.product.guid if element.product is not None else None
+                 })
+        return result

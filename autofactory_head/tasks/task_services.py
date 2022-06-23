@@ -3,9 +3,10 @@ from typing import NamedTuple, Iterable
 
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet, Q
+from pydantic import BaseModel
 from rest_framework import serializers
 
-from tasks.models import Task, TaskStatus
+from tasks.models import Task, TaskStatus, TaskProperties
 
 User = get_user_model()
 
@@ -15,15 +16,17 @@ class RouterContent(NamedTuple):
     create_function: Callable[[Iterable[dict[str, str]], type(User) | None], Iterable[str]]
     read_serializer: type(serializers.Serializer)
     write_serializer: type(serializers.Serializer)
+    content_model: BaseModel | None
+    change_content_function: Callable[[dict[str, str], type(Task)], [str]] | None
 
 
-def change_task_properties(instance: Task, serializer_data: dict[str: str]) -> None:
+def change_task_properties(instance: Task, properties: TaskProperties) -> None:
     """ Сохраняет свойства инстанса из базового класса: статус, флаги выгрузки... """
-    keys = set(instance.__dict__.keys()) & set(serializer_data.keys())
+    keys = set(instance.__dict__.keys()) & set(properties.__dict__.keys())
     if not len(keys):
         return None
 
-    fields = {key: serializer_data[key] for key in keys}
+    fields = {key: str(properties.__dict__[key]) for key in keys if properties.__dict__[key] is not None}
     type(instance).objects.filter(pk=instance.pk).update(**fields)
 
 

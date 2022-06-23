@@ -6,11 +6,14 @@ from django.db import transaction
 from catalogs.models import ExternalSource, Product, Storage, StorageCell
 from tasks.models import TaskStatus
 from tasks.task_services import RouterContent
-from warehouse_management.models import (AcceptanceOperation, Pallet, BaseOperation, OperationPallet, OperationProduct,
-                                         PalletStatus, PalletCollectOperation, PlacementToCellsOperation, OperationCell)
+from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
+                                         OperationProduct,
+                                         PalletStatus, PalletCollectOperation, PlacementToCellsOperation, OperationCell,
+                                         PlacementToCellsTask)
 from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
-    PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer)
+    PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
+    PlacementToCellsOperationReadSerializer)
 
 User = get_user_model()
 
@@ -22,20 +25,26 @@ def get_content_router() -> dict[str: RouterContent]:
     return {'ACCEPTANCE_TO_STOCK': RouterContent(task=AcceptanceOperation,
                                                  create_function=create_acceptance_operation,
                                                  read_serializer=AcceptanceOperationReadSerializer,
-                                                 write_serializer=AcceptanceOperationWriteSerializer),
+                                                 write_serializer=AcceptanceOperationWriteSerializer,
+                                                 content_model=None,
+                                                 change_content_function=None),
             'PALLET_COLLECT': RouterContent(task=PalletCollectOperation,
                                             create_function=create_collect_operation,
                                             read_serializer=PalletCollectOperationReadSerializer,
-                                            write_serializer=PalletCollectOperationWriteSerializer),
+                                            write_serializer=PalletCollectOperationWriteSerializer,
+                                            content_model=None,
+                                            change_content_function=None),
             'PLACEMENT_TO_CELLS': RouterContent(task=PlacementToCellsOperation,
                                                 create_function=create_placement_operation,
-                                                read_serializer=PlacementToCellsOperationWriteSerializer,
-                                                write_serializer=PlacementToCellsOperationWriteSerializer)
+                                                read_serializer=PlacementToCellsOperationReadSerializer,
+                                                write_serializer=PlacementToCellsOperationWriteSerializer,
+                                                content_model=PlacementToCellsTask,
+                                                change_content_function=change_content_placement_operation)
             }
 
 
 @transaction.atomic
-def create_placement_operation(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
+def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию размещение в ячейках"""
     result = []
     for element in serializer_data:
@@ -60,7 +69,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
 
 
 @transaction.atomic
-def create_acceptance_operation(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
+def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения. Возвращает идентификаторы внешнего источника """
 
     result = []
@@ -98,7 +107,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
     return result
 
 
-def fill_operation_products(operation: BaseOperation, raw_data: Iterable[dict[str: str]]) -> None:
+def fill_operation_products(operation: OperationBaseOperation, raw_data: Iterable[dict[str: str]]) -> None:
     """ Заполняет товары абстрактной операции """
 
     for task_product in raw_data:
@@ -112,7 +121,7 @@ def fill_operation_products(operation: BaseOperation, raw_data: Iterable[dict[st
         operation_products.fill_properties(operation)
 
 
-def fill_operation_pallets(operation: BaseOperation, raw_data: Iterable[str]) -> None:
+def fill_operation_pallets(operation: OperationBaseOperation, raw_data: Iterable[str]) -> None:
     """ Заполняет информацию о паллетах абстрактной операции """
 
     for pallet_id in raw_data:
@@ -123,7 +132,7 @@ def fill_operation_pallets(operation: BaseOperation, raw_data: Iterable[str]) ->
         operation_pallets.fill_properties(operation)
 
 
-def fill_operation_cells(operation: BaseOperation, raw_data: Iterable[dict[str: str]]) -> None:
+def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[dict[str: str]]) -> None:
     """ Заполняет ячейки абстрактной операции """
 
     for element in raw_data:
@@ -148,3 +157,18 @@ def get_or_create_external_source(raw_data=dict[str: str]) -> ExternalSource:
     if external_source is None:
         external_source = ExternalSource.objects.create(**raw_data['external_source'])
     return external_source
+
+
+@transaction.atomic
+def change_content_placement_operation(content: dict[str: str], instance: PlacementToCellsOperation) -> str:
+    """ Изменяет содержимое операции размещение в ячейках"""
+    for element in content['cells']:
+        cell_row = OperationCell.objects.filter(operation=instance.guid, product__guid=element.product,
+                                                cell__guid=element.changed_cell).first()
+        if cell_row is None:
+            continue
+
+        cell_row.changed_cell = cell_row.cell
+        cell_row.cell = StorageCell.objects.filter(guid=element.cell).first()
+        cell_row.save()
+    return instance.guid

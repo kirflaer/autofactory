@@ -1,15 +1,12 @@
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
-from .models import TaskStatus
+from tasks.models import TaskStatus
 
 
-class TaskUpdateSerializer(serializers.Serializer):
+class TaskPropertiesSerializer(serializers.Serializer):
     status = serializers.CharField(required=False)
     unloaded = serializers.BooleanField(required=False)
-
-    class Meta:
-        fields = ('status', 'unloaded')
 
     def validate(self, attrs):
         status = attrs.get('status')

@@ -5,7 +5,7 @@ from rest_framework import permissions
 
 from catalogs.models import ActivationKey
 
-from .exceptions import ActivationFailed
+from api.exceptions import ActivationFailed
 
 User = get_user_model()
 

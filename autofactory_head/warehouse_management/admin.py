@@ -5,7 +5,7 @@ from warehouse_management.models import (
     Pallet,
     OperationPallet,
     OperationProduct,
-    PalletCollectOperation, PlacementToCellsOperation
+    PalletCollectOperation, PlacementToCellsOperation, OperationCell
 )
 
 
@@ -43,3 +43,8 @@ class OperationPalletAdmin(admin.ModelAdmin):
 @admin.register(OperationProduct)
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('product', 'type_operation', 'external_source')
+
+
+@admin.register(OperationCell)
+class OperationCellPalletAdmin(admin.ModelAdmin):
+    list_display = ('operation', 'product', 'type_operation', 'external_source', 'count', 'cell')

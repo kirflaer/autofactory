@@ -1,5 +1,10 @@
+from enum import Enum
+from typing import Optional
+
 from django.contrib.auth import get_user_model
 from django.db import models
+from pydantic.dataclasses import dataclass
+from pydantic.main import BaseModel
 
 from catalogs.models import ExternalSource
 from factory_core.models import ExternalSystemExchangeMixin
@@ -36,3 +41,8 @@ class Task(ExternalSystemExchangeMixin):
 
     class Meta:
         abstract = True
+
+
+class TaskProperties(BaseModel):
+    status: TaskStatus | None
+    unloaded: bool | None

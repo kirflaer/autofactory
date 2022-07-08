@@ -6,7 +6,7 @@ from django.db.models import QuerySet, Q
 from pydantic import BaseModel
 from rest_framework import serializers
 
-from tasks.models import Task, TaskStatus, TaskProperties
+from tasks.models import Task, TaskStatus, TaskProperties, TaskBaseModel
 
 User = get_user_model()
 
@@ -16,7 +16,7 @@ class RouterContent(NamedTuple):
     create_function: Callable[[Iterable[dict[str, str]], type(User) | None], Iterable[str]]
     read_serializer: type(serializers.Serializer)
     write_serializer: type(serializers.Serializer)
-    content_model: BaseModel | None
+    content_model: type(TaskBaseModel) | None
     change_content_function: Callable[[dict[str, str], type(Task)], [str]] | None
 
 

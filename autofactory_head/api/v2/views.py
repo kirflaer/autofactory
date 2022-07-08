@@ -19,14 +19,17 @@ class TasksChangeViewSet(api.views.TasksViewSet):
             raise APIException('Задача не найдена')
 
         try:
-            content = task_router.content_model(**request.data)
+            task_data = task_router.content_model(**request.data)
         except TypeError:
             raise APIException('Переданы некорректные данные')
         except JSONDecodeError:
             raise APIException('Переданы некорректные данные')
 
-        if content.properties is not None:
-            change_task_properties(instance, content.__dict__['properties'])
+        if task_data.properties is not None:
+            change_task_properties(instance, task_data.__dict__['properties'])
 
-        ret = task_router.change_content_function(content.__dict__['content'].__dict__, instance)
-        return Response(ret)
+        if task_data.content is not None:
+            ret = task_router.change_content_function(task_data.__dict__['content'].__dict__, instance)
+            return Response(ret)
+
+        return Response({'status': 'success'})

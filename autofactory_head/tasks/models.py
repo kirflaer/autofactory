@@ -46,3 +46,8 @@ class Task(ExternalSystemExchangeMixin):
 class TaskProperties(BaseModel):
     status: TaskStatus | None
     unloaded: bool | None
+
+
+class TaskBaseModel(BaseModel):
+    properties: TaskProperties | None
+    content: BaseModel | None

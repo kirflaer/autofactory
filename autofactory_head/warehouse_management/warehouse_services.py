@@ -2,7 +2,8 @@ from typing import Iterable
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-
+from datetime import datetime
+from dateutil import parser
 from catalogs.models import ExternalSource, Product, Storage, StorageCell
 from tasks.models import TaskStatus, TaskBaseModel
 from tasks.task_services import RouterContent
@@ -99,7 +100,9 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
             continue
 
         storage = Storage.objects.filter(external_key=element['storage']).first()
-        operation = AcceptanceOperation.objects.create(external_source=external_source, storage=storage)
+        operation = AcceptanceOperation.objects.create(external_source=external_source, storage=storage,
+                                                       batch_number=element['batch_number'],
+                                                       production_date=parser.parse(element['production_date']))
         fill_operation_pallets(operation, element['pallets'])
         fill_operation_products(operation, element['products'])
 

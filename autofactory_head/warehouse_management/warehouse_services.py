@@ -66,7 +66,7 @@ def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: 
     """ Создает операцию размещение в ячейках"""
     result = []
     for element in serializer_data:
-        storage = Storage.objects.filter(guid=element['storage']).first()
+        storage = Storage.objects.filter(external_key=element['storage']).first()
         operation = PlacementToCellsOperation.objects.create(storage=storage)
         fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
@@ -98,7 +98,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
         if operation is not None:
             continue
 
-        storage = Storage.objects.filter(guid=element['storage']).first()
+        storage = Storage.objects.filter(external_key=element['storage']).first()
         operation = AcceptanceOperation.objects.create(external_source=external_source, storage=storage)
         fill_operation_pallets(operation, element['pallets'])
         fill_operation_products(operation, element['products'])

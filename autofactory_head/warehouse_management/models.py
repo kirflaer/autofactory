@@ -8,7 +8,7 @@ from pydantic.dataclasses import dataclass
 
 from catalogs.models import Product, Storage, StorageCell
 from factory_core.models import OperationBaseModel
-from tasks.models import Task, TaskProperties
+from tasks.models import Task, TaskProperties, TaskBaseModel
 
 User = get_user_model()
 
@@ -159,6 +159,5 @@ class PlacementToCellsContent:
     cells: List[CellContent]
 
 
-class PlacementToCellsTask(BaseModel):
-    properties: TaskProperties | None
+class PlacementToCellsTask(TaskBaseModel):
     content: PlacementToCellsContent

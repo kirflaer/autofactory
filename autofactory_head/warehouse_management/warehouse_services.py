@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from catalogs.models import ExternalSource, Product, Storage, StorageCell
-from tasks.models import TaskStatus
+from tasks.models import TaskStatus, TaskBaseModel
 from tasks.task_services import RouterContent
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct,
@@ -27,13 +27,13 @@ def get_content_router() -> dict[str: RouterContent]:
                                                  create_function=create_acceptance_operation,
                                                  read_serializer=AcceptanceOperationReadSerializer,
                                                  write_serializer=AcceptanceOperationWriteSerializer,
-                                                 content_model=None,
+                                                 content_model=TaskBaseModel,
                                                  change_content_function=None),
             'PALLET_COLLECT': RouterContent(task=PalletCollectOperation,
                                             create_function=create_collect_operation,
                                             read_serializer=PalletCollectOperationReadSerializer,
                                             write_serializer=PalletCollectOperationWriteSerializer,
-                                            content_model=None,
+                                            content_model=TaskBaseModel,
                                             change_content_function=None),
             'PLACEMENT_TO_CELLS': RouterContent(task=PlacementToCellsOperation,
                                                 create_function=create_placement_operation,

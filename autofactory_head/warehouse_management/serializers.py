@@ -112,7 +112,7 @@ class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
 class AcceptanceOperationWriteSerializer(OperationBaseSerializer):
     products = OperationProductsSerializer(many=True)
     pallets = serializers.ListField()
-    storage = serializers.CharField(required=False)
+    storage = serializers.CharField()
     production_date = serializers.CharField(required=False)
     batch_number = serializers.CharField(required=False)
 
@@ -127,11 +127,12 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
     pallets = serializers.SerializerMethodField()
     pallets_count = serializers.SerializerMethodField()
+    external_source = ExternalSerializer()
 
     class Meta:
         model = AcceptanceOperation
         fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products', 'pallets',
-                  'pallets_count', 'batch_number')
+                  'pallets_count', 'batch_number', 'external_source')
 
     @staticmethod
     def get_pallets_count(obj):
@@ -182,6 +183,37 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
                 {'cell': element.cell.guid if element.cell is not None else None,
                  'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
                  'count': element.count,
+                 'product': element.product.guid if element.product is not None else None
+                 })
+        return result
+
+
+class MovementCellContent(serializers.Serializer):
+    product = serializers.CharField()
+    cell = serializers.CharField()
+    changed_cell = serializers.CharField()
+
+
+class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
+    cells = MovementCellContent(many=True)
+
+
+class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
+    cells = MovementCellContent(many=True)
+    date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
+
+    class Meta:
+        model = PlacementToCellsOperation
+        fields = ('guid', 'number', 'status', 'date', 'cells')
+
+    @staticmethod
+    def get_cells(obj):
+        cells = OperationCell.objects.filter(operation=obj.guid)
+        result = []
+        for element in cells:
+            result.append(
+                {'cell': element.cell.guid if element.cell is not None else None,
+                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
                  'product': element.product.guid if element.product is not None else None
                  })
         return result

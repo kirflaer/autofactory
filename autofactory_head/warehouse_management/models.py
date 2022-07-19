@@ -138,6 +138,15 @@ class PlacementToCellsOperation(OperationBaseOperation):
         verbose_name_plural = 'Операции размещения в ячейки'
 
 
+class MovementBetweenCellsOperation(OperationBaseOperation):
+    type_task = 'MOVEMENT_BETWEEN_CELLS'
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+
+    class Meta:
+        verbose_name = 'Перемещение между ячейками'
+        verbose_name_plural = 'Операции перемещения между ячейками'
+
+
 @dataclass
 class CellContent:
     cell: str

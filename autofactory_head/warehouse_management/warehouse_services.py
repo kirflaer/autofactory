@@ -9,11 +9,12 @@ from tasks.task_services import RouterContent
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct,
                                          PalletStatus, PalletCollectOperation, PlacementToCellsOperation, OperationCell,
-                                         PlacementToCellsTask)
+                                         PlacementToCellsTask, MovementBetweenCellsOperation)
 from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
     PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
-    PlacementToCellsOperationReadSerializer)
+    PlacementToCellsOperationReadSerializer, MovementBetweenCellsOperationWriteSerializer,
+    MovementBetweenCellsOperationReadSerializer)
 
 User = get_user_model()
 
@@ -39,8 +40,25 @@ def get_content_router() -> dict[str: RouterContent]:
                                                 read_serializer=PlacementToCellsOperationReadSerializer,
                                                 write_serializer=PlacementToCellsOperationWriteSerializer,
                                                 content_model=PlacementToCellsTask,
-                                                change_content_function=change_content_placement_operation)
+                                                change_content_function=change_content_placement_operation),
+            'MOVEMENT_BETWEEN_CELLS': RouterContent(task=MovementBetweenCellsOperation,
+                                                    create_function=create_movement_cell_operation,
+                                                    read_serializer=MovementBetweenCellsOperationWriteSerializer,
+                                                    write_serializer=MovementBetweenCellsOperationReadSerializer,
+                                                    content_model=None,
+                                                    change_content_function=None),
             }
+
+
+@transaction.atomic
+def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию перемещения между ячейками"""
+    result = []
+    for element in serializer_data:
+        operation = MovementBetweenCellsOperation.objects.create()
+        fill_operation_cells(operation, element['cells'])
+        result.append(operation.guid)
+    return result
 
 
 @transaction.atomic
@@ -79,7 +97,9 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
         operation = AcceptanceOperation.objects.filter(external_source=external_source).first()
         if operation is not None:
             continue
-        operation = AcceptanceOperation.objects.create(external_source=external_source)
+
+        storage = Storage.objects.filter(guid=element['storage']).first()
+        operation = AcceptanceOperation.objects.create(external_source=external_source, storage=storage)
         fill_operation_pallets(operation, element['pallets'])
         fill_operation_products(operation, element['products'])
 
@@ -144,8 +164,14 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         if product is None:
             continue
 
+        if element.get('changed_cell') is not None:
+            changed_cell = StorageCell.objects.filter(external_key=element['changed_cell']).first()
+        else:
+            changed_cell = None
+
         count = 0 if element.get('count') is None else element['count']
-        operation_products = OperationCell.objects.create(cell=cell, count=count, product=product)
+        operation_products = OperationCell.objects.create(cell=cell, count=count, product=product,
+                                                          changed_cell=changed_cell)
         operation_products.fill_properties(operation)
 
 

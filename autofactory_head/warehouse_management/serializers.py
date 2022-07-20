@@ -4,7 +4,8 @@ from api.serializers import ProductShortSerializer, StorageSerializer
 from catalogs.serializers import ExternalSerializer
 from tasks.serialisers import TaskPropertiesSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
-                                         Pallet, PalletContent, PlacementToCellsOperation, OperationCell)
+                                         Pallet, PalletContent, PlacementToCellsOperation, OperationCell,
+                                         MovementBetweenCellsOperation)
 
 
 class PalletWriteSerializer(serializers.Serializer):
@@ -199,11 +200,11 @@ class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
 
 
 class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
-    cells = MovementCellContent(many=True)
+    cells = serializers.SerializerMethodField()
     date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
 
     class Meta:
-        model = PlacementToCellsOperation
+        model = MovementBetweenCellsOperation
         fields = ('guid', 'number', 'status', 'date', 'cells')
 
     @staticmethod

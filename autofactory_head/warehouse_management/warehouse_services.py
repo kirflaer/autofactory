@@ -2,7 +2,7 @@ from typing import Iterable
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from datetime import datetime
+from django.db.models import Q
 from dateutil import parser
 from catalogs.models import ExternalSource, Product, Storage, StorageCell
 from tasks.models import TaskStatus, TaskBaseModel
@@ -44,8 +44,8 @@ def get_content_router() -> dict[str: RouterContent]:
                                                 change_content_function=change_content_placement_operation),
             'MOVEMENT_BETWEEN_CELLS': RouterContent(task=MovementBetweenCellsOperation,
                                                     create_function=create_movement_cell_operation,
-                                                    read_serializer=MovementBetweenCellsOperationWriteSerializer,
-                                                    write_serializer=MovementBetweenCellsOperationReadSerializer,
+                                                    read_serializer=MovementBetweenCellsOperationReadSerializer,
+                                                    write_serializer=MovementBetweenCellsOperationWriteSerializer,
                                                     content_model=None,
                                                     change_content_function=None),
             }
@@ -56,7 +56,8 @@ def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], us
     """ Создает операцию перемещения между ячейками"""
     result = []
     for element in serializer_data:
-        operation = MovementBetweenCellsOperation.objects.create()
+        operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
+                                                                 status=TaskStatus.CLOSE)
         fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
     return result
@@ -159,16 +160,17 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
     """ Заполняет ячейки абстрактной операции """
 
     for element in raw_data:
-        cell = StorageCell.objects.filter(external_key=element['cell']).first()
+        cell = StorageCell.objects.filter(Q(external_key=element['cell']) | Q(guid=element['cell'])).first()
         if cell is None:
             continue
 
-        product = Product.objects.filter(external_key=element['product']).first()
+        product = Product.objects.filter(Q(external_key=element['product']) | Q(guid=element['product'])).first()
         if product is None:
             continue
 
         if element.get('changed_cell') is not None:
-            changed_cell = StorageCell.objects.filter(external_key=element['changed_cell']).first()
+            changed_cell = StorageCell.objects.filter(
+                Q(external_key=element['changed_cell']) | Q(guid=element['changed_cell'])).first()
         else:
             changed_cell = None
 

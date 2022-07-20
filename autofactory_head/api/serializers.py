@@ -244,6 +244,6 @@ class RegularExpressionSerializer(serializers.ModelSerializer):
 
 class StorageCellsSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('guid', 'name', 'external_key')
+        fields = ('guid', 'name', 'external_key', 'barcode')
         model = StorageCell
         read_only_fields = ('guid',)

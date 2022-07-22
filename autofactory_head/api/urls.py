@@ -23,9 +23,8 @@ urlpatterns = [
     re_path(r'v[0-9]/scanners/$', DeviceViewSet.as_view(
         {'get': 'list_scanners'})),
     re_path(r'v[0-9]/units/$', UnitsCreateListSet.as_view()),
+    re_path(r'^v[0-9]/marking/(?P<pk>).{36}/$', MarkingViewSet.as_view({'put': 'close'})),
     re_path(r'v[0-9]/marking/', MarkingListCreateViewSet.as_view()),
-    re_path(r'v[0-9]/marking/<uuid:pk>/', MarkingViewSet.as_view({'put': 'close'})),
-
     re_path(r'v[0-9]/arks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
     re_path(r'v[0-9]/marks/remove/', MarksViewSet.as_view({'post': 'remove_marks'})),
 

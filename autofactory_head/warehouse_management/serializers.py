@@ -1,8 +1,7 @@
 from rest_framework import serializers
 
-from api.serializers import ProductShortSerializer, StorageSerializer
+from api.serializers import StorageSerializer
 from catalogs.serializers import ExternalSerializer
-from tasks.serialisers import TaskPropertiesSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PalletContent, PlacementToCellsOperation, OperationCell,
                                          MovementBetweenCellsOperation)
@@ -18,21 +17,14 @@ class PalletWriteSerializer(serializers.Serializer):
 
 
 class PalletReadSerializer(serializers.Serializer):
-    codes = serializers.SerializerMethodField()
     id = serializers.CharField()
-    product = ProductShortSerializer()
+    product_name = serializers.SlugRelatedField(many=False, read_only=True, slug_field='name', source='product')
     status = serializers.CharField()
     batch_number = serializers.CharField()
     weight = serializers.IntegerField()
+    count = serializers.IntegerField(source='content_count')
     production_date = serializers.DateField(format="%d.%m.%Y")
-
-    @staticmethod
-    def get_codes(obj):
-        pallet_codes = PalletContent.objects.filter(pallet=obj)
-        if pallet_codes.exists():
-            return [i.aggregation_code for i in pallet_codes]
-        else:
-            return []
+    guid = serializers.UUIDField()
 
 
 class PalletUpdateSerializer(serializers.ModelSerializer):

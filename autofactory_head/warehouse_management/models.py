@@ -121,6 +121,8 @@ class AcceptanceOperation(OperationBaseOperation):
         verbose_name_plural = 'Операции приемки товаров'
 
 
+
+
 class PalletCollectOperation(OperationBaseOperation):
     type_task = 'PALLET_COLLECT'
 

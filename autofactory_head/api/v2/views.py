@@ -5,6 +5,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 import api.views
+from tasks.models import TaskStatus
 from tasks.task_services import change_task_properties
 
 
@@ -27,6 +28,9 @@ class TasksChangeViewSet(api.views.TasksViewSet):
 
         if task_data.properties is not None:
             change_task_properties(instance, task_data.__dict__['properties'])
+
+        if instance.status == TaskStatus.CLOSE and not instance.closed:
+            instance.close()
 
         if task_data.content is not None:
             ret = task_router.change_content_function(task_data.__dict__['content'].__dict__, instance)

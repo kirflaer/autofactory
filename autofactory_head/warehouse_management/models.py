@@ -61,6 +61,10 @@ class OperationBaseOperation(OperationBaseModel, Task):
     class Meta:
         abstract = True
 
+    def close(self):
+        self.ready_to_unload = True
+        super().close()
+
 
 class ManyToManyOperationMixin(models.Model):
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
@@ -119,8 +123,6 @@ class AcceptanceOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Приемка на склад'
         verbose_name_plural = 'Операции приемки товаров'
-
-
 
 
 class PalletCollectOperation(OperationBaseOperation):

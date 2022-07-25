@@ -236,6 +236,7 @@ class MarkingViewSet(viewsets.ViewSet):
         Если закрытие от автоматического сканера марки берутся из RawMark"""
 
         marking = MarkingOperation.objects.filter(guid=pk)
+
         if not marking.exists():
             raise APIException("Маркировка не найдена")
 

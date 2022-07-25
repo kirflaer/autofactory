@@ -29,8 +29,10 @@ class TasksChangeViewSet(api.views.TasksViewSet):
         if task_data.properties is not None:
             change_task_properties(instance, task_data.__dict__['properties'])
 
+        instance = task_router.task.objects.get(guid=guid)
         if instance.status == TaskStatus.CLOSE and not instance.closed:
             instance.close()
+
 
         if task_data.content is not None:
             ret = task_router.change_content_function(task_data.__dict__['content'].__dict__, instance)

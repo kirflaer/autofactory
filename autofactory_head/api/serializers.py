@@ -207,12 +207,13 @@ class MarkingSerializer(serializers.ModelSerializer):
     production_date = serializers.DateField(format="%Y-%m-%d")
     product = serializers.CharField(write_only=True, required=False)
     organization = serializers.CharField(write_only=True, required=False)
+    weight = serializers.FloatField(required=False)
 
     class Meta:
         fields = (
             'batch_number', 'production_date', 'product', 'organization',
             'guid', 'closed', 'line', 'organization', 'product',
-            'aggregations', 'unloaded')
+            'aggregations', 'unloaded', 'weight')
         read_only_fields = ('guid', 'closed', 'unloaded')
         model = MarkingOperation
 

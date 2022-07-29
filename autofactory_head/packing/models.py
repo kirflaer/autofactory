@@ -19,6 +19,7 @@ class MarkingOperation(OperationBaseModel, ExternalSystemExchangeMixin):
     manual_editing = models.BooleanField(default=False)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
     production_date = models.DateField('Дата выработки')
+    weight = models.FloatField('Вес', default=0)
 
     line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name='Линия', blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура', blank=True, null=True)

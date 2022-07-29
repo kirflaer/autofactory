@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from catalogs.models import (ActivationKey, Department, Device, Direction, Line, LineProduct, Organization, Product,
                              RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
-from packing.marking_services import (confirm_marks_unloading, create_marking_marks, get_marks_to_unload,
+from packing.marking_services import (create_marking_marks,
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
 from tasks.task_services import get_task_queryset, TaskException
@@ -24,6 +24,7 @@ from .serializers import (AggregationsSerializer, ConfirmUnloadingSerializer, De
                           MarkingSerializer, MarksSerializer, OrganizationSerializer, ProductSerializer,
                           RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
                           UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer)
+from .services import confirm_marks_unloading
 
 User = get_user_model()
 
@@ -263,6 +264,15 @@ class MarksViewSet(viewsets.ViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
     @staticmethod
+    def confirm_unloading(request):
+        """ Подтверждение об успешной выгрузке маркировки """
+        serializer = ConfirmUnloadingSerializer(data=request.data)
+        if serializer.is_valid():
+            confirm_marks_unloading(serializer.validated_data['operations'])
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
     def add_marks(request):
         """Добавляет марки в существующую операцию маркировки"""
         serializer = MarksSerializer(data=request.data, source='post_request')
@@ -284,20 +294,6 @@ class MarksViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors)
 
-    @staticmethod
-    def marks_to_unload(request):
-        """ Формирует марки для выгрузки в 1с """
-        return Response(data=get_marks_to_unload())
-
-    @staticmethod
-    def confirm_unloading(request):
-        """ Подтверждение об успешной выгрузке маркировки """
-        serializer = ConfirmUnloadingSerializer(data=request.data)
-        if serializer.is_valid():
-            confirm_marks_unloading(serializer.validated_data['operations'])
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class LogCreateViewSet(generics.CreateAPIView):
     serializer_class = LogSerializer
@@ -317,7 +313,7 @@ class PalletViewSet(viewsets.ViewSet):
         queryset = Pallet.objects.all()
 
         if len(request.query_params):
-            if request.query_params.get('id') is None:
+            if request.query_params.get('id') is not None:
                 queryset = queryset.filter(id=request.query_params.get('id'))
 
         serializer = PalletReadSerializer(queryset, many=True)

@@ -19,7 +19,9 @@ class PalletWriteSerializer(serializers.Serializer):
 class PalletReadSerializer(serializers.Serializer):
     id = serializers.CharField()
     product_name = serializers.SlugRelatedField(many=False, read_only=True, slug_field='name', source='product')
+    product_guid = serializers.SlugRelatedField(many=False, read_only=True, slug_field='pk', source='product')
     status = serializers.CharField()
+    creation_date = serializers.DateTimeField(format="%d.%m.%Y")
     batch_number = serializers.CharField()
     weight = serializers.IntegerField()
     count = serializers.IntegerField(source='content_count')

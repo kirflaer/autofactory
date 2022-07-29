@@ -1,9 +1,10 @@
-from rest_framework import status
+from rest_framework import status, permissions, viewsets
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 import api.views
-from tasks.serialisers import TaskPropertiesSerializer
+from api.v1.services import get_marks_to_unload
+from tasks.serializers import TaskPropertiesSerializer
 from tasks.task_services import change_task_properties
 
 
@@ -23,3 +24,11 @@ class TasksChangeViewSet(api.views.TasksViewSet):
             return Response({'status': serializer.validated_data})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MarksViewSet(api.views.MarksViewSet):
+    @staticmethod
+    def marks_to_unload(request):
+        """ Формирует марки для выгрузки в 1с """
+        return Response(data=get_marks_to_unload())
+

@@ -3,7 +3,6 @@ from typing import NamedTuple, Iterable
 
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet, Q
-from pydantic import BaseModel
 from rest_framework import serializers
 
 from tasks.models import Task, TaskStatus, TaskProperties, TaskBaseModel

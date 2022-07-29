@@ -27,13 +27,10 @@ urlpatterns = [
     re_path(r'v[0-9]/marking/', MarkingListCreateViewSet.as_view()),
     re_path(r'v[0-9]/arks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
     re_path(r'v[0-9]/marks/remove/', MarksViewSet.as_view({'post': 'remove_marks'})),
-
-    re_path(r'v[0-9]/marks/', MarksViewSet.as_view(
-        {'get': 'marks_to_unload', 'put': 'confirm_unloading'})),
-
     re_path(r'^v[0-9]/pallets/$', PalletViewSet.as_view({'get': 'list', 'post': 'create'})),
     re_path(r'^v[0-9]/pallets/(?P<id>.+)/$', PalletRetrieveUpdate.as_view()),
     re_path(r'^v[0-9]/tasks/(?P<type_task>\w+)/$', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
+
     path('v1/', include('api.v1.urls')),
     path('v2/', include('api.v2.urls')),
 ]

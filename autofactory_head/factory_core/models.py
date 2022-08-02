@@ -29,7 +29,7 @@ class ExternalSystemExchangeMixin(models.Model):
         self.save()
 
 
-class BaseModel(models.Model):
+class OperationBaseModel(models.Model):
     """ Базовая модель для операций """
 
     number = models.IntegerField(default=1)

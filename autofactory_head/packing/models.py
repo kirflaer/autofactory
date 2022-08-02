@@ -2,13 +2,13 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 from catalogs.models import Device, Line, ExternalSource
-from factory_core.models import BaseModel, ExternalSystemExchangeMixin
+from factory_core.models import OperationBaseModel, ExternalSystemExchangeMixin
 from catalogs.models import Product, Organization, Direction, Client
 
 User = get_user_model()
 
 
-class MarkingOperation(BaseModel, ExternalSystemExchangeMixin):
+class MarkingOperation(OperationBaseModel, ExternalSystemExchangeMixin):
     author = models.ForeignKey(User, on_delete=models.CASCADE,
                                verbose_name='Автор', null=True)
 
@@ -19,6 +19,7 @@ class MarkingOperation(BaseModel, ExternalSystemExchangeMixin):
     manual_editing = models.BooleanField(default=False)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
     production_date = models.DateField('Дата выработки')
+    weight = models.FloatField('Вес', default=0)
 
     line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name='Линия', blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура', blank=True, null=True)

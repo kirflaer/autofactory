@@ -1,11 +1,14 @@
 import uuid
+from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 
 from catalogs.models import Product, Storage, StorageCell
-from factory_core.models import BaseModel
-from tasks.models import Task
+from factory_core.models import OperationBaseModel
+from tasks.models import Task, TaskProperties, TaskBaseModel
 
 User = get_user_model()
 
@@ -54,9 +57,13 @@ class PalletContent(models.Model):
         return f'{self.pallet} - {self.aggregation_code}'
 
 
-class BaseOperation(BaseModel, Task):
+class OperationBaseOperation(OperationBaseModel, Task):
     class Meta:
         abstract = True
+
+    def close(self):
+        self.ready_to_unload = True
+        super().close()
 
 
 class ManyToManyOperationMixin(models.Model):
@@ -70,7 +77,7 @@ class ManyToManyOperationMixin(models.Model):
     class Meta:
         abstract = True
 
-    def fill_properties(self, operation: BaseOperation) -> None:
+    def fill_properties(self, operation: OperationBaseOperation) -> None:
         self.operation = operation.guid
         self.type_operation = operation.type_task
         self.number_operation = operation.number
@@ -97,14 +104,17 @@ class OperationProduct(ManyToManyOperationMixin):
 
 
 class OperationCell(OperationProduct):
-    cell = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка')
+    cell = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
+                             related_name='operation_cell')
+    changed_cell = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,
+                                     verbose_name='Измененная ячейка')
 
     class Meta:
         verbose_name = 'Складские ячейки операции'
         verbose_name_plural = 'Складские ячейки операций'
 
 
-class AcceptanceOperation(BaseOperation):
+class AcceptanceOperation(OperationBaseOperation):
     type_task = 'ACCEPTANCE_TO_STOCK'
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
     production_date = models.DateField('Дата выработки', blank=True, null=True)
@@ -115,7 +125,7 @@ class AcceptanceOperation(BaseOperation):
         verbose_name_plural = 'Операции приемки товаров'
 
 
-class PalletCollectOperation(BaseOperation):
+class PalletCollectOperation(OperationBaseOperation):
     type_task = 'PALLET_COLLECT'
 
     class Meta:
@@ -123,10 +133,35 @@ class PalletCollectOperation(BaseOperation):
         verbose_name_plural = 'Операции сбора паллет'
 
 
-class PlacementToCellsOperation(BaseOperation):
+class PlacementToCellsOperation(OperationBaseOperation):
     type_task = 'PLACEMENT_TO_CELLS'
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
 
     class Meta:
         verbose_name = 'Размещение в ячейки'
         verbose_name_plural = 'Операции размещения в ячейки'
+
+
+class MovementBetweenCellsOperation(OperationBaseOperation):
+    type_task = 'MOVEMENT_BETWEEN_CELLS'
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+
+    class Meta:
+        verbose_name = 'Перемещение между ячейками'
+        verbose_name_plural = 'Операции перемещения между ячейками'
+
+
+@dataclass
+class CellContent:
+    cell: str
+    changed_cell: str
+    product: str
+
+
+@dataclass
+class PlacementToCellsContent:
+    cells: List[CellContent]
+
+
+class PlacementToCellsTask(TaskBaseModel):
+    content: PlacementToCellsContent

@@ -9,21 +9,22 @@ from rest_framework.response import Response
 
 from catalogs.models import (ActivationKey, Department, Device, Direction, Line, LineProduct, Organization, Product,
                              RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
-from packing.marking_services import (confirm_marks_unloading, create_marking_marks, get_marks_to_unload,
+from packing.marking_services import (create_marking_marks,
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
-from tasks.serializers import TaskUpdateSerializer
-from tasks.task_services import get_task_queryset, TaskException, change_task_properties
+from tasks.task_services import get_task_queryset, TaskException
 from warehouse_management.models import Pallet
+from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer, PalletUpdateSerializer
+
 from warehouse_management.warehouse_services import get_content_router, create_pallets
 
-from .exceptions import ActivationFailed
+from api.exceptions import ActivationFailed
 from .serializers import (AggregationsSerializer, ConfirmUnloadingSerializer, DepartmentSerializer,
                           DeviceSerializer, DirectionSerializer, LineCreateSerializer, LogSerializer,
                           MarkingSerializer, MarksSerializer, OrganizationSerializer, ProductSerializer,
                           RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
-                          UnitSerializer, UserSerializer, LineSerializer, PalletWriteSerializer, PalletReadSerializer,
-                          PalletUpdateSerializer, StorageCellsSerializer)
+                          UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer)
+from .services import confirm_marks_unloading
 
 User = get_user_model()
 
@@ -236,6 +237,7 @@ class MarkingViewSet(viewsets.ViewSet):
         Если закрытие от автоматического сканера марки берутся из RawMark"""
 
         marking = MarkingOperation.objects.filter(guid=pk)
+
         if not marking.exists():
             raise APIException("Маркировка не найдена")
 
@@ -262,6 +264,15 @@ class MarksViewSet(viewsets.ViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
     @staticmethod
+    def confirm_unloading(request):
+        """ Подтверждение об успешной выгрузке маркировки """
+        serializer = ConfirmUnloadingSerializer(data=request.data)
+        if serializer.is_valid():
+            confirm_marks_unloading(serializer.validated_data['operations'])
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
     def add_marks(request):
         """Добавляет марки в существующую операцию маркировки"""
         serializer = MarksSerializer(data=request.data, source='post_request')
@@ -283,20 +294,6 @@ class MarksViewSet(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors)
 
-    @staticmethod
-    def marks_to_unload(request):
-        """ Формирует марки для выгрузки в 1с """
-        return Response(data=get_marks_to_unload())
-
-    @staticmethod
-    def confirm_unloading(request):
-        """ Подтверждение об успешной выгрузке маркировки """
-        serializer = ConfirmUnloadingSerializer(data=request.data)
-        if serializer.is_valid():
-            confirm_marks_unloading(serializer.validated_data['operations'])
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class LogCreateViewSet(generics.CreateAPIView):
     serializer_class = LogSerializer
@@ -316,7 +313,7 @@ class PalletViewSet(viewsets.ViewSet):
         queryset = Pallet.objects.all()
 
         if len(request.query_params):
-            if request.query_params.get('id') is None:
+            if request.query_params.get('id') is not None:
                 queryset = queryset.filter(id=request.query_params.get('id'))
 
         serializer = PalletReadSerializer(queryset, many=True)
@@ -330,15 +327,6 @@ class PalletViewSet(viewsets.ViewSet):
             create_pallets(serializer.validated_data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    #
-    def change_content(self, request):
-        pass
-        # serializer = ChangePalletContentSerializer(data=request.data)
-        # if serializer.is_valid():
-        #     change_pallet_content(serializer.validated_data)
-        #     return Response(serializer.data)
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
@@ -389,22 +377,6 @@ class TasksViewSet(viewsets.ViewSet):
             # TODO: обработать ошибку создания
             result = task_router.create_function(serializer.data, request.user)
             return Response({'type_task': type_task, 'guids': result})
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def change_task(self, request, type_task, guid):
-        task_router = self.router.get(type_task.upper())
-        if not task_router:
-            raise APIException('Тип задачи не найден')
-
-        instance = task_router.task.objects.filter(guid=guid).first()
-        if instance is None:
-            raise APIException('Задача не найдена')
-
-        serializer = TaskUpdateSerializer(data=request.data)
-        if serializer.is_valid():
-            change_task_properties(instance, serializer.validated_data)
-            return Response({'status': serializer.validated_data})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

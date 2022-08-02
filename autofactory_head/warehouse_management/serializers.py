@@ -1,14 +1,42 @@
 from rest_framework import serializers
 
-# TODO убрать зависимость от модуля api
-from api.serializers import PalletWriteSerializer, StorageSerializer, PalletReadSerializer
+from api.serializers import StorageSerializer
 from catalogs.serializers import ExternalSerializer
-from warehouse_management.models import AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet, \
-    Pallet
+from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
+                                         Pallet, PalletContent, PlacementToCellsOperation, OperationCell,
+                                         MovementBetweenCellsOperation)
+
+
+class PalletWriteSerializer(serializers.Serializer):
+    codes = serializers.ListField(required=False)
+    id = serializers.CharField()
+    product = serializers.CharField()
+    batch_number = serializers.CharField(required=False)
+    production_date = serializers.DateField(required=False)
+    content_count = serializers.IntegerField(required=False)
+
+
+class PalletReadSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    product_name = serializers.SlugRelatedField(many=False, read_only=True, slug_field='name', source='product')
+    product_guid = serializers.SlugRelatedField(many=False, read_only=True, slug_field='pk', source='product')
+    status = serializers.CharField()
+    creation_date = serializers.DateTimeField(format="%d.%m.%Y")
+    batch_number = serializers.CharField()
+    weight = serializers.IntegerField()
+    count = serializers.IntegerField(source='content_count')
+    production_date = serializers.DateField(format="%d.%m.%Y")
+    guid = serializers.UUIDField()
+
+
+class PalletUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('status',)
+        model = Pallet
 
 
 class OperationBaseSerializer(serializers.Serializer):
-    external_source = ExternalSerializer(required=False)
+    external_source = ExternalSerializer()
 
     def create(self, validated_data):
         pass
@@ -25,12 +53,6 @@ class OperationProductsSerializer(serializers.Serializer):
     class Meta:
         fields = ('product', 'weight', 'count')
 
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
 
 class OperationCellsSerializer(serializers.Serializer):
     product = serializers.CharField()
@@ -40,24 +62,12 @@ class OperationCellsSerializer(serializers.Serializer):
     class Meta:
         fields = ('product', 'cell', 'count')
 
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
     pallets = PalletWriteSerializer(many=True)
 
     class Meta:
         fields = 'pallets',
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
 
 
 class PalletShortSerializer(serializers.ModelSerializer):
@@ -97,7 +107,7 @@ class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
 class AcceptanceOperationWriteSerializer(OperationBaseSerializer):
     products = OperationProductsSerializer(many=True)
     pallets = serializers.ListField()
-    storage = serializers.CharField(required=False)
+    storage = serializers.CharField()
     production_date = serializers.CharField(required=False)
     batch_number = serializers.CharField(required=False)
 
@@ -112,11 +122,12 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
     pallets = serializers.SerializerMethodField()
     pallets_count = serializers.SerializerMethodField()
+    external_source = ExternalSerializer()
 
     class Meta:
         model = AcceptanceOperation
         fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products', 'pallets',
-                  'pallets_count', 'batch_number')
+                  'pallets_count', 'batch_number', 'external_source')
 
     @staticmethod
     def get_pallets_count(obj):
@@ -148,5 +159,56 @@ class PlacementToCellsOperationWriteSerializer(OperationBaseSerializer):
     cells = OperationCellsSerializer(many=True)
     storage = serializers.CharField(required=False)
 
+
+class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
+    storage = StorageSerializer()
+    date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
+    cells = serializers.SerializerMethodField()
+
     class Meta:
-        fields = ('external_source', 'cells', 'storage')
+        model = PlacementToCellsOperation
+        fields = ('guid', 'number', 'status', 'date', 'storage', 'cells')
+
+    @staticmethod
+    def get_cells(obj):
+        cells = OperationCell.objects.filter(operation=obj.guid)
+        result = []
+        for element in cells:
+            result.append(
+                {'cell': element.cell.guid if element.cell is not None else None,
+                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
+                 'count': element.count,
+                 'product': element.product.guid if element.product is not None else None
+                 })
+        return result
+
+
+class MovementCellContent(serializers.Serializer):
+    product = serializers.CharField()
+    cell = serializers.CharField()
+    changed_cell = serializers.CharField()
+
+
+class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
+    cells = MovementCellContent(many=True)
+
+
+class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
+    cells = serializers.SerializerMethodField()
+    date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
+
+    class Meta:
+        model = MovementBetweenCellsOperation
+        fields = ('guid', 'number', 'status', 'date', 'cells')
+
+    @staticmethod
+    def get_cells(obj):
+        cells = OperationCell.objects.filter(operation=obj.guid)
+        result = []
+        for element in cells:
+            result.append(
+                {'cell': element.cell.guid if element.cell is not None else None,
+                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
+                 'product': element.product.guid if element.product is not None else None
+                 })
+        return result

@@ -1,4 +1,4 @@
-from django.urls import path, re_path
+from django.urls import path, re_path, include
 
 from .views import (DepartmentList, DeviceViewSet, DirectionListCreateView, LineListCreateView, LogCreateViewSet,
                     MarkingListCreateViewSet, MarkingViewSet, MarksViewSet, OrganizationList, PalletRetrieveUpdate,
@@ -23,19 +23,14 @@ urlpatterns = [
     re_path(r'v[0-9]/scanners/$', DeviceViewSet.as_view(
         {'get': 'list_scanners'})),
     re_path(r'v[0-9]/units/$', UnitsCreateListSet.as_view()),
-    path('v1/marking/', MarkingListCreateViewSet.as_view()),
-    path('v1/marking/<uuid:pk>/', MarkingViewSet.as_view({'put': 'close'})),
+    re_path(r'^v[0-9]/marking/(?P<pk>.{36})/$', MarkingViewSet.as_view({'put': 'close'})),
+    re_path(r'v[0-9]/marking/', MarkingListCreateViewSet.as_view()),
+    re_path(r'v[0-9]/arks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
+    re_path(r'v[0-9]/marks/remove/', MarksViewSet.as_view({'post': 'remove_marks'})),
+    re_path(r'^v[0-9]/pallets/$', PalletViewSet.as_view({'get': 'list', 'post': 'create'})),
+    re_path(r'^v[0-9]/pallets/(?P<id>.+)/$', PalletRetrieveUpdate.as_view()),
+    re_path(r'^v[0-9]/tasks/(?P<type_task>\w+)/$', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
 
-    path('v1/marks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
-    path('v1/marks/remove/', MarksViewSet.as_view({'post': 'remove_marks'})),
-
-    path('v1/marks/', MarksViewSet.as_view(
-        {'get': 'marks_to_unload', 'put': 'confirm_unloading'})),
-
-    path('v1/pallets/',
-         PalletViewSet.as_view(
-             {'get': 'list', 'post': 'create', 'patch': 'change_content'})),
-    path('v1/pallets/<str:id>/', PalletRetrieveUpdate.as_view()),
-    path('v1/tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
-    path('v1/tasks/<str:type_task>/<uuid:guid>/', TasksViewSet.as_view({'patch': 'change_task'})),
+    path('v1/', include('api.v1.urls')),
+    path('v2/', include('api.v2.urls')),
 ]

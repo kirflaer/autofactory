@@ -1,14 +1,13 @@
 import uuid
-from typing import List, Optional
+from typing import List
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
-from catalogs.models import Product, Storage, StorageCell
+from catalogs.models import Product, Storage, StorageCell, Direction, Client
 from factory_core.models import OperationBaseModel
-from tasks.models import Task, TaskProperties, TaskBaseModel
+from tasks.models import Task, TaskBaseModel
 
 User = get_user_model()
 
@@ -18,6 +17,7 @@ class PalletStatus(models.TextChoices):
     CONFIRMED = 'CONFIRMED'
     POSTED = 'POSTED'
     SHIPPED = 'SHIPPED'
+    ARCHIVE = 'ARCHIVE'
 
 
 class Pallet(models.Model):
@@ -29,7 +29,7 @@ class Pallet(models.Model):
     creation_date = models.DateTimeField('Дата создания', auto_now_add=True)
     collector = models.ForeignKey(User, verbose_name='Сборщик', on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField('Статус', max_length=20, choices=PalletStatus.choices, default=PalletStatus.COLLECTED)
-    weight = models.FloatField('Вес', default=0)
+    weight = models.IntegerField('Вес', default=0)
     content_count = models.PositiveIntegerField('Количество позиций внутри паллеты', default=0)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
     production_date = models.DateField('Дата выработки', blank=True, null=True)
@@ -116,7 +116,7 @@ class OperationCell(OperationProduct):
 
 class AcceptanceOperation(OperationBaseOperation):
     type_task = 'ACCEPTANCE_TO_STOCK'
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+    storage = models.ForeignKey(Storage, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Склад')
     production_date = models.DateField('Дата выработки', blank=True, null=True)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
 
@@ -135,7 +135,7 @@ class PalletCollectOperation(OperationBaseOperation):
 
 class PlacementToCellsOperation(OperationBaseOperation):
     type_task = 'PLACEMENT_TO_CELLS'
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+    storage = models.ForeignKey(Storage, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Склад')
 
     class Meta:
         verbose_name = 'Размещение в ячейки'
@@ -144,11 +144,42 @@ class PlacementToCellsOperation(OperationBaseOperation):
 
 class MovementBetweenCellsOperation(OperationBaseOperation):
     type_task = 'MOVEMENT_BETWEEN_CELLS'
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Склад')
+    storage = models.ForeignKey(Storage, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Склад')
 
     class Meta:
         verbose_name = 'Перемещение между ячейками'
         verbose_name_plural = 'Операции перемещения между ячейками'
+
+
+class ShipmentOperation(OperationBaseOperation):
+    type_task = 'SHIPMENT'
+    direction = models.ForeignKey(Direction, on_delete=models.SET_NULL, null=True, blank=True,
+                                  verbose_name='Направление')
+
+    class Meta:
+        verbose_name = 'Отгрузка со склада'
+        verbose_name_plural = 'Операции отгрузки со склада'
+
+
+class OrderOperation(OperationBaseOperation):
+    type_task = 'ORDER'
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Клиент')
+
+    class Meta:
+        verbose_name = 'Заказ клиента'
+        verbose_name_plural = 'Заказы клиентов'
+
+
+class PalletProduct(ManyToManyOperationMixin):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура')
+    weight = models.FloatField('Вес', default=0.0)
+    count = models.PositiveIntegerField('Количество', default=0.0)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Номенклатура паллеты'
+        verbose_name_plural = 'Номенклатура паллет'
 
 
 @dataclass

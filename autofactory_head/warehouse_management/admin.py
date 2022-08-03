@@ -8,7 +8,7 @@ from warehouse_management.models import (
     PalletCollectOperation,
     PlacementToCellsOperation,
     OperationCell,
-    MovementBetweenCellsOperation
+    MovementBetweenCellsOperation, ShipmentOperation
 )
 
 
@@ -42,18 +42,24 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 @admin.register(PalletCollectOperation)
 class PalletCollectOperationAdmin(admin.ModelAdmin):
     list_display = (
-        'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',
+        'date', 'guid', 'user', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
 
 
 @admin.register(PlacementToCellsOperation)
 class PalletCollectOperationAdmin(admin.ModelAdmin):
     list_display = (
-        'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',
+        'date', 'guid', 'user', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
 
 
 @admin.register(MovementBetweenCellsOperation)
-class MovementBetweenCellsOperationOperationAdmin(admin.ModelAdmin):
+class MovementBetweenCellsOperationAdmin(admin.ModelAdmin):
     list_display = (
-        'date', 'guid', 'user', 'number', 'type_task', 'status', 'closed', 'ready_to_unload', 'unloaded')
+        'date', 'guid', 'user', 'number', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(ShipmentOperation)
+class ShipmentOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')

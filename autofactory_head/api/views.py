@@ -122,8 +122,7 @@ class LineListCreateView(generics.ListCreateAPIView):
 
             for key in element.get('products'):
                 product = Product.objects.filter(external_key=key).first()
-                if not LineProduct.objects.filter(product=product,
-                                                  line=line).exists():
+                if not LineProduct.objects.filter(product=product,line=line).exists():
                     LineProduct.objects.create(product=product, line=line)
 
     def get_serializer(self, *args, **kwargs):
@@ -307,28 +306,6 @@ class LogCreateViewSet(generics.CreateAPIView):
                         data=base64.b64decode(data))
 
 
-class PalletViewSet(viewsets.ViewSet):
-    @staticmethod
-    def list(request):
-        queryset = Pallet.objects.all()
-
-        if len(request.query_params):
-            if request.query_params.get('id') is not None:
-                queryset = queryset.filter(id=request.query_params.get('id'))
-
-        serializer = PalletReadSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @staticmethod
-    def create(request):
-        serializer = PalletWriteSerializer(data=request.data, many=True)
-
-        if serializer.is_valid():
-            create_pallets(serializer.validated_data)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = Pallet.objects.all()
     lookup_field = 'id'
@@ -345,9 +322,6 @@ class TasksViewSet(viewsets.ViewSet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # TODO: все роутеры вынести в голобальный синглтон
-        # в router будут добавлены роутеры всех сервисов
         warehouse_router = get_content_router()
         self.router = warehouse_router | {}
 

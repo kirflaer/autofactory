@@ -3,8 +3,8 @@ from rest_framework import serializers
 from api.serializers import StorageSerializer
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
-                                         Pallet, PalletContent, PlacementToCellsOperation, OperationCell,
-                                         MovementBetweenCellsOperation)
+                                         Pallet, PlacementToCellsOperation, OperationCell,
+                                         MovementBetweenCellsOperation, ShipmentOperation)
 
 
 class PalletWriteSerializer(serializers.Serializer):
@@ -14,6 +14,7 @@ class PalletWriteSerializer(serializers.Serializer):
     batch_number = serializers.CharField(required=False)
     production_date = serializers.DateField(required=False)
     content_count = serializers.IntegerField(required=False)
+    weight = serializers.IntegerField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):
@@ -116,6 +117,7 @@ class AcceptanceOperationWriteSerializer(OperationBaseSerializer):
 
 
 class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
+    """ Приемка на склад. Сериализатор для читающих запросов """
     products = serializers.SerializerMethodField()
     storage = StorageSerializer()
     production_date = serializers.DateField(format="%d.%m.%Y")
@@ -212,3 +214,12 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
                  'product': element.product.guid if element.product is not None else None
                  })
         return result
+
+
+class ShipmentOperationReadSerializer(serializers.ModelSerializer):
+    direction = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    external_source = serializers.SlugRelatedField(slug_field='name', read_only=True)
+
+    class Meta:
+        model = ShipmentOperation
+        fields = ('direction', 'external_source', 'guid')

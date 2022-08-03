@@ -15,6 +15,7 @@ User = get_user_model()
 class TaskStatus(models.TextChoices):
     NEW = 'NEW'
     WORK = 'WORK'
+    WAIT = 'WAIT'
     CLOSE = 'CLOSE'
 
 

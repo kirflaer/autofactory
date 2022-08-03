@@ -10,12 +10,13 @@ from tasks.task_services import RouterContent
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct,
                                          PalletStatus, PalletCollectOperation, PlacementToCellsOperation, OperationCell,
-                                         PlacementToCellsTask, MovementBetweenCellsOperation)
+                                         PlacementToCellsTask, MovementBetweenCellsOperation, ShipmentOperation,
+                                         OrderOperation)
 from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
     PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
     PlacementToCellsOperationReadSerializer, MovementBetweenCellsOperationWriteSerializer,
-    MovementBetweenCellsOperationReadSerializer)
+    MovementBetweenCellsOperationReadSerializer, ShipmentOperationReadSerializer)
 
 User = get_user_model()
 
@@ -48,6 +49,18 @@ def get_content_router() -> dict[str: RouterContent]:
                                                     write_serializer=MovementBetweenCellsOperationWriteSerializer,
                                                     content_model=None,
                                                     change_content_function=None),
+            'SHIPMENT': RouterContent(task=ShipmentOperation,
+                                      create_function=create_movement_cell_operation,
+                                      read_serializer=ShipmentOperationReadSerializer,
+                                      write_serializer=MovementBetweenCellsOperationWriteSerializer,
+                                      content_model=None,
+                                      change_content_function=None),
+            'ORDER': RouterContent(task=OrderOperation,
+                                   create_function=create_movement_cell_operation,
+                                   read_serializer=MovementBetweenCellsOperationReadSerializer,
+                                   write_serializer=MovementBetweenCellsOperationWriteSerializer,
+                                   content_model=None,
+                                   change_content_function=None),
             }
 
 
@@ -124,10 +137,13 @@ def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
 
             serializer_keys = set(element.keys())
             class_keys = set(dir(Pallet))
+            serializer_keys.discard('codes')
             fields = {key: element[key] for key in (class_keys & serializer_keys)}
             pallet = Pallet.objects.create(**fields, status=PalletStatus.CONFIRMED)
 
         result.append(pallet.id)
+
+        # TODO: необходимо реализовать создание паллеты с кодами агрегации
     return result
 
 

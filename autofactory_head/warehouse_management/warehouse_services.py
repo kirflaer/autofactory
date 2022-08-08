@@ -16,7 +16,8 @@ from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
     PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
     PlacementToCellsOperationReadSerializer, MovementBetweenCellsOperationWriteSerializer,
-    MovementBetweenCellsOperationReadSerializer, ShipmentOperationReadSerializer)
+    MovementBetweenCellsOperationReadSerializer, ShipmentOperationReadSerializer, OrderOperationReadSerializer,
+    OrderOperationWriteSerializer)
 
 User = get_user_model()
 
@@ -49,20 +50,31 @@ def get_content_router() -> dict[str: RouterContent]:
                                                     write_serializer=MovementBetweenCellsOperationWriteSerializer,
                                                     content_model=None,
                                                     change_content_function=None),
-            'SHIPMENT': RouterContent(task=ShipmentOperation,
-                                      create_function=create_movement_cell_operation,
-                                      read_serializer=ShipmentOperationReadSerializer,
-                                      write_serializer=MovementBetweenCellsOperationWriteSerializer,
-                                      content_model=None,
-                                      change_content_function=None),
+            'PLANT_APPLICATION': RouterContent(task=ShipmentOperation,
+                                               create_function=create_movement_cell_operation,
+                                               read_serializer=ShipmentOperationReadSerializer,
+                                               write_serializer=MovementBetweenCellsOperationWriteSerializer,
+                                               content_model=None,
+                                               change_content_function=None),
             'ORDER': RouterContent(task=OrderOperation,
-                                   create_function=create_movement_cell_operation,
-                                   read_serializer=MovementBetweenCellsOperationReadSerializer,
-                                   write_serializer=MovementBetweenCellsOperationWriteSerializer,
+                                   create_function=create_order_operation,
+                                   read_serializer=OrderOperationReadSerializer,
+                                   write_serializer=OrderOperationWriteSerializer,
                                    content_model=None,
                                    change_content_function=None),
             }
 
+
+@transaction.atomic
+def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию перемещения между ячейками"""
+    result = []
+    for element in serializer_data:
+        operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
+                                                                 status=TaskStatus.CLOSE)
+        fill_operation_cells(operation, element['cells'])
+        result.append(operation.guid)
+    return result
 
 @transaction.atomic
 def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:

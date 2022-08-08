@@ -8,7 +8,7 @@ from warehouse_management.models import (
     PalletCollectOperation,
     PlacementToCellsOperation,
     OperationCell,
-    MovementBetweenCellsOperation, ShipmentOperation
+    MovementBetweenCellsOperation, ShipmentOperation, PalletProduct, OrderOperation
 )
 
 
@@ -63,3 +63,15 @@ class MovementBetweenCellsOperationAdmin(admin.ModelAdmin):
 class ShipmentOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(OrderOperation)
+class OrderOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(PalletProduct)
+class SPalletProductAdmin(admin.ModelAdmin):
+    list_display = (
+        'type_operation', 'external_source', 'product', 'weight', 'count', 'batch_number', 'production_date')

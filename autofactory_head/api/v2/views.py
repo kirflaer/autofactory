@@ -56,7 +56,7 @@ class PalletViewSet(generics.ListCreateAPIView):
     serializer_class = PalletReadSerializer
     queryset = Pallet.objects.all().order_by('-content_count')
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = ('id', 'batch_number', 'production_date')
+    filterset_fields = ('id', 'batch_number', 'production_date', 'content_count')
     search_fields = ('id',)
 
     def create(self, request, *args, **kwargs):

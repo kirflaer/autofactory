@@ -33,6 +33,7 @@ class Pallet(models.Model):
     content_count = models.PositiveIntegerField('Количество позиций внутри паллеты', default=0)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
     production_date = models.DateField('Дата выработки', blank=True, null=True)
+    external_key = models.CharField(max_length=36, blank=True, verbose_name='Внешний ключ')
 
     class Meta:
         verbose_name = 'Паллета'

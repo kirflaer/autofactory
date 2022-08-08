@@ -114,4 +114,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-VERSION = '1.1.7.0'
+VERSION = '1.1.7.1'

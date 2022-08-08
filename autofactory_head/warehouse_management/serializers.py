@@ -4,7 +4,7 @@ from api.serializers import StorageSerializer
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation, OperationCell,
-                                         MovementBetweenCellsOperation, ShipmentOperation)
+                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation)
 
 
 class PalletWriteSerializer(serializers.Serializer):
@@ -31,8 +31,11 @@ class PalletReadSerializer(serializers.Serializer):
 
 
 class PalletUpdateSerializer(serializers.ModelSerializer):
+    content_count = serializers.IntegerField(required=False)
+    id = serializers.CharField(required=False)
+
     class Meta:
-        fields = ('status',)
+        fields = ('status', 'content_count', 'id')
         model = Pallet
 
 
@@ -218,8 +221,37 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
 
 class ShipmentOperationReadSerializer(serializers.ModelSerializer):
     direction = serializers.SlugRelatedField(slug_field='name', read_only=True)
-    external_source = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    external_source = ExternalSerializer()
 
     class Meta:
         model = ShipmentOperation
         fields = ('direction', 'external_source', 'guid')
+
+
+class OrderOperationReadSerializer(serializers.ModelSerializer):
+    client = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    external_source = serializers.SlugRelatedField(slug_field='name', read_only=True)
+
+    class Meta:
+        model = OrderOperation
+        fields = ('client', 'external_source', 'guid')
+
+
+class PalletProductSerializer(OperationBaseSerializer):
+    product = serializers.CharField()
+    weight = serializers.FloatField()
+    count = serializers.FloatField()
+    batch_number = serializers.IntegerField()
+    production_date = serializers.DateField()
+
+    class Meta:
+        fields = ('product', 'weight', 'count', 'batch_number', 'production_date')
+
+
+class OrderOperationWriteSerializer(OperationBaseSerializer):
+    parent_task = serializers.CharField()
+    client = serializers.CharField()
+    products = PalletProductSerializer(many=True)
+
+    class Meta:
+        fields = ('client', 'external_source', 'guid', 'parent_task')

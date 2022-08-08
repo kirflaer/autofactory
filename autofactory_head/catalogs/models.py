@@ -20,8 +20,7 @@ class BaseExternalModel(BaseModel):
     class Meta:
         abstract = True
 
-    external_key = models.CharField(max_length=36, blank=True,
-                                    verbose_name='Внешний ключ')
+    external_key = models.CharField(max_length=36, blank=True, verbose_name='Внешний ключ')
 
 
 class Organization(BaseExternalModel):

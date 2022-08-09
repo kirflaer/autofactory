@@ -2,7 +2,13 @@ from django.contrib import admin
 
 from .models import (ActivationKey, Client, Department, Device, Direction,
                      Line, LineProduct, Log, Organization, Product,
-                     RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
+                     RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell, ExternalSource)
+
+
+@admin.register(ExternalSource)
+class ExternalSourceKeyAdmin(admin.ModelAdmin):
+    list_display = ('date', 'number', 'external_key', 'name')
+    list_filter = ('external_key', 'number')
 
 
 @admin.register(ActivationKey)
@@ -13,8 +19,7 @@ class ActivationKeyAdmin(admin.ModelAdmin):
 
 @admin.register(Log)
 class LogAdmin(admin.ModelAdmin):
-    list_display = (
-        'date', 'device', 'username', 'app_version', 'server_version')
+    list_display = ('date', 'device', 'username', 'app_version', 'server_version')
 
 
 @admin.register(TypeFactoryOperation)
@@ -44,7 +49,7 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(Direction)
 class DirectionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid')
+    list_display = ('name', 'guid', 'external_key')
 
 
 @admin.register(Storage)

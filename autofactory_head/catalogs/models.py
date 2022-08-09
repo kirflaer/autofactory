@@ -191,9 +191,8 @@ class Log(models.Model):
 
 class ExternalSource(models.Model):
     name = models.CharField(verbose_name='Наименование', max_length=1024)
-    external_key = models.CharField(verbose_name='Идентификатор',
-                                    max_length=1024)
-    number = models.CharField(verbose_name='Идентификатор', max_length=1024)
+    external_key = models.CharField(verbose_name='Внешний ключ',max_length=1024)
+    number = models.CharField(verbose_name='Номер', max_length=1024)
     date = models.CharField(verbose_name='Дата', max_length=1024, blank=True,
                             default="")
 

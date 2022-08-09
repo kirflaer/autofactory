@@ -72,6 +72,5 @@ class OrderOperationAdmin(admin.ModelAdmin):
 
 
 @admin.register(PalletProduct)
-class SPalletProductAdmin(admin.ModelAdmin):
-    list_display = (
-        'type_operation', 'external_source', 'product', 'weight', 'count', 'batch_number', 'production_date')
+class PalletProductAdmin(admin.ModelAdmin):
+    list_display = ('pallet', 'product', 'weight', 'count', 'batch_number', 'production_date')

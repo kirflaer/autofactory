@@ -33,7 +33,7 @@ class Pallet(models.Model):
     content_count = models.PositiveIntegerField('Количество позиций внутри паллеты', default=0)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
     production_date = models.DateField('Дата выработки', blank=True, null=True)
-    external_key = models.CharField(max_length=36, blank=True, verbose_name='Внешний ключ')
+    external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
 
     class Meta:
         verbose_name = 'Паллета'
@@ -56,6 +56,19 @@ class PalletContent(models.Model):
 
     def __str__(self):
         return f'{self.pallet} - {self.aggregation_code}'
+
+
+class PalletProduct(models.Model):
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='products')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
+    weight = models.FloatField('Вес', default=0.0)
+    count = models.PositiveIntegerField('Количество', default=0.0)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Номенклатура паллеты'
+        verbose_name_plural = 'Номенклатура паллет'
 
 
 class OperationBaseOperation(OperationBaseModel, Task):
@@ -169,18 +182,6 @@ class OrderOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Заказ клиента'
         verbose_name_plural = 'Заказы клиентов'
-
-
-class PalletProduct(ManyToManyOperationMixin):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура')
-    weight = models.FloatField('Вес', default=0.0)
-    count = models.PositiveIntegerField('Количество', default=0.0)
-    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
-    production_date = models.DateField('Дата выработки', blank=True, null=True)
-
-    class Meta:
-        verbose_name = 'Номенклатура паллеты'
-        verbose_name_plural = 'Номенклатура паллет'
 
 
 @dataclass

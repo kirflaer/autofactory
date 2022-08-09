@@ -4,19 +4,19 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
 from dateutil import parser
-from catalogs.models import ExternalSource, Product, Storage, StorageCell
+from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
 from tasks.models import TaskStatus, TaskBaseModel
 from tasks.task_services import RouterContent
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct,
                                          PalletStatus, PalletCollectOperation, PlacementToCellsOperation, OperationCell,
                                          PlacementToCellsTask, MovementBetweenCellsOperation, ShipmentOperation,
-                                         OrderOperation)
+                                         OrderOperation, PalletContent, PalletProduct)
 from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
     PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
     PlacementToCellsOperationReadSerializer, MovementBetweenCellsOperationWriteSerializer,
-    MovementBetweenCellsOperationReadSerializer, ShipmentOperationReadSerializer, OrderOperationReadSerializer,
+    MovementBetweenCellsOperationReadSerializer, ShipmentOperationSerializer, OrderOperationReadSerializer,
     OrderOperationWriteSerializer)
 
 User = get_user_model()
@@ -50,12 +50,12 @@ def get_content_router() -> dict[str: RouterContent]:
                                                     write_serializer=MovementBetweenCellsOperationWriteSerializer,
                                                     content_model=None,
                                                     change_content_function=None),
-            'PLANT_APPLICATION': RouterContent(task=ShipmentOperation,
-                                               create_function=create_movement_cell_operation,
-                                               read_serializer=ShipmentOperationReadSerializer,
-                                               write_serializer=MovementBetweenCellsOperationWriteSerializer,
-                                               content_model=None,
-                                               change_content_function=None),
+            'SHIPMENT': RouterContent(task=ShipmentOperation,
+                                      create_function=create_shipment_operation,
+                                      read_serializer=ShipmentOperationSerializer,
+                                      write_serializer=ShipmentOperationSerializer,
+                                      content_model=None,
+                                      change_content_function=None),
             'ORDER': RouterContent(task=OrderOperation,
                                    create_function=create_order_operation,
                                    read_serializer=OrderOperationReadSerializer,
@@ -66,15 +66,35 @@ def get_content_router() -> dict[str: RouterContent]:
 
 
 @transaction.atomic
-def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения между ячейками"""
     result = []
     for element in serializer_data:
-        operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
-                                                                 status=TaskStatus.CLOSE)
-        fill_operation_cells(operation, element['cells'])
+        source = ExternalSource.objects.filter(external_key=element['external_source']['external_key']).first()
+        if source is not None:
+            return ()
+        direction = Direction.objects.filter(external_key=element['direction']).first()
+        source = ExternalSource.objects.create(**element['external_source'])
+        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=source)
         result.append(operation.guid)
     return result
+
+
+@transaction.atomic
+def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает заказ клиента"""
+    result = []
+    for element in serializer_data:
+        task_source = ExternalSource.objects.filter(external_key=element['external_source']['external_key']).first()
+        if task_source is not None:
+            return ()
+        client = Client.objects.filter(external_key=element['client']).first()
+        source = ExternalSource.objects.create(**element['external_source'])
+        operation = OrderOperation.objects.create(user=user, client=client, external_source=source)
+        fill_operation_pallets(operation, element['pallets'])
+        result.append(operation.guid)
+    return result
+
 
 @transaction.atomic
 def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
@@ -139,20 +159,37 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
+    related_tables = ('codes', 'products')
 
     for element in serializer_data:
-        product = Product.objects.filter(guid=element['product']).first()
-        pallet = Pallet.objects.filter(id=element['id'], product=product).first()
+        pallet = Pallet.objects.filter(id=element['id']).first()
         if not pallet:
-            product = element['product']
+            if not element.get('product'):
+                product = None
+            else:
+                product = element['product']
             element['product'] = Product.objects.filter(guid=product).first()
 
             serializer_keys = set(element.keys())
             class_keys = set(dir(Pallet))
-            serializer_keys.discard('codes')
+            [serializer_keys.discard(field) for field in related_tables]
             fields = {key: element[key] for key in (class_keys & serializer_keys)}
             pallet = Pallet.objects.create(**fields, status=PalletStatus.CONFIRMED)
 
+        if element.get('products') is not None:
+            products_count = PalletProduct.objects.filter(pallet=pallet).count()
+            if not products_count:
+                for product in element['products']:
+                    product['pallet'] = pallet
+                    product['product'] = Product.objects.filter(external_key=product['product']).first()
+                    PalletProduct.objects.create(**product)
+
+        if element.get('codes') is not None:
+            for code in element['codes']:
+                aggregation_code = PalletContent.objects.filter(aggregation_code=code).first()
+                if aggregation_code is not None:
+                    continue
+                PalletContent.objects.create(pallet=pallet, aggregation_code=aggregation_code, product=pallet.product)
         result.append(pallet.id)
 
         # TODO: необходимо реализовать создание паллеты с кодами агрегации

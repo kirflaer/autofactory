@@ -1,20 +1,45 @@
 from rest_framework import serializers
+from rest_framework.exceptions import APIException
 
 from api.serializers import StorageSerializer
+from catalogs.models import ExternalSource
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation, OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation)
 
 
+class OperationBaseSerializer(serializers.Serializer):
+    external_source = ExternalSerializer()
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class PalletProductSerializer(serializers.Serializer):
+    product = serializers.CharField()
+    weight = serializers.FloatField()
+    count = serializers.FloatField()
+    batch_number = serializers.IntegerField()
+    production_date = serializers.DateField()
+
+    class Meta:
+        fields = ('product', 'weight', 'count', 'batch_number', 'production_date')
+
+
 class PalletWriteSerializer(serializers.Serializer):
     codes = serializers.ListField(required=False)
     id = serializers.CharField()
-    product = serializers.CharField()
+    product = serializers.CharField(required=False)
     batch_number = serializers.CharField(required=False)
     production_date = serializers.DateField(required=False)
     content_count = serializers.IntegerField(required=False)
     weight = serializers.IntegerField(required=False)
+    external_key = serializers.CharField(required=False)
+    products = PalletProductSerializer(many=True, required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):
@@ -37,16 +62,6 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('status', 'content_count', 'id')
         model = Pallet
-
-
-class OperationBaseSerializer(serializers.Serializer):
-    external_source = ExternalSerializer()
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
 
 
 class OperationProductsSerializer(serializers.Serializer):
@@ -219,13 +234,14 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
         return result
 
 
-class ShipmentOperationReadSerializer(serializers.ModelSerializer):
-    direction = serializers.SlugRelatedField(slug_field='name', read_only=True)
+class ShipmentOperationSerializer(serializers.ModelSerializer):
+    direction_name = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    direction = serializers.CharField()
     external_source = ExternalSerializer()
 
     class Meta:
         model = ShipmentOperation
-        fields = ('direction', 'external_source', 'guid')
+        fields = ('direction', 'external_source', 'guid', 'direction_name')
 
 
 class OrderOperationReadSerializer(serializers.ModelSerializer):
@@ -237,21 +253,19 @@ class OrderOperationReadSerializer(serializers.ModelSerializer):
         fields = ('client', 'external_source', 'guid')
 
 
-class PalletProductSerializer(OperationBaseSerializer):
-    product = serializers.CharField()
-    weight = serializers.FloatField()
-    count = serializers.FloatField()
-    batch_number = serializers.IntegerField()
-    production_date = serializers.DateField()
-
-    class Meta:
-        fields = ('product', 'weight', 'count', 'batch_number', 'production_date')
-
-
 class OrderOperationWriteSerializer(OperationBaseSerializer):
     parent_task = serializers.CharField()
     client = serializers.CharField()
-    products = PalletProductSerializer(many=True)
+    pallets = serializers.ListField()
 
     class Meta:
-        fields = ('client', 'external_source', 'guid', 'parent_task')
+        fields = ('client', 'external_source', 'guid', 'parent_task', 'pallets')
+
+    def validate(self, attrs):
+        parent_task_source = ExternalSource.objects.filter(external_key=attrs.get('parent_task')).first()
+        if not parent_task_source:
+            raise APIException("Не найден источник родительской задачи")
+        if not ShipmentOperation.objects.filter(external_source=parent_task_source).first():
+            raise APIException("Не найдена родительская задача")
+
+        return super().validate(attrs)

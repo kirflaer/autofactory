@@ -90,7 +90,10 @@ def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User
             return ()
         client = Client.objects.filter(external_key=element['client']).first()
         source = ExternalSource.objects.create(**element['external_source'])
-        operation = OrderOperation.objects.create(user=user, client=client, external_source=source)
+        parent_task = ExternalSource.objects.filter(external_key=element['parent_task']).first()
+        parent_task = ShipmentOperation.objects.filter(external_source=parent_task).first()
+        operation = OrderOperation.objects.create(user=user, client=client, external_source=source,
+                                                  parent_task=parent_task)
         fill_operation_pallets(operation, element['pallets'])
         result.append(operation.guid)
     return result

@@ -177,6 +177,8 @@ class ShipmentOperation(OperationBaseOperation):
 
 class OrderOperation(OperationBaseOperation):
     type_task = 'ORDER'
+    parent_task = models.ForeignKey(ShipmentOperation, on_delete=models.CASCADE, verbose_name='Родительское задание', null=True,
+                                    blank=True)
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Клиент')
 
     class Meta:

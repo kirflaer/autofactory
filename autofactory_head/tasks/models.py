@@ -22,11 +22,6 @@ class TaskStatus(models.TextChoices):
 class Task(ExternalSystemExchangeMixin):
     type_task = models.CharField(max_length=255, verbose_name='Тип задания')
 
-    parent_task = models.ForeignKey('self', on_delete=models.CASCADE,
-                                    verbose_name='Родительское задание',
-                                    null=True,
-                                    blank=True)
-
     status = models.CharField(max_length=255, choices=TaskStatus.choices, default=TaskStatus.NEW,
                               verbose_name='Статус')
 

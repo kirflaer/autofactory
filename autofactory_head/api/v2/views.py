@@ -66,3 +66,12 @@ class PalletViewSet(generics.ListCreateAPIView):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_queryset(self):
+        if len(self.request.data) and self.request.data.get('id') is not None:
+            # TODO: сделать универсальную фильтрацию через body
+            return super().get_queryset().filter(id__in=self.request.data['id'])
+        else:
+            return super().get_queryset()
+
+

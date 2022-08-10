@@ -16,7 +16,8 @@ from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
     PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
     PlacementToCellsOperationReadSerializer, MovementBetweenCellsOperationWriteSerializer,
-    MovementBetweenCellsOperationReadSerializer, ShipmentOperationSerializer, OrderOperationReadSerializer,
+    MovementBetweenCellsOperationReadSerializer, ShipmentOperationReadSerializer, ShipmentOperationWriteSerializer,
+    OrderOperationReadSerializer,
     OrderOperationWriteSerializer)
 
 User = get_user_model()
@@ -52,8 +53,8 @@ def get_content_router() -> dict[str: RouterContent]:
                                                     change_content_function=None),
             'SHIPMENT': RouterContent(task=ShipmentOperation,
                                       create_function=create_shipment_operation,
-                                      read_serializer=ShipmentOperationSerializer,
-                                      write_serializer=ShipmentOperationSerializer,
+                                      read_serializer=ShipmentOperationReadSerializer,
+                                      write_serializer=ShipmentOperationWriteSerializer,
                                       content_model=None,
                                       change_content_function=None),
             'ORDER': RouterContent(task=OrderOperation,

@@ -6,7 +6,8 @@ from catalogs.models import ExternalSource
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation, OperationCell,
-                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation)
+                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
+                                         PalletProduct, PalletStatus)
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -234,23 +235,58 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
         return result
 
 
-class ShipmentOperationSerializer(serializers.ModelSerializer):
-    direction_name = serializers.SlugRelatedField(slug_field='name', read_only=True)
+class ShipmentOperationWriteSerializer(serializers.ModelSerializer):
     direction = serializers.CharField()
     external_source = ExternalSerializer()
 
     class Meta:
         model = ShipmentOperation
-        fields = ('direction', 'external_source', 'guid', 'direction_name')
+        fields = ('direction', 'external_source', 'guid')
+
+
+class ShipmentOperationReadSerializer(serializers.ModelSerializer):
+    direction_name = serializers.SlugRelatedField(slug_field='name', read_only=True, source='direction')
+    date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
+    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+
+    class Meta:
+        model = ShipmentOperation
+        fields = ('direction_name', 'date', 'number', 'guid')
 
 
 class OrderOperationReadSerializer(serializers.ModelSerializer):
-    client = serializers.SlugRelatedField(slug_field='name', read_only=True)
-    external_source = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    client_name = serializers.SlugRelatedField(slug_field='name', read_only=True, source='client')
+    date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
+    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    pallets = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderOperation
-        fields = ('client', 'external_source', 'guid')
+        fields = ('client_name', 'date', 'number', 'status', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj):
+        pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
+        pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.CONFIRMED).values('guid',
+                                                                                                     'content_count',
+                                                                                                     'weight')
+
+        pallets_products = PalletProduct.objects.filter(pallet__in=[pallet['guid'] for pallet in pallets]).values(
+            'product', 'count', 'weight', 'batch_number', 'production_date', 'pallet')
+        products = {}
+        result = []
+        for record in pallets_products:
+            if not products.get(record['pallet']):
+                products[record['pallet']] = []
+            products[record['pallet']].append(record)
+
+        for pallet in pallets:
+            if products.get(pallet['guid']) is not None:
+                pallet['products'] = products[pallet['guid']]
+
+            result.append(pallet)
+
+        return result
 
 
 class OrderOperationWriteSerializer(OperationBaseSerializer):

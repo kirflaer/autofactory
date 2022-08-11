@@ -18,6 +18,7 @@ class PalletStatus(models.TextChoices):
     POSTED = 'POSTED'
     SHIPPED = 'SHIPPED'
     ARCHIVE = 'ARCHIVE'
+    WAIT = 'WAIT'
 
 
 class Pallet(models.Model):
@@ -68,6 +69,20 @@ class PalletProduct(models.Model):
     class Meta:
         verbose_name = 'Номенклатура паллеты'
         verbose_name_plural = 'Номенклатура паллет'
+
+
+class PalletSource(models.Model):
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources')
+    pallet_source = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета источник')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
+    weight = models.FloatField('Вес', default=0.0)
+    count = models.PositiveIntegerField('Количество', default=0.0)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Паллета источник'
+        verbose_name_plural = 'Паллеты источники'
 
 
 class OperationBaseOperation(OperationBaseModel, Task):

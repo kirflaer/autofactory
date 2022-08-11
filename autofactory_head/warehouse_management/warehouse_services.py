@@ -11,7 +11,7 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          OperationProduct,
                                          PalletStatus, PalletCollectOperation, PlacementToCellsOperation, OperationCell,
                                          PlacementToCellsTask, MovementBetweenCellsOperation, ShipmentOperation,
-                                         OrderOperation, PalletContent, PalletProduct)
+                                         OrderOperation, PalletContent, PalletProduct, PalletSource)
 from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
     PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
@@ -178,7 +178,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
             class_keys = set(dir(Pallet))
             [serializer_keys.discard(field) for field in related_tables]
             fields = {key: element[key] for key in (class_keys & serializer_keys)}
-            pallet = Pallet.objects.create(**fields, status=PalletStatus.CONFIRMED)
+            pallet = Pallet.objects.create(**fields)
 
         if element.get('products') is not None:
             products_count = PalletProduct.objects.filter(pallet=pallet).count()
@@ -194,9 +194,9 @@ def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
                 if aggregation_code is not None:
                     continue
                 PalletContent.objects.create(pallet=pallet, aggregation_code=aggregation_code, product=pallet.product)
+
         result.append(pallet.id)
 
-        # TODO: необходимо реализовать создание паллеты с кодами агрегации
     return result
 
 

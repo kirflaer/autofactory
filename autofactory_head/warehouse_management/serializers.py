@@ -248,10 +248,11 @@ class ShipmentOperationReadSerializer(serializers.ModelSerializer):
     direction_name = serializers.SlugRelatedField(slug_field='name', read_only=True, source='direction')
     date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
     number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
 
     class Meta:
         model = ShipmentOperation
-        fields = ('direction_name', 'date', 'number', 'guid')
+        fields = ('direction_name', 'date', 'number', 'guid', 'external_key')
 
 
 class OrderOperationReadSerializer(serializers.ModelSerializer):

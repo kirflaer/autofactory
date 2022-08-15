@@ -1,6 +1,7 @@
 from json import JSONDecodeError
 
 from django_filters.rest_framework import DjangoFilterBackend
+from pydantic.error_wrappers import ValidationError
 from rest_framework import generics, status, filters
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
@@ -27,9 +28,12 @@ class TasksChangeViewSet(api.views.TasksViewSet):
         try:
             task_data = task_router.content_model(**request.data)
         except TypeError:
-            raise APIException('Переданы некорректные данные')
+            raise APIException('Переданы некорректные данные, возможно указана некорректная базовая модель')
         except JSONDecodeError:
-            raise APIException('Переданы некорректные данные')
+            raise APIException('Переданы некорректные данные, возможно не указана некорректная базовая модель')
+        except ValidationError:
+            raise APIException(
+                'Переданы некорректные данные, возможно не верно указаны значения передаваемых полей')
 
         if task_data.properties is not None:
             change_task_properties(instance, task_data.__dict__['properties'])
@@ -73,5 +77,3 @@ class PalletViewSet(generics.ListCreateAPIView):
             return super().get_queryset().filter(id__in=self.request.data['id'])
         else:
             return super().get_queryset()
-
-

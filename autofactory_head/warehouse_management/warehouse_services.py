@@ -55,13 +55,13 @@ def get_content_router() -> dict[str: RouterContent]:
                                       create_function=create_shipment_operation,
                                       read_serializer=ShipmentOperationReadSerializer,
                                       write_serializer=ShipmentOperationWriteSerializer,
-                                      content_model=None,
+                                      content_model=TaskBaseModel,
                                       change_content_function=None),
             'ORDER': RouterContent(task=OrderOperation,
                                    create_function=create_order_operation,
                                    read_serializer=OrderOperationReadSerializer,
                                    write_serializer=OrderOperationWriteSerializer,
-                                   content_model=None,
+                                   content_model=TaskBaseModel,
                                    change_content_function=None),
             }
 

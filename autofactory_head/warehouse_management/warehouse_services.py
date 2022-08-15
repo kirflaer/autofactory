@@ -72,11 +72,15 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
     result = []
     for element in serializer_data:
         source = ExternalSource.objects.filter(external_key=element['external_source']['external_key']).first()
-        if source is not None:
+        if not source:
+            source = ExternalSource.objects.create(**element['external_source'])
+        task = ShipmentOperation.objects.filter(external_source=source).first()
+        if task is not None:
             return ()
         direction = Direction.objects.filter(external_key=element['direction']).first()
-        source = ExternalSource.objects.create(**element['external_source'])
-        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=source)
+
+        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=source,
+                                                     status=TaskStatus.WAIT)
         result.append(operation.guid)
     return result
 

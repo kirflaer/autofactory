@@ -200,6 +200,13 @@ class OrderOperation(OperationBaseOperation):
         verbose_name = 'Заказ клиента'
         verbose_name_plural = 'Заказы клиентов'
 
+    def close(self):
+        super().close()
+        open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
+            guid=self.guid).count()
+        if not open_orders_count:
+            self.parent_task.close()
+
 
 @dataclass
 class CellContent:

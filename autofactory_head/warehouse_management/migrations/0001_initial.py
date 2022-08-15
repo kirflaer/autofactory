@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('guid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('id', models.CharField(max_length=50, verbose_name='Идентификатор')),
                 ('creation_date', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
-                ('status', models.CharField(choices=[('COLLECTED', 'Collected'), ('CONFIRMED', 'Confirmed'), ('POSTED', 'Posted'), ('SHIPPED', 'Shipped'), ('ARCHIVE', 'Archive')], default='COLLECTED', max_length=20, verbose_name='Статус')),
+                ('status', models.CharField(choices=[('COLLECTED', 'Collected'), ('CONFIRMED', 'Confirmed'), ('POSTED', 'Posted'), ('SHIPPED', 'Shipped'), ('ARCHIVED', 'Archived'), ('WAITED', 'waited')], default='COLLECTED', max_length=20, verbose_name='Статус')),
                 ('weight', models.IntegerField(default=0, verbose_name='Вес')),
                 ('content_count', models.PositiveIntegerField(default=0, verbose_name='Количество позиций внутри паллеты')),
                 ('batch_number', models.CharField(blank=True, max_length=150, null=True, verbose_name='Номер партии')),

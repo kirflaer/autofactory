@@ -17,8 +17,8 @@ class PalletStatus(models.TextChoices):
     CONFIRMED = 'CONFIRMED'
     POSTED = 'POSTED'
     SHIPPED = 'SHIPPED'
-    ARCHIVE = 'ARCHIVE'
-    WAIT = 'WAIT'
+    ARCHIVED = 'ARCHIVED'
+    WAITED = 'WAITED'
 
 
 class Pallet(models.Model):

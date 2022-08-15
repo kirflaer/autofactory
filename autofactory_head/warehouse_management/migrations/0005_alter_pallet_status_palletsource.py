@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='pallet',
             name='status',
-            field=models.CharField(choices=[('COLLECTED', 'Collected'), ('CONFIRMED', 'Confirmed'), ('POSTED', 'Posted'), ('SHIPPED', 'Shipped'), ('ARCHIVE', 'Archive'), ('WAIT', 'Wait')], default='COLLECTED', max_length=20, verbose_name='Статус'),
+            field=models.CharField(choices=[('COLLECTED', 'Collected'), ('CONFIRMED', 'Confirmed'), ('POSTED', 'Posted'), ('SHIPPED', 'Shipped'), ('ARCHIVE', 'Archive'), ('WAITED', 'Wait')], default='COLLECTED', max_length=20, verbose_name='Статус'),
         ),
         migrations.CreateModel(
             name='PalletSource',

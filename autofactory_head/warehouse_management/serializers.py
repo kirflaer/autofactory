@@ -306,12 +306,12 @@ class OrderOperationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderOperation
-        fields = ('client_name', 'date', 'number', 'status', 'pallets')
+        fields = ('client_name', 'date', 'number', 'status', 'pallets', 'guid')
 
     @staticmethod
     def get_pallets(obj):
         pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
-        pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.CONFIRMED).values('guid',
+        pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAIT).values('guid',
                                                                                                      'content_count',
                                                                                                      'weight')
 

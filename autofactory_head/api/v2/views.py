@@ -35,18 +35,24 @@ class TasksChangeViewSet(api.views.TasksViewSet):
             raise APIException(
                 'Переданы некорректные данные, возможно не верно указаны значения передаваемых полей')
 
+        old_status = instance.status
         if task_data.properties is not None:
             change_task_properties(instance, task_data.__dict__['properties'])
 
         instance = task_router.task.objects.get(guid=guid)
+
+        if old_status != instance.status and instance.user is None:
+            instance.user = request.user
+            instance.save()
+
         if instance.status == TaskStatus.CLOSE and not instance.closed:
             instance.close()
 
+        result = {'status': 'success'}
         if task_data.content is not None:
-            ret = task_router.change_content_function(task_data.__dict__['content'].__dict__, instance)
-            return Response(ret)
+            result = task_router.change_content_function(task_data.__dict__['content'].__dict__, instance)
 
-        return Response({'status': 'success'})
+        return Response(result)
 
 
 class MarksViewSet(api.views.MarksViewSet):

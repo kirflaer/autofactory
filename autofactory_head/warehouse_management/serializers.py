@@ -306,14 +306,14 @@ class OrderOperationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderOperation
-        fields = ('client_name', 'date', 'number', 'status', 'pallets', 'guid')
+        fields = ('guid', 'client_name', 'date', 'number', 'status', 'pallets')
 
     @staticmethod
     def get_pallets(obj):
         pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
         pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED).values('guid',
-                                                                                                     'content_count',
-                                                                                                     'weight')
+                                                                                                  'content_count',
+                                                                                                  'weight')
 
         pallets_products = PalletProduct.objects.filter(pallet__in=[pallet['guid'] for pallet in pallets]).values(
             'product', 'count', 'weight', 'batch_number', 'production_date', 'pallet')
@@ -328,6 +328,9 @@ class OrderOperationReadSerializer(serializers.ModelSerializer):
             if products.get(pallet['guid']) is not None:
                 pallet['products'] = products[pallet['guid']]
 
+            sources = PalletSource.objects.filter(pallet=pallet['guid'])
+            serializer = PalletSourceReadSerializer(sources, many=True)
+            pallet['sources'] = serializer.data
             result.append(pallet)
 
         return result

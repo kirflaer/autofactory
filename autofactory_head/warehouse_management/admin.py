@@ -1,4 +1,5 @@
 from django.contrib import admin
+from rangefilter.filters import DateRangeFilter
 
 from warehouse_management.models import (
     AcceptanceOperation,
@@ -14,12 +15,15 @@ from warehouse_management.models import (
 
 @admin.register(Pallet)
 class PalletAdmin(admin.ModelAdmin):
-    list_display = ('creation_date', 'status', 'collector', 'product', 'id')
+    list_display = ('creation_date', 'status', 'collector', 'product', 'id', 'external_key', 'guid')
+    list_filter = (('creation_date', DateRangeFilter), 'status')
+    ordering = ('-creation_date',)
 
 
 @admin.register(OperationPallet)
 class OperationPalletAdmin(admin.ModelAdmin):
-    list_display = ('pallet', 'type_operation', 'external_source')
+    list_display = ('operation', 'pallet', 'type_operation', 'external_source')
+    list_filter = ('type_operation', )
 
 
 @admin.register(OperationProduct)

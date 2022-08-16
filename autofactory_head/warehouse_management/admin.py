@@ -9,7 +9,7 @@ from warehouse_management.models import (
     PalletCollectOperation,
     PlacementToCellsOperation,
     OperationCell,
-    MovementBetweenCellsOperation, ShipmentOperation, PalletProduct, OrderOperation
+    MovementBetweenCellsOperation, ShipmentOperation, PalletProduct, OrderOperation, PalletSource
 )
 
 
@@ -20,10 +20,15 @@ class PalletAdmin(admin.ModelAdmin):
     ordering = ('-creation_date',)
 
 
+@admin.register(PalletSource)
+class PalletSourceAdmin(admin.ModelAdmin):
+    list_display = ('pallet', 'pallet_source', 'product', 'weight', 'count', 'batch_number', 'production_date')
+
+
 @admin.register(OperationPallet)
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('operation', 'pallet', 'type_operation', 'external_source')
-    list_filter = ('type_operation', )
+    list_filter = ('type_operation',)
 
 
 @admin.register(OperationProduct)

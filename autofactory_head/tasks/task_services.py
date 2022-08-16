@@ -41,10 +41,10 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
         raise TaskException
 
     if filter_task.get('not_closed'):
-        queryset = queryset.exclude(status=TaskStatus.CLOSE)
+        queryset = queryset.exclude(status=TaskStatus.CLOSE, closed=True)
         filter_task.pop('not_closed')
     elif filter_task.get('only_close'):
-        queryset = queryset.filter(status=TaskStatus.CLOSE)
+        queryset = queryset.filter(status=TaskStatus.CLOSE, closed=True)
         filter_task.pop('only_close')
     else:
         queryset = queryset.filter(Q(user=filter_task['user']) | Q(status=TaskStatus.NEW))

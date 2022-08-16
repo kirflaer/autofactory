@@ -37,6 +37,7 @@ class PalletSourceCreateSerializer(serializers.Serializer):
     batch_number = serializers.CharField()
     weight = serializers.IntegerField()
     count = serializers.IntegerField()
+    production_date = serializers.DateField()
 
     def validate(self, attrs):
         pallet_source = Pallet.objects.filter(id=attrs.get('pallet_source')).first()

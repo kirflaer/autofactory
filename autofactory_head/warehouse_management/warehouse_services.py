@@ -8,17 +8,18 @@ from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direc
 from tasks.models import TaskStatus, TaskBaseModel
 from tasks.task_services import RouterContent
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
-                                         OperationProduct,
-                                         PalletStatus, PalletCollectOperation, PlacementToCellsOperation, OperationCell,
-                                         PlacementToCellsTask, MovementBetweenCellsOperation, ShipmentOperation,
-                                         OrderOperation, PalletContent, PalletProduct, PalletSource)
+                                         OperationProduct, PalletCollectOperation,
+                                         PlacementToCellsOperation,
+                                         #OperationCell,
+                                         PlacementToCellsTask,
+                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
+                                         PalletContent, PalletProduct)
 from warehouse_management.serializers import (
     AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
     PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
     PlacementToCellsOperationReadSerializer, MovementBetweenCellsOperationWriteSerializer,
     MovementBetweenCellsOperationReadSerializer, ShipmentOperationReadSerializer, ShipmentOperationWriteSerializer,
-    OrderOperationReadSerializer,
-    OrderOperationWriteSerializer)
+    OrderOperationReadSerializer, OrderOperationWriteSerializer)
 
 User = get_user_model()
 
@@ -68,18 +69,15 @@ def get_content_router() -> dict[str: RouterContent]:
 
 @transaction.atomic
 def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
-    """ Создает операцию перемещения между ячейками"""
+    """ Создает операцию отгрузки со склада"""
     result = []
     for element in serializer_data:
-        source = ExternalSource.objects.filter(external_key=element['external_source']['external_key']).first()
-        if not source:
-            source = ExternalSource.objects.create(**element['external_source'])
-        task = ShipmentOperation.objects.filter(external_source=source).first()
+        external_source = get_or_create_external_source(element)
+        task = ShipmentOperation.objects.filter(external_source=external_source).first()
         if task is not None:
-            return ()
+            continue
         direction = Direction.objects.filter(external_key=element['direction']).first()
-
-        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=source,
+        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source,
                                                      status=TaskStatus.WAIT)
         result.append(operation.guid)
     return result
@@ -90,9 +88,11 @@ def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User
     """ Создает заказ клиента"""
     result = []
     for element in serializer_data:
-        task_source = ExternalSource.objects.filter(external_key=element['external_source']['external_key']).first()
-        if task_source is not None:
-            return ()
+        external_source = get_or_create_external_source(element)
+        task = OrderOperation.objects.filter(external_source=external_source).first()
+        if task is not None:
+            continue
+
         client = Client.objects.filter(external_key=element['client']).first()
         source = ExternalSource.objects.create(**element['external_source'])
         parent_task = ExternalSource.objects.filter(external_key=element['parent_task']).first()
@@ -121,8 +121,12 @@ def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: 
     """ Создает операцию размещение в ячейках"""
     result = []
     for element in serializer_data:
+        external_source = get_or_create_external_source(element)
+        task = PlacementToCellsOperation.objects.filter(external_source=external_source).first()
+        if task is not None:
+            continue
         storage = Storage.objects.filter(external_key=element['storage']).first()
-        operation = PlacementToCellsOperation.objects.create(storage=storage)
+        operation = PlacementToCellsOperation.objects.create(storage=storage, external_source=external_source)
         fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
     return result
@@ -241,16 +245,16 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         if product is None:
             continue
 
-        if element.get('changed_cell') is not None:
-            changed_cell = StorageCell.objects.filter(
-                Q(external_key=element['changed_cell']) | Q(guid=element['changed_cell'])).first()
+        if element.get('cell_destination') is not None:
+            cell_destination = StorageCell.objects.filter(
+                Q(external_key=element['cell_destination']) | Q(guid=element['cell_destination'])).first()
         else:
-            changed_cell = None
+            cell_destination = None
 
         count = 0 if element.get('count') is None else element['count']
-        operation_products = OperationCell.objects.create(cell=cell, count=count, product=product,
-                                                          changed_cell=changed_cell)
-        operation_products.fill_properties(operation)
+        # operation_products = OperationCell.objects.create(cell_source=cell, count=count, product=product,
+        #                                                   cell_destination=cell_destination)
+        # operation_products.fill_properties(operation)
 
 
 def get_or_create_external_source(raw_data=dict[str: str]) -> ExternalSource:
@@ -267,12 +271,13 @@ def get_or_create_external_source(raw_data=dict[str: str]) -> ExternalSource:
 def change_content_placement_operation(content: dict[str: str], instance: PlacementToCellsOperation) -> str:
     """ Изменяет содержимое операции размещение в ячейках"""
     for element in content['cells']:
-        cell_row = OperationCell.objects.filter(operation=instance.guid, product__guid=element.product,
-                                                cell__guid=element.changed_cell).first()
-        if cell_row is None:
-            continue
-
-        cell_row.changed_cell = cell_row.cell
-        cell_row.cell = StorageCell.objects.filter(guid=element.cell).first()
-        cell_row.save()
+        pass
+        # cell_row = OperationCell.objects.filter(operation=instance.guid, product__guid=element.product,
+        #                                         cell__guid=element.changed_cell).first()
+        # if cell_row is None:
+        #     continue
+        #
+        # cell_row.changed_cell = cell_row.cell
+        # cell_row.cell = StorageCell.objects.filter(guid=element.cell).first()
+        # cell_row.save()
     return instance.guid

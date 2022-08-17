@@ -7,7 +7,7 @@ from pydantic.dataclasses import dataclass
 
 from catalogs.models import Product, Storage, StorageCell, Direction, Client
 from factory_core.models import OperationBaseModel
-from tasks.models import Task, TaskBaseModel
+from tasks.models import Task, TaskBaseModel, TaskStatus
 
 User = get_user_model()
 
@@ -131,15 +131,15 @@ class OperationProduct(ManyToManyOperationMixin):
         verbose_name_plural = 'Номенклатура операций'
 
 
-class OperationCell(OperationProduct):
-    cell = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
-                             related_name='operation_cell')
-    changed_cell = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,
-                                     verbose_name='Измененная ячейка')
-
-    class Meta:
-        verbose_name = 'Складские ячейки операции'
-        verbose_name_plural = 'Складские ячейки операций'
+# class OperationCell(OperationProduct):
+#     cell_source = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
+#                                     related_name='operation_cell')
+#     cell_destination = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,
+#                                          verbose_name='Измененная ячейка')
+#
+#     class Meta:
+#         verbose_name = 'Складские ячейки операции'
+#         verbose_name_plural = 'Складские ячейки операций'
 
 
 class AcceptanceOperation(OperationBaseOperation):
@@ -205,6 +205,7 @@ class OrderOperation(OperationBaseOperation):
         open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
             guid=self.guid).count()
         if not open_orders_count:
+            self.parent_task.status = TaskStatus.CLOSE
             self.parent_task.close()
 
 

@@ -1,9 +1,5 @@
-from enum import Enum
-from typing import Optional
-
 from django.contrib.auth import get_user_model
 from django.db import models
-from pydantic.dataclasses import dataclass
 from pydantic.main import BaseModel
 
 from catalogs.models import ExternalSource

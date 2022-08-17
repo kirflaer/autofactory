@@ -5,7 +5,8 @@ from api.serializers import StorageSerializer
 from catalogs.models import ExternalSource, Product
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
-                                         Pallet, PlacementToCellsOperation, OperationCell,
+                                         Pallet, PlacementToCellsOperation,
+                                         #OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource)
 
@@ -236,16 +237,17 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_cells(obj):
-        cells = OperationCell.objects.filter(operation=obj.guid)
-        result = []
-        for element in cells:
-            result.append(
-                {'cell': element.cell.guid if element.cell is not None else None,
-                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
-                 'count': element.count,
-                 'product': element.product.guid if element.product is not None else None
-                 })
-        return result
+        return []
+        # cells = OperationCell.objects.filter(operation=obj.guid)
+        # result = []
+        # for element in cells:
+        #     result.append(
+        #         {'cell_source': element.cell_source.guid if element.cell_source is not None else None,
+        #          'cell_destination': element.cell_destination.guid if element.cell_destination is not None else None,
+        #          'count': element.count,
+        #          'product': element.product.guid if element.product is not None else None
+        #          })
+        # return result
 
 
 class MovementCellContent(serializers.Serializer):
@@ -268,15 +270,16 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_cells(obj):
-        cells = OperationCell.objects.filter(operation=obj.guid)
-        result = []
-        for element in cells:
-            result.append(
-                {'cell': element.cell.guid if element.cell is not None else None,
-                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
-                 'product': element.product.guid if element.product is not None else None
-                 })
-        return result
+        return []
+        # cells = OperationCell.objects.filter(operation=obj.guid)
+        # result = []
+        # for element in cells:
+        #     result.append(
+        #         {'cell': element.cell.guid if element.cell is not None else None,
+        #          'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
+        #          'product': element.product.guid if element.product is not None else None
+        #          })
+        # return result
 
 
 class ShipmentOperationWriteSerializer(serializers.ModelSerializer):

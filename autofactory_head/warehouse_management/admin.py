@@ -8,8 +8,12 @@ from warehouse_management.models import (
     OperationProduct,
     PalletCollectOperation,
     PlacementToCellsOperation,
-    OperationCell,
-    MovementBetweenCellsOperation, ShipmentOperation, PalletProduct, OrderOperation, PalletSource
+    #OperationCell,
+    MovementBetweenCellsOperation,
+    ShipmentOperation,
+    PalletProduct,
+    OrderOperation,
+    PalletSource
 )
 
 
@@ -36,9 +40,9 @@ class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('product', 'type_operation', 'external_source')
 
 
-@admin.register(OperationCell)
-class OperationCellPalletAdmin(admin.ModelAdmin):
-    list_display = ('operation', 'product', 'type_operation', 'external_source', 'count', 'cell')
+# @admin.register(OperationCell)
+# class OperationCellPalletAdmin(admin.ModelAdmin):
+#     list_display = ('operation', 'product', 'type_operation', 'external_source', 'count', 'cell_source')
 
 
 @admin.register(AcceptanceOperation)

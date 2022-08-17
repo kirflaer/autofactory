@@ -317,7 +317,8 @@ class OrderOperationReadSerializer(serializers.ModelSerializer):
         pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
         pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED).values('guid',
                                                                                                   'content_count',
-                                                                                                  'weight')
+                                                                                                  'weight',
+                                                                                                  'id')
 
         pallets_products = PalletProduct.objects.filter(pallet__in=[pallet['guid'] for pallet in pallets]).values(
             'product', 'count', 'weight', 'batch_number', 'production_date', 'pallet')

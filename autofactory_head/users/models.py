@@ -100,6 +100,9 @@ class User(AbstractUser):
     is_local_admin = models.BooleanField(
         verbose_name='Локальный администратор', default=False)
 
+    class Meta:
+        ordering = ('username',)
+
     def __str__(self):
         return self.username
 

@@ -186,7 +186,7 @@ class ShipmentOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
-        verbose_name_plural = 'Операции отгрузки со склада'
+        verbose_name_plural = 'Отгрузка со со склада (Заявка на завод)'
 
 
 class OrderOperation(OperationBaseOperation):
@@ -198,7 +198,7 @@ class OrderOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Заказ клиента'
-        verbose_name_plural = 'Заказы клиентов'
+        verbose_name_plural = 'Отгрузка со склада (Заказы клиентов)'
 
     def close(self):
         super().close()

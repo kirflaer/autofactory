@@ -8,7 +8,7 @@ from warehouse_management.models import (
     OperationProduct,
     PalletCollectOperation,
     PlacementToCellsOperation,
-    #OperationCell,
+    OperationCell,
     MovementBetweenCellsOperation,
     ShipmentOperation,
     PalletProduct,

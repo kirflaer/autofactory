@@ -6,9 +6,8 @@ from catalogs.models import ExternalSource, Product
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
-                                         #OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletProduct, PalletStatus, PalletSource)
+                                         PalletProduct, PalletStatus, PalletSource, OperationCell)
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -120,7 +119,7 @@ class OperationProductsSerializer(serializers.Serializer):
 
 
 class OperationCellsSerializer(serializers.Serializer):
-    product = serializers.CharField()
+    pallet = serializers.CharField()
     cell = serializers.CharField()
     count = serializers.FloatField(required=False)
 
@@ -237,17 +236,16 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_cells(obj):
-        return []
-        # cells = OperationCell.objects.filter(operation=obj.guid)
-        # result = []
-        # for element in cells:
-        #     result.append(
-        #         {'cell_source': element.cell_source.guid if element.cell_source is not None else None,
-        #          'cell_destination': element.cell_destination.guid if element.cell_destination is not None else None,
-        #          'count': element.count,
-        #          'product': element.product.guid if element.product is not None else None
-        #          })
-        # return result
+        cells = OperationCell.objects.filter(operation=obj.guid)
+        result = []
+        for element in cells:
+            result.append(
+                {'cell_source': element.cell_source.guid if element.cell_source is not None else None,
+                 'cell_destination': element.cell_destination.guid if element.cell_destination is not None else None,
+                 'count': element.count,
+                 'pallet': element.pallet.guid if element.pallet is not None else None
+                 })
+        return result
 
 
 class MovementCellContent(serializers.Serializer):

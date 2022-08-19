@@ -10,7 +10,7 @@ import api.views
 from api.v2.services import get_marks_to_unload
 from tasks.models import TaskStatus
 from tasks.task_services import change_task_properties
-from warehouse_management.models import Pallet
+from warehouse_management.models import Pallet, PalletStatus
 from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer
 from warehouse_management.warehouse_services import create_pallets
 
@@ -64,7 +64,7 @@ class MarksViewSet(api.views.MarksViewSet):
 
 class PalletViewSet(generics.ListCreateAPIView):
     serializer_class = PalletReadSerializer
-    queryset = Pallet.objects.all().order_by('-content_count')
+    queryset = Pallet.objects.all().exclude(status=PalletStatus.ARCHIVED).order_by('-content_count')
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_fields = ('id', 'batch_number', 'production_date', 'content_count', 'product', 'status')
     search_fields = ('id',)

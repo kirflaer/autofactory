@@ -131,15 +131,16 @@ class OperationProduct(ManyToManyOperationMixin):
         verbose_name_plural = 'Номенклатура операций'
 
 
-# class OperationCell(OperationProduct):
-#     cell_source = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
-#                                     related_name='operation_cell')
-#     cell_destination = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,
-#                                          verbose_name='Измененная ячейка')
-#
-#     class Meta:
-#         verbose_name = 'Складские ячейки операции'
-#         verbose_name_plural = 'Складские ячейки операций'
+class OperationCell(ManyToManyOperationMixin):
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета')
+    cell_source = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
+                                    related_name='operation_cell')
+    cell_destination = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,
+                                         verbose_name='Измененная ячейка')
+
+    class Meta:
+        verbose_name = 'Складские ячейки операции'
+        verbose_name_plural = 'Складские ячейки операций'
 
 
 class AcceptanceOperation(OperationBaseOperation):
@@ -150,7 +151,7 @@ class AcceptanceOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Приемка на склад'
-        verbose_name_plural = 'Операции приемки товаров'
+        verbose_name_plural = 'Приемка товаров'
 
 
 class PalletCollectOperation(OperationBaseOperation):
@@ -158,7 +159,7 @@ class PalletCollectOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Сбор паллет'
-        verbose_name_plural = 'Операции сбора паллет'
+        verbose_name_plural = 'Сбор паллет'
 
 
 class PlacementToCellsOperation(OperationBaseOperation):
@@ -167,7 +168,7 @@ class PlacementToCellsOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Размещение в ячейки'
-        verbose_name_plural = 'Операции размещения в ячейки'
+        verbose_name_plural = 'Размещения в ячейки'
 
 
 class MovementBetweenCellsOperation(OperationBaseOperation):
@@ -176,7 +177,7 @@ class MovementBetweenCellsOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Перемещение между ячейками'
-        verbose_name_plural = 'Операции перемещения между ячейками'
+        verbose_name_plural = 'Перемещения между ячейками'
 
 
 class ShipmentOperation(OperationBaseOperation):

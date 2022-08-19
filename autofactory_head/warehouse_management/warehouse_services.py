@@ -10,7 +10,7 @@ from tasks.task_services import RouterContent
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct, PalletCollectOperation,
                                          PlacementToCellsOperation,
-                                         #OperationCell,
+                                         OperationCell,
                                          PlacementToCellsTask,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct)
@@ -100,7 +100,7 @@ def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User
         operation = OrderOperation.objects.create(user=user, client=client, external_source=source,
                                                   parent_task=parent_task)
         fill_operation_pallets(operation, element['pallets'])
-        result.append(operation.guid)
+        result.append(parent_task.guid)
     return result
 
 
@@ -241,7 +241,7 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         if cell is None:
             continue
 
-        product = Product.objects.filter(Q(external_key=element['product']) | Q(guid=element['product'])).first()
+        product = Pallet.objects.filter(Q(external_key=element['pallet']) | Q(guid=element['pallet'])).first()
         if product is None:
             continue
 
@@ -252,9 +252,9 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
             cell_destination = None
 
         count = 0 if element.get('count') is None else element['count']
-        # operation_products = OperationCell.objects.create(cell_source=cell, count=count, product=product,
-        #                                                   cell_destination=cell_destination)
-        # operation_products.fill_properties(operation)
+        operation_products = OperationCell.objects.create(cell_source=cell, count=count, product=product,
+                                                          cell_destination=cell_destination)
+        operation_products.fill_properties(operation)
 
 
 def get_or_create_external_source(raw_data=dict[str: str]) -> ExternalSource:

@@ -98,7 +98,7 @@ class ManyToManyOperationMixin(models.Model):
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
     operation = models.UUIDField('ГУИД операции', null=True)
-    type_operation = models.CharField('Тип операции', max_length=100, null=True)
+    type_operation = models.CharField('Тип операции', max_length=100)
     number_operation = models.CharField('Номер операции', max_length=100, null=True)
     external_source = models.CharField('Наименование внешнего источника', max_length=100, null=True)
 
@@ -132,7 +132,7 @@ class OperationProduct(ManyToManyOperationMixin):
 
 
 class OperationCell(ManyToManyOperationMixin):
-    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета')
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', null=True, blank=True)
     cell_source = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
                                     related_name='operation_cell')
     cell_destination = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,

@@ -20,6 +20,7 @@ class ActivationKeyAdmin(admin.ModelAdmin):
 @admin.register(Log)
 class LogAdmin(admin.ModelAdmin):
     list_display = ('date', 'device', 'username', 'app_version', 'server_version')
+    search_fields = ('username', )
 
 
 @admin.register(TypeFactoryOperation)

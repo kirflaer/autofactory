@@ -78,6 +78,7 @@
         <th style="width:20%;">Автор</th>
         <th style="width:10%;">Номер партии</th>
         <th style="width:15%;">Дата выработки</th>
+        <th style="width:15%;">Количство марок</th>
         <th style="width:5%;">Закрыта</th>
         <th style="width:5%;">Готова в выгрузке</th>
         <th style="width:5%;">Выгружена</th>
@@ -93,6 +94,7 @@
             <td> {{ element.author }} </td>
             <td> {{ element.batch_number|default_if_none:"-" }} </td>
             <td> {{ element.production_date }} </td>
+            <td> {{ element.marks.count }} </td>
             <td>
                 {% if element.closed %}
                     <span class="badge bg-success">V</span>

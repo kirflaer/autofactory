@@ -43,3 +43,4 @@ class TaskProperties(BaseModel):
 class TaskBaseModel(BaseModel):
     properties: TaskProperties | None
     content: BaseModel | None
+

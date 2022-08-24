@@ -5,66 +5,16 @@ from django.db import transaction
 from django.db.models import Q
 from dateutil import parser
 from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
-from tasks.models import TaskStatus, TaskBaseModel
-from tasks.task_services import RouterContent
+from tasks.models import TaskStatus
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct, PalletCollectOperation,
                                          PlacementToCellsOperation,
                                          OperationCell,
-                                         PlacementToCellsTask,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct)
-from warehouse_management.serializers import (
-    AcceptanceOperationReadSerializer, AcceptanceOperationWriteSerializer, PalletCollectOperationWriteSerializer,
-    PalletCollectOperationReadSerializer, PlacementToCellsOperationWriteSerializer,
-    PlacementToCellsOperationReadSerializer, MovementBetweenCellsOperationWriteSerializer,
-    MovementBetweenCellsOperationReadSerializer, ShipmentOperationReadSerializer, ShipmentOperationWriteSerializer,
-    OrderOperationReadSerializer, OrderOperationWriteSerializer)
+
 
 User = get_user_model()
-
-
-def get_content_router() -> dict[str: RouterContent]:
-    """ Возвращает роутер для потомков Task.
-    В зависимости от переданного типа задания формируется класс и сериализаторы"""
-
-    return {'ACCEPTANCE_TO_STOCK': RouterContent(task=AcceptanceOperation,
-                                                 create_function=create_acceptance_operation,
-                                                 read_serializer=AcceptanceOperationReadSerializer,
-                                                 write_serializer=AcceptanceOperationWriteSerializer,
-                                                 content_model=TaskBaseModel,
-                                                 change_content_function=None),
-            'PALLET_COLLECT': RouterContent(task=PalletCollectOperation,
-                                            create_function=create_collect_operation,
-                                            read_serializer=PalletCollectOperationReadSerializer,
-                                            write_serializer=PalletCollectOperationWriteSerializer,
-                                            content_model=TaskBaseModel,
-                                            change_content_function=None),
-            'PLACEMENT_TO_CELLS': RouterContent(task=PlacementToCellsOperation,
-                                                create_function=create_placement_operation,
-                                                read_serializer=PlacementToCellsOperationReadSerializer,
-                                                write_serializer=PlacementToCellsOperationWriteSerializer,
-                                                content_model=PlacementToCellsTask,
-                                                change_content_function=change_content_placement_operation),
-            'MOVEMENT_BETWEEN_CELLS': RouterContent(task=MovementBetweenCellsOperation,
-                                                    create_function=create_movement_cell_operation,
-                                                    read_serializer=MovementBetweenCellsOperationReadSerializer,
-                                                    write_serializer=MovementBetweenCellsOperationWriteSerializer,
-                                                    content_model=None,
-                                                    change_content_function=None),
-            'SHIPMENT': RouterContent(task=ShipmentOperation,
-                                      create_function=create_shipment_operation,
-                                      read_serializer=ShipmentOperationReadSerializer,
-                                      write_serializer=ShipmentOperationWriteSerializer,
-                                      content_model=TaskBaseModel,
-                                      change_content_function=None),
-            'ORDER': RouterContent(task=OrderOperation,
-                                   create_function=create_order_operation,
-                                   read_serializer=OrderOperationReadSerializer,
-                                   write_serializer=OrderOperationWriteSerializer,
-                                   content_model=TaskBaseModel,
-                                   change_content_function=None),
-            }
 
 
 @transaction.atomic

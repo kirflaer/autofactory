@@ -19,6 +19,7 @@ class PalletStatus(models.TextChoices):
     SHIPPED = 'SHIPPED'
     ARCHIVED = 'ARCHIVED'
     WAITED = 'WAITED'
+    FOR_SHIPMENT = 'FOR_SHIPMENT'
 
 
 class Pallet(models.Model):
@@ -35,6 +36,8 @@ class Pallet(models.Model):
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
     production_date = models.DateField('Дата выработки', blank=True, null=True)
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
+    production_shop = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Цех производства', blank=True,
+                                        null=True)
 
     class Meta:
         verbose_name = 'Паллета'

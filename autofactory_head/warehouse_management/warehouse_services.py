@@ -118,7 +118,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 
 @transaction.atomic
-def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
+def create_pallets(serializer_data: Iterable[dict[  str: str]]) -> Iterable[str]:
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
@@ -131,6 +131,12 @@ def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
             else:
                 product = element['product']
             element['product'] = Product.objects.filter(guid=product).first()
+
+            if not element.get('production_shop'):
+                production_shop = None
+            else:
+                production_shop = element['production_shop']
+            element['production_shop'] = Storage.objects.filter(guid=production_shop).first()
 
             serializer_keys = set(element.keys())
             class_keys = set(dir(Pallet))

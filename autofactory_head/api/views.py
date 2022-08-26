@@ -13,7 +13,7 @@ from packing.marking_services import (create_marking_marks,
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
 from tasks.task_services import get_task_queryset, TaskException, get_content_queryset
-from warehouse_management.models import Pallet
+from warehouse_management.models import Pallet, PalletStatus
 from warehouse_management.serializers import PalletReadSerializer, PalletUpdateSerializer
 
 from api.exceptions import ActivationFailed
@@ -306,7 +306,7 @@ class LogCreateViewSet(generics.CreateAPIView):
 
 
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
-    queryset = Pallet.objects.all()
+    queryset = Pallet.objects.all().exclude(status=PalletStatus.ARCHIVED)
     lookup_field = 'id'
     serializer_class = PalletReadSerializer
 

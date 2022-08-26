@@ -104,7 +104,7 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         if validated_data.get('sources') is not None:
             sources = validated_data.pop('sources')
             for source in sources:
-                source['pallet_source'] = Pallet.objects.filter(id=source['pallet_source']).first()
+                source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
                 source['pallet'] = instance
                 source['product'] = Product.objects.filter(guid=source['product']).first()
                 PalletSource.objects.create(**source)

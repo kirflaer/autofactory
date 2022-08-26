@@ -40,7 +40,7 @@ class PalletSourceCreateSerializer(serializers.Serializer):
     production_date = serializers.DateField()
 
     def validate(self, attrs):
-        pallet_source = Pallet.objects.filter(id=attrs.get('pallet_source')).first()
+        pallet_source = Pallet.objects.filter(guid=attrs.get('pallet_source')).first()
         if not pallet_source:
             raise APIException("Не найдена паллета указанная в качестве источника")
 

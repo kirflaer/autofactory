@@ -78,8 +78,16 @@ class PalletViewSet(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
-        if not self.request.query_params.get('ids'):
-            return super().get_queryset()
-        else:
-            return super().get_queryset().filter(id__in=self.request.query_params.get('ids').split('_'))
+        list_params = {
+            'ids': 'id__in',
+            'keys': 'external_key__in'
+        }
+        qs = super().get_queryset()
+        for param, condition in list_params.items():
+            value = self.request.query_params.get(param)
+            if not value:
+                continue
+            qs_filter = {condition: value.split('_')}
+            qs = qs.filter(**qs_filter)
 
+        return qs

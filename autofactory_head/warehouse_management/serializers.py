@@ -24,7 +24,7 @@ class PalletProductSerializer(serializers.Serializer):
     product = serializers.CharField()
     weight = serializers.FloatField()
     count = serializers.FloatField()
-    batch_number = serializers.IntegerField()
+    batch_number = serializers.IntegerField(required=False)
     production_date = serializers.DateField(required=False)
 
     class Meta:

@@ -180,12 +180,13 @@ class UserSerializer(serializers.ModelSerializer):
     device = serializers.SlugRelatedField(many=False, read_only=True,
                                           slug_field='identifier')
     settings = SettingSerializer(read_only=True)
+    stock = serializers.SlugRelatedField(source='shop', slug_field='pk', read_only=True)
 
     class Meta:
         fields = (
             'pk', 'line', 'role', 'device', 'scanner', 'vision_controller',
             'settings', 'log_level', 'inactive_sound_enabled',
-            'inactive_period_in_sec', 'use_aggregations')
+            'inactive_period_in_sec', 'use_aggregations', 'stock')
 
         model = User
 

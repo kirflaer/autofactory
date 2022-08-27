@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from catalogs.models import Line, Device, RegularExpression
+from catalogs.models import Line, Device, RegularExpression, Storage
 
 
 class Setting(models.Model):
@@ -26,6 +26,10 @@ class Setting(models.Model):
                                                 blank=True)
     collect_pallet_mode_is_active = models.BooleanField(
         'Доступен режим сбора паллет', default=False)
+
+    class Meta:
+        verbose_name = 'Настройки пользователя'
+        verbose_name_plural = 'Настройки пользователя'
 
     def __str__(self):
         return self.name
@@ -89,6 +93,8 @@ class User(AbstractUser):
     use_aggregations = models.BooleanField('Использовать агрегацию',
                                            default=False)
 
+    shop = models.ForeignKey(Storage, verbose_name='Цех', blank=True, null=True, on_delete=models.SET_NULL)
+
     USERNAME_FIELD = "username"
 
     log_level = models.CharField('Уровень логирования', max_length=255,
@@ -102,6 +108,8 @@ class User(AbstractUser):
 
     class Meta:
         ordering = ('username',)
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
 
     def __str__(self):
         return self.username
@@ -125,3 +133,7 @@ class ConfigEvent(models.Model):
     user = models.ForeignKey(User, verbose_name='Пользователь',
                              on_delete=models.CASCADE)
     argument = models.CharField(verbose_name='Параметр', max_length=255)
+
+    class Meta:
+        verbose_name = 'Настройка событий логирования'
+        verbose_name_plural = 'Настройка событий логирования'

@@ -322,12 +322,14 @@ class OrderOperationReadSerializer(serializers.ModelSerializer):
                                                                                                   'id')
 
         pallets_products = PalletProduct.objects.filter(pallet__in=[pallet['guid'] for pallet in pallets]).values(
-            'product', 'count', 'weight', 'batch_number', 'production_date', 'pallet')
+            'product', 'count', 'weight', 'batch_number', 'production_date', 'pallet', 'product__is_weight')
         products = {}
         result = []
         for record in pallets_products:
             if not products.get(record['pallet']):
                 products[record['pallet']] = []
+            record['is_weight'] = record['product__is_weight']
+            record.pop('product__is_weight')
             products[record['pallet']].append(record)
 
         for pallet in pallets:

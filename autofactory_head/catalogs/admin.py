@@ -6,8 +6,8 @@ from .models import (ActivationKey, Client, Department, Device, Direction,
 
 
 @admin.register(ExternalSource)
-class ExternalSourceKeyAdmin(admin.ModelAdmin):
-    list_display = ('date', 'number', 'external_key', 'name')
+class ExternalSourceAdmin(admin.ModelAdmin):
+    list_display = ('creation_date', 'date', 'number', 'external_key', 'name')
     search_fields = ('external_key', 'number')
 
 

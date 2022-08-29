@@ -13,7 +13,6 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct)
 
-
 User = get_user_model()
 
 
@@ -44,10 +43,9 @@ def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User
             continue
 
         client = Client.objects.filter(external_key=element['client']).first()
-        source = ExternalSource.objects.create(**element['external_source'])
         parent_task = ExternalSource.objects.filter(external_key=element['parent_task']).first()
         parent_task = ShipmentOperation.objects.filter(external_source=parent_task).first()
-        operation = OrderOperation.objects.create(user=user, client=client, external_source=source,
+        operation = OrderOperation.objects.create(user=user, client=client, external_source=external_source,
                                                   parent_task=parent_task)
         fill_operation_pallets(operation, element['pallets'])
         result.append(parent_task.guid)
@@ -118,7 +116,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 
 @transaction.atomic
-def create_pallets(serializer_data: Iterable[dict[  str: str]]) -> Iterable[str]:
+def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')

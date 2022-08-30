@@ -20,8 +20,7 @@ class BaseExternalModel(BaseModel):
     class Meta:
         abstract = True
 
-    external_key = models.CharField(max_length=36, blank=True,
-                                    verbose_name='Внешний ключ')
+    external_key = models.CharField(max_length=36, blank=True, verbose_name='Внешний ключ')
 
 
 class Organization(BaseExternalModel):
@@ -141,6 +140,8 @@ class LineDevice(models.Model):
                                verbose_name='Устройство')
 
     class Meta:
+        verbose_name = 'Устройство линии'
+        verbose_name_plural = 'Устройства линии'
         constraints = [UniqueConstraint(fields=['line', 'device'],
                                         name='unique_devices')]
 
@@ -154,6 +155,8 @@ class LineProduct(models.Model):
                                 verbose_name='Номенклатура')
 
     class Meta:
+        verbose_name = 'Номенклатура линии'
+        verbose_name_plural = 'Номенклатура линии'
         constraints = [UniqueConstraint(fields=['line', 'product'],
                                         name='unique_products')]
 
@@ -189,14 +192,18 @@ class Log(models.Model):
     level = models.CharField('Уровень логирования', max_length=255,
                              default='ERROR')
 
+    class Meta:
+        verbose_name = 'Журнал'
+        verbose_name_plural = 'Журналы'
+
 
 class ExternalSource(models.Model):
     name = models.CharField(verbose_name='Наименование', max_length=1024)
-    external_key = models.CharField(verbose_name='Идентификатор',
-                                    max_length=1024)
-    number = models.CharField(verbose_name='Идентификатор', max_length=1024)
+    external_key = models.CharField(verbose_name='Внешний ключ', max_length=1024)
+    number = models.CharField(verbose_name='Номер', max_length=1024)
     date = models.CharField(verbose_name='Дата', max_length=1024, blank=True,
                             default="")
+    creation_date = models.DateTimeField('Дата создания', auto_now_add=True, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Внешний источник'

@@ -1,19 +1,72 @@
 from rest_framework import serializers
+from rest_framework.exceptions import APIException
 
 from api.serializers import StorageSerializer
+from catalogs.models import ExternalSource, Product
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
-                                         Pallet, PalletContent, PlacementToCellsOperation, OperationCell,
-                                         MovementBetweenCellsOperation)
+                                         Pallet, PlacementToCellsOperation,
+                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
+                                         PalletProduct, PalletStatus, PalletSource, OperationCell)
+
+
+class OperationBaseSerializer(serializers.Serializer):
+    external_source = ExternalSerializer()
+
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+
+class PalletProductSerializer(serializers.Serializer):
+    product = serializers.CharField()
+    weight = serializers.FloatField()
+    count = serializers.FloatField()
+    batch_number = serializers.IntegerField(required=False)
+    production_date = serializers.DateField(required=False)
+
+    class Meta:
+        fields = ('product', 'weight', 'count', 'batch_number', 'production_date')
+
+
+class PalletSourceCreateSerializer(serializers.Serializer):
+    pallet = serializers.CharField(source='pallet_source')
+    product = serializers.CharField()
+    batch_number = serializers.CharField()
+    weight = serializers.IntegerField()
+    count = serializers.IntegerField()
+    production_date = serializers.DateField()
+
+    def validate(self, attrs):
+        pallet_source = Pallet.objects.filter(guid=attrs.get('pallet_source')).first()
+        if not pallet_source:
+            raise APIException("Не найдена паллета указанная в качестве источника")
+
+        return super().validate(attrs)
+
+
+class PalletSourceReadSerializer(serializers.ModelSerializer):
+    pallet = serializers.SlugRelatedField(slug_field='id', source='pallet_source', read_only=True)
+
+    class Meta:
+        fields = ('product', 'batch_number', 'weight', 'count', 'pallet', 'production_date')
+        model = PalletSource
 
 
 class PalletWriteSerializer(serializers.Serializer):
     codes = serializers.ListField(required=False)
     id = serializers.CharField()
-    product = serializers.CharField()
+    product = serializers.CharField(required=False)
     batch_number = serializers.CharField(required=False)
     production_date = serializers.DateField(required=False)
     content_count = serializers.IntegerField(required=False)
+    weight = serializers.IntegerField(required=False)
+    external_key = serializers.CharField(required=False)
+    products = PalletProductSerializer(many=True, required=False)
+    status = serializers.CharField(required=False)
+    production_shop = serializers.CharField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):
@@ -27,22 +80,36 @@ class PalletReadSerializer(serializers.Serializer):
     count = serializers.IntegerField(source='content_count')
     production_date = serializers.DateField(format="%d.%m.%Y")
     guid = serializers.UUIDField()
+    sources = serializers.SerializerMethodField()
+    production_shop = serializers.SlugRelatedField(read_only=True, slug_field='pk')
+    external_key = serializers.CharField(read_only=True)
+
+    @staticmethod
+    def get_sources(obj):
+        sources = PalletSource.objects.filter(pallet=obj)
+        serializer = PalletSourceReadSerializer(sources, many=True)
+        return serializer.data
 
 
 class PalletUpdateSerializer(serializers.ModelSerializer):
+    content_count = serializers.IntegerField(required=False)
+    id = serializers.CharField(required=False)
+    sources = PalletSourceCreateSerializer(many=True, required=False)
+
     class Meta:
-        fields = ('status',)
+        fields = ('status', 'content_count', 'id', 'sources')
         model = Pallet
 
-
-class OperationBaseSerializer(serializers.Serializer):
-    external_source = ExternalSerializer()
-
-    def create(self, validated_data):
-        pass
-
     def update(self, instance, validated_data):
-        pass
+        if validated_data.get('sources') is not None:
+            sources = validated_data.pop('sources')
+            for source in sources:
+                source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
+                source['pallet'] = instance
+                source['product'] = Product.objects.filter(guid=source['product']).first()
+                PalletSource.objects.create(**source)
+
+        return super().update(instance, validated_data)
 
 
 class OperationProductsSerializer(serializers.Serializer):
@@ -55,7 +122,7 @@ class OperationProductsSerializer(serializers.Serializer):
 
 
 class OperationCellsSerializer(serializers.Serializer):
-    product = serializers.CharField()
+    pallet = serializers.CharField()
     cell = serializers.CharField()
     count = serializers.FloatField(required=False)
 
@@ -75,7 +142,7 @@ class PalletShortSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pallet
-        fields = ('id', 'product', 'content_count', 'batch_number', 'production_date')
+        fields = ('id', 'product', 'content_count', 'batch_number', 'production_date', 'status')
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
@@ -116,6 +183,7 @@ class AcceptanceOperationWriteSerializer(OperationBaseSerializer):
 
 
 class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
+    """ Приемка на склад. Сериализатор для читающих запросов """
     products = serializers.SerializerMethodField()
     storage = StorageSerializer()
     production_date = serializers.DateField(format="%d.%m.%Y")
@@ -175,10 +243,10 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
         result = []
         for element in cells:
             result.append(
-                {'cell': element.cell.guid if element.cell is not None else None,
-                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
+                {'cell_source': element.cell_source.guid if element.cell_source is not None else None,
+                 'cell_destination': element.cell_destination.guid if element.cell_destination is not None else None,
                  'count': element.count,
-                 'product': element.product.guid if element.product is not None else None
+                 'pallet': element.pallet.guid if element.pallet is not None else None
                  })
         return result
 
@@ -203,12 +271,92 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_cells(obj):
-        cells = OperationCell.objects.filter(operation=obj.guid)
+        return []
+        # cells = OperationCell.objects.filter(operation=obj.guid)
+        # result = []
+        # for element in cells:
+        #     result.append(
+        #         {'cell': element.cell.guid if element.cell is not None else None,
+        #          'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
+        #          'product': element.product.guid if element.product is not None else None
+        #          })
+        # return result
+
+
+class ShipmentOperationWriteSerializer(serializers.ModelSerializer):
+    direction = serializers.CharField()
+    external_source = ExternalSerializer()
+
+    class Meta:
+        model = ShipmentOperation
+        fields = ('direction', 'external_source', 'guid')
+
+
+class ShipmentOperationReadSerializer(serializers.ModelSerializer):
+    direction_name = serializers.SlugRelatedField(slug_field='name', read_only=True, source='direction')
+    date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
+    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
+
+    class Meta:
+        model = ShipmentOperation
+        fields = ('direction_name', 'date', 'number', 'guid', 'external_key')
+
+
+class OrderOperationReadSerializer(serializers.ModelSerializer):
+    client_name = serializers.SlugRelatedField(slug_field='name', read_only=True, source='client')
+    date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
+    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    pallets = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderOperation
+        fields = ('guid', 'client_name', 'date', 'number', 'status', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj):
+        pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
+        pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED).values('guid',
+                                                                                                  'content_count',
+                                                                                                  'weight',
+                                                                                                  'id')
+
+        pallets_products = PalletProduct.objects.filter(pallet__in=[pallet['guid'] for pallet in pallets]).values(
+            'product', 'count', 'weight', 'batch_number', 'production_date', 'pallet', 'product__is_weight')
+        products = {}
         result = []
-        for element in cells:
-            result.append(
-                {'cell': element.cell.guid if element.cell is not None else None,
-                 'changed_cell': element.changed_cell.guid if element.changed_cell is not None else None,
-                 'product': element.product.guid if element.product is not None else None
-                 })
+        for record in pallets_products:
+            if not products.get(record['pallet']):
+                products[record['pallet']] = []
+            record['is_weight'] = record['product__is_weight']
+            record.pop('product__is_weight')
+            products[record['pallet']].append(record)
+
+        for pallet in pallets:
+            if products.get(pallet['guid']) is not None:
+                pallet['products'] = products[pallet['guid']]
+
+            sources = PalletSource.objects.filter(pallet=pallet['guid'])
+            serializer = PalletSourceReadSerializer(sources, many=True)
+            pallet['sources'] = serializer.data
+            result.append(pallet)
+
         return result
+
+
+class OrderOperationWriteSerializer(OperationBaseSerializer):
+    parent_task = serializers.CharField()
+    client = serializers.CharField()
+    pallets = serializers.ListField()
+
+    class Meta:
+        fields = ('client', 'external_source', 'guid', 'parent_task', 'pallets')
+
+    def validate(self, attrs):
+        parent_task_source = ExternalSource.objects.filter(external_key=attrs.get('parent_task')).first()
+        if not parent_task_source:
+            raise APIException("Не найден источник родительской задачи")
+        if not ShipmentOperation.objects.filter(external_source=parent_task_source).first():
+            raise APIException("Не найдена родительская задача")
+
+        return super().validate(attrs)

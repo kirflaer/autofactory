@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 from dateutil import parser
 from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
-from tasks.models import TaskStatus
+from tasks.models import TaskStatus, Task
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct, PalletCollectOperation,
                                          PlacementToCellsOperation,
@@ -26,30 +26,30 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         if task is not None:
             continue
         direction = Direction.objects.filter(external_key=element['direction']).first()
-        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source,
-                                                     status=TaskStatus.WAIT)
+        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source)
+
+        pallets = create_pallets(element['pallets'], user, operation)
+        for pallet in pallets:
+            child_operation = PalletCollectOperation.objects.create(user=user,
+                                                                    type_collect=PalletCollectOperation.SHIPMENT,
+                                                                    parent_task=operation)
+            fill_operation_pallets(child_operation, (pallet,))
+
         result.append(operation.guid)
     return result
 
 
 @transaction.atomic
-def create_order_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_order_operation(serializer_data: dict[str: str], user: User,
+                           parent_task: ShipmentOperation) -> OrderOperation:
     """ Создает заказ клиента"""
-    result = []
-    for element in serializer_data:
-        external_source = get_or_create_external_source(element)
-        task = OrderOperation.objects.filter(external_source=external_source).first()
-        if task is not None:
-            continue
+    external_source = get_or_create_external_source(serializer_data, 'order')
+    task = OrderOperation.objects.filter(external_source=external_source).first()
+    if task is not None:
+        return task
 
-        client = Client.objects.filter(external_key=element['client']).first()
-        parent_task = ExternalSource.objects.filter(external_key=element['parent_task']).first()
-        parent_task = ShipmentOperation.objects.filter(external_source=parent_task).first()
-        operation = OrderOperation.objects.create(user=user, client=client, external_source=external_source,
-                                                  parent_task=parent_task)
-        fill_operation_pallets(operation, element['pallets'])
-        result.append(parent_task.guid)
-    return result
+    return OrderOperation.objects.create(user=user, client_presentation=serializer_data['order']['client_presentation'],
+                                         external_source=external_source, parent_task=parent_task)
 
 
 @transaction.atomic
@@ -116,7 +116,8 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 
 @transaction.atomic
-def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
+def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None = None, task: Task | None = None) -> \
+Iterable[str]:
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
@@ -148,6 +149,11 @@ def create_pallets(serializer_data: Iterable[dict[str: str]]) -> Iterable[str]:
                 for product in element['products']:
                     product['pallet'] = pallet
                     product['product'] = Product.objects.filter(external_key=product['product']).first()
+
+                    if product.get('order') is not None:
+                        order = create_order_operation(product, user, task)
+                        product['order'] = order
+
                     PalletProduct.objects.create(**product)
 
         if element.get('codes') is not None:
@@ -211,13 +217,13 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         operation_products.fill_properties(operation)
 
 
-def get_or_create_external_source(raw_data=dict[str: str]) -> ExternalSource:
+def get_or_create_external_source(raw_data=dict[str: str], field_name='external_source') -> ExternalSource:
     """ Создает либо находит элемент таблицы внешнего источника """
 
     external_source = ExternalSource.objects.filter(
-        external_key=raw_data['external_source']['external_key']).first()
+        external_key=raw_data[field_name]['external_key']).first()
     if external_source is None:
-        external_source = ExternalSource.objects.create(**raw_data['external_source'])
+        external_source = ExternalSource.objects.create(**raw_data[field_name])
     return external_source
 
 

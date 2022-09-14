@@ -22,6 +22,12 @@ class PalletStatus(models.TextChoices):
     FOR_SHIPMENT = 'FOR_SHIPMENT'
 
 
+class PalletType(models.TextChoices):
+    SHIPPED = 'SHIPPED'
+    FULLED = 'FULLED'
+    COMBINED = 'COMBINED'
+
+
 class Pallet(models.Model):
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
@@ -38,6 +44,8 @@ class Pallet(models.Model):
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
     production_shop = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Цех производства', blank=True,
                                         null=True)
+    has_shipped_products = models.BooleanField('Содержит номенклатуру требующую обеспечения', default=False)
+    pallet_type = models.CharField('Статус', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -59,33 +67,6 @@ class PalletContent(models.Model):
 
     def __str__(self):
         return f'{self.pallet} - {self.aggregation_code}'
-
-
-class PalletProduct(models.Model):
-    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='products')
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
-    weight = models.FloatField('Вес', default=0.0)
-    count = models.PositiveIntegerField('Количество', default=0.0)
-    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
-    production_date = models.DateField('Дата выработки', blank=True, null=True)
-
-    class Meta:
-        verbose_name = 'Номенклатура паллеты'
-        verbose_name_plural = 'Номенклатура паллет'
-
-
-class PalletSource(models.Model):
-    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources')
-    pallet_source = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета источник')
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
-    weight = models.FloatField('Вес', default=0.0)
-    count = models.PositiveIntegerField('Количество', default=0.0)
-    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
-    production_date = models.DateField('Дата выработки', blank=True, null=True)
-
-    class Meta:
-        verbose_name = 'Паллета источник'
-        verbose_name_plural = 'Паллеты источники'
 
 
 class OperationBaseOperation(OperationBaseModel, Task):
@@ -157,14 +138,6 @@ class AcceptanceOperation(OperationBaseOperation):
         verbose_name_plural = 'Приемка товаров'
 
 
-class PalletCollectOperation(OperationBaseOperation):
-    type_task = 'PALLET_COLLECT'
-
-    class Meta:
-        verbose_name = 'Сбор паллет'
-        verbose_name_plural = 'Сбор паллет'
-
-
 class PlacementToCellsOperation(OperationBaseOperation):
     type_task = 'PLACEMENT_TO_CELLS'
     storage = models.ForeignKey(Storage, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Склад')
@@ -193,12 +166,31 @@ class ShipmentOperation(OperationBaseOperation):
         verbose_name_plural = 'Отгрузка со со склада (Заявка на завод)'
 
 
+class PalletCollectOperation(OperationBaseOperation):
+    type_task = 'PALLET_COLLECT'
+    parent_task = models.ForeignKey(ShipmentOperation, on_delete=models.CASCADE, verbose_name='Родительское задание',
+                                    null=True,
+                                    blank=True)
+
+    SHIPMENT = 'SHIPMENT'
+    ACCEPTANCE = 'ACCEPTANCE'
+
+    TYPE_COLLECT = ((SHIPMENT, SHIPMENT), (ACCEPTANCE, ACCEPTANCE),)
+    type_collect = models.CharField('Тип сбора', max_length=255, choices=TYPE_COLLECT, default=ACCEPTANCE)
+
+    class Meta:
+        verbose_name = 'Сбор паллет'
+        verbose_name_plural = 'Сбор паллет'
+
+
 class OrderOperation(OperationBaseOperation):
     type_task = 'ORDER'
     parent_task = models.ForeignKey(ShipmentOperation, on_delete=models.CASCADE, verbose_name='Родительское задание',
                                     null=True,
                                     blank=True)
+
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Клиент')
+    client_presentation = models.CharField('Клиент', max_length=150, blank=True, null=True, default='')
 
     class Meta:
         verbose_name = 'Заказ клиента'
@@ -211,6 +203,39 @@ class OrderOperation(OperationBaseOperation):
         if not open_orders_count:
             self.parent_task.status = TaskStatus.CLOSE
             self.parent_task.close()
+
+
+class PalletProduct(models.Model):
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='products')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
+    weight = models.FloatField('Вес', default=0.0)
+    count = models.PositiveIntegerField('Количество', default=0.0)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
+    order = models.ForeignKey(OrderOperation, verbose_name='Заказ клиента', blank=True, null=True,
+                              on_delete=models.SET_NULL)
+    external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
+
+    class Meta:
+        verbose_name = 'Номенклатура паллеты'
+        verbose_name_plural = 'Номенклатура паллет'
+
+
+class PalletSource(models.Model):
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources')
+    pallet_source = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета источник')
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
+    weight = models.FloatField('Вес', default=0.0)
+    count = models.PositiveIntegerField('Количество', default=0.0)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+    production_date = models.DateField('Дата выработки', blank=True, null=True)
+    external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
+    order = models.ForeignKey(OrderOperation, verbose_name='Заказ клиента', blank=True, null=True,
+                              on_delete=models.SET_NULL)
+
+    class Meta:
+        verbose_name = 'Паллета источник'
+        verbose_name_plural = 'Паллеты источники'
 
 
 @dataclass

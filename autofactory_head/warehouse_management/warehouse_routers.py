@@ -11,8 +11,8 @@ from warehouse_management.serializers import (AcceptanceOperationReadSerializer,
                                               MovementBetweenCellsOperationReadSerializer,
                                               ShipmentOperationReadSerializer,
                                               ShipmentOperationWriteSerializer,
-                                              OrderOperationReadSerializer,
-                                              OrderOperationWriteSerializer, PalletReadSerializer)
+                                              PalletReadSerializer,
+                                              PalletCollectShipmentSerializer)
 
 from warehouse_management.models import (AcceptanceOperation,
                                          PalletCollectOperation,
@@ -62,11 +62,18 @@ def get_task_router() -> dict[str: RouterTask]:
                                    content_model=TaskBaseModel,
                                    change_content_function=None),
             'ORDER': RouterTask(task=OrderOperation,
-                                create_function=create_order_operation,
-                                read_serializer=OrderOperationReadSerializer,
-                                write_serializer=OrderOperationWriteSerializer,
-                                content_model=TaskBaseModel,
+                                create_function=None,
+                                read_serializer=PalletCollectShipmentSerializer,
+                                write_serializer=None,
+                                content_model=None,
                                 change_content_function=None),
+
+            'PALLET_COLLECT_SHIPMENT': RouterTask(task=PalletCollectOperation,
+                                                  create_function=None,
+                                                  read_serializer=PalletCollectShipmentSerializer,
+                                                  write_serializer=None,
+                                                  content_model=None,
+                                                  change_content_function=None),
             }
 
 

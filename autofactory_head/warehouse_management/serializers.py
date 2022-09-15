@@ -44,6 +44,11 @@ class PalletProductSerializer(serializers.Serializer):
     external_key = serializers.CharField(required=False)
     order = OrderOperationReadSerializer(required=False)
     order_external_source = OrderOperationWriteSerializer(required=False)
+    is_weight = serializers.SerializerMethodField(read_only=True, required=False)
+
+    @staticmethod
+    def get_is_weight(obj):
+        return obj.product.is_weight
 
 
 class PalletSourceCreateSerializer(serializers.Serializer):
@@ -111,9 +116,10 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
     content_count = serializers.IntegerField(required=False)
     id = serializers.CharField(required=False)
     sources = PalletSourceCreateSerializer(many=True, required=False)
+    weight = serializers.IntegerField(required=False)
 
     class Meta:
-        fields = ('status', 'content_count', 'id', 'sources')
+        fields = ('status', 'content_count', 'id', 'sources', 'weight')
         model = Pallet
 
     def update(self, instance, validated_data):
@@ -164,23 +170,32 @@ class PalletShortSerializer(serializers.ModelSerializer):
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
     pallets_semi = serializers.SerializerMethodField()
     pallets_complete = serializers.SerializerMethodField()
+    pallets_not_marked = serializers.SerializerMethodField()
 
     class Meta:
         model = PalletCollectOperation
-        fields = ('guid', 'pallets_semi', 'pallets_complete')
+        fields = ('guid', 'pallets_semi', 'pallets_complete', 'pallets_not_marked')
+
+    @staticmethod
+    def get_pallets_not_marked(obj):
+        return PalletCollectOperationReadSerializer.get_pallets_data({'operation': obj.guid,
+                                                                      'pallet__product__not_marked': True})
 
     @staticmethod
     def get_pallets_complete(obj):
-        return PalletCollectOperationReadSerializer.get_pallets_data(obj.guid, False)
+        return PalletCollectOperationReadSerializer.get_pallets_data({'operation': obj.guid,
+                                                                      'pallet__product__semi_product': False,
+                                                                      'pallet__product__not_marked': False})
 
     @staticmethod
     def get_pallets_semi(obj):
-        return PalletCollectOperationReadSerializer.get_pallets_data(obj.guid, True)
+        return PalletCollectOperationReadSerializer.get_pallets_data({'operation': obj.guid,
+                                                                      'pallet__product__semi_product': True})
+
 
     @staticmethod
-    def get_pallets_data(operation, semi_product):
-        pallets_ids = OperationPallet.objects.filter(operation=operation,
-                                                     pallet__product__semi_product=semi_product).values_list(
+    def get_pallets_data(product_filter):
+        pallets_ids = OperationPallet.objects.filter(**product_filter).values_list(
             'pallet', flat=True)
         pallets = Pallet.objects.filter(guid__in=pallets_ids)
         serializer = PalletShortSerializer(pallets, many=True)

@@ -77,7 +77,9 @@ class ProductSerializer(serializers.ModelSerializer):
     external_key = serializers.CharField(required=False)
 
     class Meta:
-        fields = ('name', 'gtin', 'guid', 'is_weight', 'expiration_date', 'units', 'external_key', 'semi_product')
+        fields = (
+            'name', 'gtin', 'guid', 'is_weight', 'expiration_date', 'units', 'external_key', 'semi_product',
+            'not_marked')
         model = Product
         read_only_fields = ('guid', 'expiration_date', 'store_semi_product')
 
@@ -91,7 +93,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class StorageSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('guid', 'name', 'store_semi_product')
+        fields = ('guid', 'name', 'store_semi_product', 'production_without_marking')
         model = Storage
         read_only_fields = ('store_semi_product',)
 

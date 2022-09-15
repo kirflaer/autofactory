@@ -43,6 +43,7 @@ class Direction(BaseExternalModel):
 
 class Storage(BaseExternalModel):
     store_semi_product = models.BooleanField('Хранит полуфабрикаты', default=False)
+    production_without_marking = models.BooleanField('Производство без маркировки', default=False)
 
     class Meta:
         verbose_name = 'Склад'
@@ -105,6 +106,7 @@ class Product(BaseExternalModel):
     expiration_date = models.PositiveIntegerField('Срок годности', default=0)
     is_weight = models.BooleanField('Весовой товар', default=False)
     semi_product = models.BooleanField('Полуфабрикат', default=False)
+    not_marked = models.BooleanField('Немаркируемый', default=False)
 
     class Meta:
         verbose_name = 'Номенклаутра'

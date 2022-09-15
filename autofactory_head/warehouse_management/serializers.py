@@ -23,7 +23,7 @@ class OperationBaseSerializer(serializers.Serializer):
 class OrderOperationReadSerializer(serializers.Serializer):
     client_presentation = serializers.CharField()
     number = serializers.CharField()
-    date = serializers.DateTimeField()
+    date = serializers.DateTimeField(format="%Y-%m-%d")
     guid = serializers.UUIDField()
 
 
@@ -33,6 +33,7 @@ class OrderOperationWriteSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'external_key', 'number', 'date', 'client_presentation')
         model = ExternalSource
+
 
 class PalletProductSerializer(serializers.Serializer):
     product = serializers.CharField()
@@ -346,33 +347,3 @@ class PalletCollectShipmentSerializer(serializers.ModelSerializer):
         pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED)
         serializer = PalletShipmentSerializer(pallets, many=True)
         return serializer.data
-
-        # pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
-        # pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED).values('guid',
-        #                                                                                           'content_count',
-        #                                                                                           'weight',
-        #                                                                                           'id',
-        #                                                                                           'has_shipped_products',
-        #                                                                                           'pallet_type')
-        #
-        # pallets_products = PalletProduct.objects.filter(pallet__in=[pallet['guid'] for pallet in pallets]).values(
-        #     'product', 'count', 'weight', 'batch_number', 'production_date', 'pallet', 'product__is_weight')
-        # products = {}
-        # result = []
-        # for record in pallets_products:
-        #     if not products.get(record['pallet']):
-        #         products[record['pallet']] = []
-        #     record['is_weight'] = record['product__is_weight']
-        #     record.pop('product__is_weight')
-        #     products[record['pallet']].append(record)
-        #
-        # for pallet in pallets:
-        #     if products.get(pallet['guid']) is not None:
-        #         pallet['products'] = products[pallet['guid']]
-        #
-        #     sources = PalletSource.objects.filter(pallet=pallet['guid'])
-        #     serializer = PalletSourceReadSerializer(sources, many=True)
-        #     pallet['sources'] = serializer.data
-        #     result.append(pallet)
-        #
-        # return result

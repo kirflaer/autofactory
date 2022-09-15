@@ -43,12 +43,12 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
 def create_order_operation(serializer_data: dict[str: str], user: User,
                            parent_task: ShipmentOperation) -> OrderOperation:
     """ Создает заказ клиента"""
-    external_source = get_or_create_external_source(serializer_data, 'order')
+    client_presentation = serializer_data['order_external_source'].pop('client_presentation')
+    external_source = get_or_create_external_source(serializer_data, 'order_external_source')
     task = OrderOperation.objects.filter(external_source=external_source).first()
     if task is not None:
         return task
-
-    return OrderOperation.objects.create(user=user, client_presentation=serializer_data['order']['client_presentation'],
+    return OrderOperation.objects.create(user=user, client_presentation=client_presentation,
                                          external_source=external_source, parent_task=parent_task)
 
 
@@ -117,7 +117,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 @transaction.atomic
 def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None = None, task: Task | None = None) -> \
-Iterable[str]:
+        Iterable[str]:
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
@@ -150,8 +150,9 @@ Iterable[str]:
                     product['pallet'] = pallet
                     product['product'] = Product.objects.filter(external_key=product['product']).first()
 
-                    if product.get('order') is not None:
+                    if product.get('order_external_source') is not None:
                         order = create_order_operation(product, user, task)
+                        product.pop('order_external_source')
                         product['order'] = order
 
                     PalletProduct.objects.create(**product)

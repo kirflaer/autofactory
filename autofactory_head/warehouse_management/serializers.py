@@ -20,14 +20,19 @@ class OperationBaseSerializer(serializers.Serializer):
         pass
 
 
-class OrderOperationWriteSerializer(serializers.Serializer):
+class OrderOperationReadSerializer(serializers.Serializer):
     client_presentation = serializers.CharField()
-    external_key = serializers.CharField(write_only=True)
     number = serializers.CharField()
     date = serializers.DateTimeField()
-    guid = serializers.UUIDField(read_only=True)
-    name = serializers.CharField(write_only=True)
+    guid = serializers.UUIDField()
 
+
+class OrderOperationWriteSerializer(serializers.ModelSerializer):
+    client_presentation = serializers.CharField()
+
+    class Meta:
+        fields = ('name', 'external_key', 'number', 'date', 'client_presentation')
+        model = ExternalSource
 
 class PalletProductSerializer(serializers.Serializer):
     product = serializers.CharField()
@@ -36,7 +41,8 @@ class PalletProductSerializer(serializers.Serializer):
     batch_number = serializers.IntegerField(required=False)
     production_date = serializers.DateField(required=False)
     external_key = serializers.CharField(required=False)
-    order = OrderOperationWriteSerializer(required=False)
+    order = OrderOperationReadSerializer(required=False)
+    order_external_source = OrderOperationWriteSerializer(required=False)
 
 
 class PalletSourceCreateSerializer(serializers.Serializer):

@@ -72,7 +72,7 @@ def get_task_router() -> dict[str: RouterTask]:
                                                   create_function=None,
                                                   read_serializer=PalletCollectShipmentSerializer,
                                                   write_serializer=None,
-                                                  content_model=None,
+                                                  content_model=TaskBaseModel,
                                                   change_content_function=None),
             }
 

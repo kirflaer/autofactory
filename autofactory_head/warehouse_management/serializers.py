@@ -36,7 +36,7 @@ class OrderOperationWriteSerializer(serializers.ModelSerializer):
 
 
 class PalletProductSerializer(serializers.Serializer):
-    product = serializers.CharField()
+    product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='pk')
     weight = serializers.FloatField()
     count = serializers.FloatField()
     batch_number = serializers.IntegerField(required=False)

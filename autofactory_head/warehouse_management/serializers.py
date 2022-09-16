@@ -334,7 +334,7 @@ class PalletShipmentSerializer(serializers.ModelSerializer):
         model = Pallet
         fields = (
             'id', 'external_key', 'weight', 'content_count', 'pallet_type', 'has_shipped_products', 'weight', 'status',
-            'products', 'sources')
+            'guid', 'products', 'sources')
 
     @staticmethod
     def get_products(obj):

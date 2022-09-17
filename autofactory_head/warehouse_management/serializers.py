@@ -45,6 +45,7 @@ class PalletProductSerializer(serializers.Serializer):
     order = OrderOperationReadSerializer(required=False)
     order_external_source = OrderOperationWriteSerializer(required=False)
     is_weight = serializers.SerializerMethodField(read_only=True, required=False)
+    has_shipped_products = serializers.BooleanField(required=False)
 
     @staticmethod
     def get_is_weight(obj):
@@ -58,6 +59,7 @@ class PalletSourceCreateSerializer(serializers.Serializer):
     weight = serializers.IntegerField()
     count = serializers.IntegerField()
     production_date = serializers.DateField()
+    external_key = serializers.CharField(required=False)
 
     def validate(self, attrs):
         pallet_source = Pallet.objects.filter(guid=attrs.get('pallet_source')).first()
@@ -333,7 +335,7 @@ class PalletShipmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
         fields = (
-            'id', 'external_key', 'weight', 'content_count', 'pallet_type', 'has_shipped_products', 'weight', 'status',
+            'id', 'external_key', 'weight', 'content_count', 'pallet_type', 'weight', 'status',
             'guid', 'products', 'sources')
 
     @staticmethod

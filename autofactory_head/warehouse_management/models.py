@@ -215,6 +215,7 @@ class PalletProduct(models.Model):
     order = models.ForeignKey(OrderOperation, verbose_name='Заказ клиента', blank=True, null=True,
                               on_delete=models.SET_NULL)
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
+    has_shipped_products = models.BooleanField('Содержит номенклатуру требующую обеспечения', default=False)
 
     class Meta:
         verbose_name = 'Номенклатура паллеты'

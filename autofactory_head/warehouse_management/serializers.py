@@ -71,7 +71,7 @@ class PalletSourceReadSerializer(serializers.ModelSerializer):
     pallet = serializers.SlugRelatedField(slug_field='id', source='pallet_source', read_only=True)
 
     class Meta:
-        fields = ('product', 'batch_number', 'weight', 'count', 'pallet', 'production_date')
+        fields = ('product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key')
         model = PalletSource
 
 

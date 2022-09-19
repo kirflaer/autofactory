@@ -36,7 +36,7 @@ class OrderOperationWriteSerializer(serializers.ModelSerializer):
 
 
 class PalletProductSerializer(serializers.Serializer):
-    product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='pk')
+    product = serializers.UUIDField()
     weight = serializers.FloatField()
     count = serializers.FloatField()
     batch_number = serializers.IntegerField(required=False)
@@ -49,7 +49,10 @@ class PalletProductSerializer(serializers.Serializer):
 
     @staticmethod
     def get_is_weight(obj):
-        return obj.product.is_weight
+        if obj.get('product') is not None:
+            return obj.product.is_weight
+        else:
+            return False
 
 
 class PalletSourceCreateSerializer(serializers.Serializer):
@@ -193,7 +196,6 @@ class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
     def get_pallets_semi(obj):
         return PalletCollectOperationReadSerializer.get_pallets_data({'operation': obj.guid,
                                                                       'pallet__product__semi_product': True})
-
 
     @staticmethod
     def get_pallets_data(product_filter):

@@ -36,9 +36,10 @@ class OrderOperationWriteSerializer(serializers.ModelSerializer):
 
 
 class PalletProductSerializer(serializers.Serializer):
-    product = serializers.UUIDField()
-    weight = serializers.FloatField()
-    count = serializers.FloatField()
+    product = serializers.UUIDField(write_only=True)
+    guid = serializers.SlugRelatedField(read_only=True, source='product', slug_field='pk')
+    weight = serializers.IntegerField()
+    count = serializers.IntegerField()
     batch_number = serializers.IntegerField(required=False)
     production_date = serializers.DateField(required=False)
     external_key = serializers.CharField(required=False)

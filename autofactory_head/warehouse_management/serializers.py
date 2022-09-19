@@ -49,10 +49,7 @@ class PalletProductSerializer(serializers.Serializer):
 
     @staticmethod
     def get_is_weight(obj):
-        if obj.get('product') is not None:
-            return obj.product.is_weight
-        else:
-            return False
+        return obj.product.is_weight
 
 
 class PalletSourceCreateSerializer(serializers.Serializer):

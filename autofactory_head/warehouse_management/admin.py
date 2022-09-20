@@ -33,6 +33,7 @@ class PalletSourceAdmin(admin.ModelAdmin):
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('operation', 'pallet', 'type_operation', 'external_source')
     list_filter = ('type_operation',)
+    search_fields = ('pallet',)
 
 
 @admin.register(OperationProduct)
@@ -83,3 +84,4 @@ class OrderOperationAdmin(admin.ModelAdmin):
 @admin.register(PalletProduct)
 class PalletProductAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'product', 'weight', 'count', 'batch_number', 'production_date')
+    search_fields = ('external_key',)

@@ -47,6 +47,7 @@ class PalletProductSerializer(serializers.Serializer):
     order_external_source = OrderOperationWriteSerializer(required=False)
     is_weight = serializers.SerializerMethodField(read_only=True, required=False)
     has_shipped_products = serializers.BooleanField(required=False)
+    is_collected = serializers.BooleanField(required=False)
 
     @staticmethod
     def get_is_weight(obj):
@@ -72,10 +73,15 @@ class PalletSourceCreateSerializer(serializers.Serializer):
 
 class PalletSourceReadSerializer(serializers.ModelSerializer):
     pallet = serializers.SlugRelatedField(slug_field='id', source='pallet_source', read_only=True)
+    is_weight = serializers.SerializerMethodField(read_only=True, required=False)
 
     class Meta:
-        fields = ('product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key')
+        fields = ('product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key', 'is_weight')
         model = PalletSource
+
+    @staticmethod
+    def get_is_weight(obj):
+        return obj.product.is_weight
 
 
 class PalletWriteSerializer(serializers.Serializer):
@@ -120,9 +126,10 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
     id = serializers.CharField(required=False)
     sources = PalletSourceCreateSerializer(many=True, required=False)
     weight = serializers.IntegerField(required=False)
+    collected_strings = serializers.ListField(required=False)
 
     class Meta:
-        fields = ('status', 'content_count', 'id', 'sources', 'weight')
+        fields = ('status', 'content_count', 'id', 'sources', 'weight', 'collected_strings')
         model = Pallet
 
     def update(self, instance, validated_data):
@@ -133,6 +140,14 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
                 source['pallet'] = instance
                 source['product'] = Product.objects.filter(guid=source['product']).first()
                 PalletSource.objects.create(**source)
+
+        if validated_data.get('collected_strings') is not None:
+            collected_strings = validated_data.pop('collected_strings')
+            for string in collected_strings:
+                pallet_product_string = PalletProduct.objects.filter(external_key=string, pallet=self.instance).first()
+                if pallet_product_string is not None:
+                    pallet_product_string.is_collected = True
+                    pallet_product_string.save()
 
         return super().update(instance, validated_data)
 

@@ -44,7 +44,6 @@ class Pallet(models.Model):
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
     production_shop = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Цех производства', blank=True,
                                         null=True)
-    has_shipped_products = models.BooleanField('Содержит номенклатуру требующую обеспечения', default=False)
     pallet_type = models.CharField('Статус', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
 
     class Meta:
@@ -182,6 +181,14 @@ class PalletCollectOperation(OperationBaseOperation):
         verbose_name = 'Сбор паллет'
         verbose_name_plural = 'Сбор паллет'
 
+    def close(self):
+        super().close()
+        open_task_count = PalletCollectOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
+            guid=self.guid).count()
+        if not open_task_count:
+            self.parent_task.status = TaskStatus.CLOSE
+            self.parent_task.close()
+
 
 class OrderOperation(OperationBaseOperation):
     type_task = 'ORDER'
@@ -196,14 +203,6 @@ class OrderOperation(OperationBaseOperation):
         verbose_name = 'Заказ клиента'
         verbose_name_plural = 'Отгрузка со склада (Заказы клиентов)'
 
-    def close(self):
-        super().close()
-        open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
-            guid=self.guid).count()
-        if not open_orders_count:
-            self.parent_task.status = TaskStatus.CLOSE
-            self.parent_task.close()
-
 
 class PalletProduct(models.Model):
     pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='products')
@@ -216,6 +215,7 @@ class PalletProduct(models.Model):
                               on_delete=models.SET_NULL)
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
     has_shipped_products = models.BooleanField('Содержит номенклатуру требующую обеспечения', default=False)
+    is_collected = models.BooleanField('Собрано', default=False)
 
     class Meta:
         verbose_name = 'Номенклатура паллеты'

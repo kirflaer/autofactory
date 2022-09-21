@@ -33,7 +33,7 @@ class PalletSourceAdmin(admin.ModelAdmin):
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('operation', 'pallet', 'type_operation', 'external_source')
     list_filter = ('type_operation',)
-    search_fields = ('pallet',)
+    search_fields = ('pallet__id',)
 
 
 @admin.register(OperationProduct)
@@ -54,6 +54,7 @@ class PalletCollectOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
+    search_fields = ('guid',)
 
 
 @admin.register(PlacementToCellsOperation)
@@ -84,4 +85,4 @@ class OrderOperationAdmin(admin.ModelAdmin):
 @admin.register(PalletProduct)
 class PalletProductAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'product', 'weight', 'count', 'batch_number', 'production_date')
-    search_fields = ('external_key',)
+    search_fields = ('pallet__id',)

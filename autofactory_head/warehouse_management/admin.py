@@ -8,7 +8,6 @@ from warehouse_management.models import (
     OperationProduct,
     PalletCollectOperation,
     PlacementToCellsOperation,
-    OperationCell,
     MovementBetweenCellsOperation,
     ShipmentOperation,
     PalletProduct,
@@ -34,16 +33,12 @@ class PalletSourceAdmin(admin.ModelAdmin):
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('operation', 'pallet', 'type_operation', 'external_source')
     list_filter = ('type_operation',)
+    search_fields = ('pallet__id',)
 
 
 @admin.register(OperationProduct)
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('product', 'type_operation', 'external_source')
-
-
-# @admin.register(OperationCell)
-# class OperationCellPalletAdmin(admin.ModelAdmin):
-#     list_display = ('operation', 'product', 'type_operation', 'external_source', 'count', 'cell_source')
 
 
 @admin.register(AcceptanceOperation)
@@ -55,9 +50,11 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 
 @admin.register(PalletCollectOperation)
 class PalletCollectOperationAdmin(admin.ModelAdmin):
+    list_filter = ('type_collect',)
     list_display = (
-        'date', 'guid', 'user', 'number', 'status', 'external_source',
+        'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
+    search_fields = ('guid',)
 
 
 @admin.register(PlacementToCellsOperation)
@@ -88,3 +85,4 @@ class OrderOperationAdmin(admin.ModelAdmin):
 @admin.register(PalletProduct)
 class PalletProductAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'product', 'weight', 'count', 'batch_number', 'production_date')
+    search_fields = ('pallet__id',)

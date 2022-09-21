@@ -1,0 +1,38 @@
+[
+  {
+    "direction": "a25fc794-4555-4fad-99f8-3a41ca14949d",
+    "external_source": {
+      "name": "Заявка клиента 0000-008562 от 18.04.2022 11:43:25",
+      "external_key": "9cac65ba-bef3-11ec-87f7-2e6094fbc090",
+      "number": "22",
+      "date": "2022-12-12+"
+    },
+    "pallets": [
+      {
+        "id": "1c_pallet_guid",
+        "external_key": "1c_pallet_guid",
+        "content_count": 3,
+        "weight": 2,
+        "type": "shipped/fulled/combined",
+        "has_shipped_products": "yes/no",
+        "products": [
+          {
+            "product": "b40f0b41-faa5-11e3-812c-9c8e99551251",
+            "weight": 2,
+            "count": 3,
+            "batch_number": 4,
+            "production_date": "2022-12-12",
+            "string_guid": "guid",
+            "order": {
+              "name": "Заявка клиента 0000-008562 от 18.04.2022 11:43:25",
+              "client": "ООО Клиент 1",
+              "external_key": "9cac65ba-bef3-11ec-87f7-2e6094fbc090",
+              "number": "22",
+              "date": "2022-12-12+"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

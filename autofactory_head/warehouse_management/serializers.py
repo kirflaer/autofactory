@@ -8,6 +8,7 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource, OperationCell)
+from warehouse_management.warehouse_services import check_and_collect_orders
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -76,7 +77,8 @@ class PalletSourceReadSerializer(serializers.ModelSerializer):
     is_weight = serializers.SerializerMethodField(read_only=True, required=False)
 
     class Meta:
-        fields = ('product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key', 'is_weight')
+        fields = (
+            'product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key', 'is_weight')
         model = PalletSource
 
     @staticmethod
@@ -133,6 +135,8 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         model = Pallet
 
     def update(self, instance, validated_data):
+        product_keys = []
+
         if validated_data.get('sources') is not None:
             sources = validated_data.pop('sources')
             for source in sources:
@@ -140,15 +144,18 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
                 source['pallet'] = instance
                 source['product'] = Product.objects.filter(guid=source['product']).first()
                 PalletSource.objects.create(**source)
+                product_keys.append(source['external_key'])
 
         if validated_data.get('collected_strings') is not None:
             collected_strings = validated_data.pop('collected_strings')
+            product_keys += collected_strings
             for string in collected_strings:
-                pallet_product_string = PalletProduct.objects.filter(external_key=string, pallet=self.instance).first()
+                pallet_product_string = PalletProduct.objects.filter(external_key=string).first()
                 if pallet_product_string is not None:
                     pallet_product_string.is_collected = True
                     pallet_product_string.save()
 
+        check_and_collect_orders(product_keys)
         return super().update(instance, validated_data)
 
 
@@ -377,5 +384,20 @@ class PalletCollectShipmentSerializer(serializers.ModelSerializer):
     def get_pallets(obj):
         pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
         pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED)
+        serializer = PalletShipmentSerializer(pallets, many=True)
+        return serializer.data
+
+
+class OrderReadSerializer(serializers.ModelSerializer):
+    pallets = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderOperation
+        fields = ('guid', 'date', 'number', 'status', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj):
+        pallet_guids = PalletProduct.objects.filter(order=obj.guid).values_list('pallet', flat=True)
+        pallets = Pallet.objects.filter(guid__in=pallet_guids)
         serializer = PalletShipmentSerializer(pallets, many=True)
         return serializer.data

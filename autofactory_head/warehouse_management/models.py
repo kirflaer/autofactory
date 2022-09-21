@@ -203,6 +203,14 @@ class OrderOperation(OperationBaseOperation):
         verbose_name = 'Заказ клиента'
         verbose_name_plural = 'Отгрузка со склада (Заказы клиентов)'
 
+    def close(self):
+        super().close()
+        open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
+            guid=self.guid).count()
+        if not open_orders_count:
+            self.parent_task.status = TaskStatus.CLOSE
+            self.parent_task.close()
+
 
 class PalletProduct(models.Model):
     pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='products')

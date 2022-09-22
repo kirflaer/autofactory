@@ -390,10 +390,11 @@ class PalletCollectShipmentSerializer(serializers.ModelSerializer):
 
 class OrderReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
+    external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
 
     class Meta:
         model = OrderOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets')
+        fields = ('guid', 'date', 'number', 'status', 'external_key', 'pallets')
 
     @staticmethod
     def get_pallets(obj):

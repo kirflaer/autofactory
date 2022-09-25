@@ -144,7 +144,14 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
     related_tables = ('codes', 'products')
 
     for element in serializer_data:
-        pallet = Pallet.objects.filter(id=element['id']).first()
+        search_field = 'id' if element.get('id') is not None else 'external_key'
+        search_value = element.get(search_field)
+        pallet = None
+
+        if search_value is not None:
+            pallet_filter = {search_field: search_value}
+            pallet = Pallet.objects.filter(**pallet_filter).first()
+
         if not pallet:
             if not element.get('product'):
                 product = None
@@ -185,7 +192,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                     continue
                 PalletContent.objects.create(pallet=pallet, aggregation_code=aggregation_code, product=pallet.product)
 
-        result.append(pallet.id)
+        result.append(pallet.guid)
 
     return result
 

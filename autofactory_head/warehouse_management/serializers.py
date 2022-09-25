@@ -88,7 +88,7 @@ class PalletSourceReadSerializer(serializers.ModelSerializer):
 
 class PalletWriteSerializer(serializers.Serializer):
     codes = serializers.ListField(required=False)
-    id = serializers.CharField()
+    id = serializers.CharField(required=False)
     product = serializers.CharField(required=False)
     batch_number = serializers.CharField(required=False)
     production_date = serializers.DateField(required=False)

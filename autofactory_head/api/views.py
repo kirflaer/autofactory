@@ -308,6 +308,7 @@ class LogCreateViewSet(generics.CreateAPIView):
 class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = Pallet.objects.all().exclude(status=PalletStatus.ARCHIVED)
     lookup_field = 'id'
+    adv_lookup_field = 'guid'
     serializer_class = PalletReadSerializer
 
     def get_serializer_class(self):
@@ -315,6 +316,18 @@ class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
             return PalletReadSerializer
         else:
             return PalletUpdateSerializer
+
+    def get_object(self):
+        filter_lf = {self.lookup_field: self.kwargs[self.lookup_field]}
+        qs_lf = self.queryset.filter(**filter_lf)
+
+        filter_alf = {self.adv_lookup_field: self.kwargs[self.lookup_field]}
+        qs_alf = self.queryset.filter(**filter_alf)
+
+        if not qs_lf.count() and qs_alf.count():
+            return qs_alf.first()
+        else:
+            return super().get_object()
 
 
 class TasksViewSet(viewsets.ViewSet):

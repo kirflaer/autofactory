@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 import api.views
 from api.v2.services import get_marks_to_unload
+from catalogs.models import ExternalSource
 from tasks.models import TaskStatus
 from tasks.task_services import change_task_properties
 from warehouse_management.models import Pallet, PalletStatus
@@ -23,7 +24,13 @@ class TasksChangeViewSet(api.views.TasksViewSet):
 
         instance = task_router.task.objects.filter(guid=guid).first()
         if instance is None:
+            external_source = ExternalSource.objects.filter(external_key=guid).first()
+            instance = task_router.task.objects.filter(external_source=external_source).first()
+
+        if instance is None:
             raise APIException('Задача не найдена')
+
+        guid = instance.pk
 
         try:
             task_data = task_router.content_model(**request.data)

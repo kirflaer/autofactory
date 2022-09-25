@@ -31,7 +31,7 @@ class PalletType(models.TextChoices):
 class Pallet(models.Model):
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    id = models.CharField('Идентификатор', max_length=50)
+    id = models.CharField('Идентификатор', max_length=50, blank=True, default='')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура', blank=True,
                                 null=True)
     creation_date = models.DateTimeField('Дата создания', auto_now_add=True)

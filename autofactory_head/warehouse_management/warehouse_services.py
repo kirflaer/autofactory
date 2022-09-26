@@ -192,7 +192,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                     continue
                 PalletContent.objects.create(pallet=pallet, aggregation_code=aggregation_code, product=pallet.product)
 
-        result.append(pallet.guid)
+        result.append(pallet.id)
 
     return result
 

@@ -31,9 +31,9 @@ class PalletSourceAdmin(admin.ModelAdmin):
 
 @admin.register(OperationPallet)
 class OperationPalletAdmin(admin.ModelAdmin):
-    list_display = ('operation', 'pallet', 'type_operation', 'external_source')
+    list_display = ('operation', 'pallet', 'type_operation', 'number_operation', 'external_source')
     list_filter = ('type_operation',)
-    search_fields = ('pallet__id',)
+    search_fields = ('pallet__id', 'operation')
 
 
 @admin.register(OperationProduct)

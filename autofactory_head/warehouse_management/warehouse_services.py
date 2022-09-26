@@ -2,7 +2,7 @@ from typing import Iterable
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from dateutil import parser
 from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
 from tasks.models import TaskStatus, Task
@@ -11,9 +11,30 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          PlacementToCellsOperation,
                                          OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletContent, PalletProduct)
+                                         PalletContent, PalletProduct, PalletSource)
 
 User = get_user_model()
+
+
+def check_and_collect_orders(product_keys: list[str]):
+    """ Функция проверяет все ли данные по заказам собраны. Если сбор окончен закрывает заказы """
+    sources = PalletSource.objects.filter(external_key__in=product_keys).values('external_key').annotate(Sum('count'))
+    pallet_products = PalletProduct.objects.filter(external_key__in=product_keys)
+    orders = pallet_products.values_list('order', flat=True)
+    order_products = pallet_products.values('order', 'external_key').annotate(Sum('count'))
+
+    for product in order_products:
+        if not sources.filter(external_key=product['external_key'], count__sum__gte=product['count__sum']).exists():
+            continue
+        order_product = PalletProduct.objects.get(external_key=product['external_key'])
+        order_product.is_collected = True
+        order_product.save()
+
+    order_need_close = PalletProduct.objects.filter(order__in=orders).exclude(is_collected=False).values_list('order',
+                                                                                                              flat=True)
+    for order_guid in order_need_close:
+        order = OrderOperation.objects.get(guid=order_guid)
+        order.close()
 
 
 @transaction.atomic
@@ -123,7 +144,14 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
     related_tables = ('codes', 'products')
 
     for element in serializer_data:
-        pallet = Pallet.objects.filter(id=element['id']).first()
+        search_field = 'id' if element.get('id') is not None else 'external_key'
+        search_value = element.get(search_field)
+        pallet = None
+
+        if search_value is not None:
+            pallet_filter = {search_field: search_value}
+            pallet = Pallet.objects.filter(**pallet_filter).first()
+
         if not pallet:
             if not element.get('product'):
                 product = None
@@ -164,7 +192,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                     continue
                 PalletContent.objects.create(pallet=pallet, aggregation_code=aggregation_code, product=pallet.product)
 
-        result.append(pallet.id)
+        result.append(pallet.guid)
 
     return result
 

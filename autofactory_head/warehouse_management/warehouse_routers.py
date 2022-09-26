@@ -12,7 +12,7 @@ from warehouse_management.serializers import (AcceptanceOperationReadSerializer,
                                               ShipmentOperationReadSerializer,
                                               ShipmentOperationWriteSerializer,
                                               PalletReadSerializer,
-                                              PalletCollectShipmentSerializer)
+                                              PalletCollectShipmentSerializer, OrderReadSerializer)
 
 from warehouse_management.models import (AcceptanceOperation,
                                          PalletCollectOperation,
@@ -63,7 +63,7 @@ def get_task_router() -> dict[str: RouterTask]:
                                    change_content_function=None),
             'ORDER': RouterTask(task=OrderOperation,
                                 create_function=None,
-                                read_serializer=PalletCollectShipmentSerializer,
+                                read_serializer=OrderReadSerializer,
                                 write_serializer=None,
                                 content_model=None,
                                 change_content_function=None),

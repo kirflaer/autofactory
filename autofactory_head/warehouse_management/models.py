@@ -31,7 +31,7 @@ class PalletType(models.TextChoices):
 class Pallet(models.Model):
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    id = models.CharField('Идентификатор', max_length=50)
+    id = models.CharField('Идентификатор', max_length=50, blank=True, default='')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура', blank=True,
                                 null=True)
     creation_date = models.DateTimeField('Дата создания', auto_now_add=True)
@@ -202,6 +202,14 @@ class OrderOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Заказ клиента'
         verbose_name_plural = 'Отгрузка со склада (Заказы клиентов)'
+
+    def close(self):
+        super().close()
+        open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
+            guid=self.guid).count()
+        if not open_orders_count:
+            self.parent_task.status = TaskStatus.CLOSE
+            self.parent_task.close()
 
 
 class PalletProduct(models.Model):

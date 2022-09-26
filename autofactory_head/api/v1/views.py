@@ -42,8 +42,8 @@ class PalletViewSet(viewsets.ViewSet):
         serializer = PalletWriteSerializer(data=request.data, many=True)
 
         if serializer.is_valid():
-            create_pallets(serializer.validated_data)
-            return Response(serializer.data)
+            pallets = create_pallets(serializer.validated_data)
+            return Response(pallets)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @staticmethod

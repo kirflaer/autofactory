@@ -51,7 +51,7 @@ class Pallet(models.Model):
         verbose_name_plural = 'Паллеты'
 
     def __str__(self):
-        return self.id
+        return f'{self.status} / {self.batch_number} / {self.id} / {self.guid}'
 
 
 class PalletContent(models.Model):
@@ -134,7 +134,7 @@ class AcceptanceOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Приемка на склад'
-        verbose_name_plural = 'Приемка товаров'
+        verbose_name_plural = 'Приемка товаров (Заказ на перемещение)'
 
 
 class PlacementToCellsOperation(OperationBaseOperation):

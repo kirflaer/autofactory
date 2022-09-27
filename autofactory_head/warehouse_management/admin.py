@@ -52,7 +52,7 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 class PalletCollectOperationAdmin(admin.ModelAdmin):
     list_filter = ('type_collect',)
     list_display = (
-        'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source',
+        'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source', 'parent_task',
         'closed', 'ready_to_unload', 'unloaded')
     search_fields = ('guid',)
 

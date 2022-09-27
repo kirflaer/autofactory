@@ -54,7 +54,7 @@ class PalletCollectOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source', 'parent_task',
         'closed', 'ready_to_unload', 'unloaded')
-    search_fields = ('guid',)
+    search_fields = ('guid', 'parent_task__guid')
 
 
 @admin.register(PlacementToCellsOperation)

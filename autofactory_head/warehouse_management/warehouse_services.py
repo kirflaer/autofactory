@@ -1,3 +1,4 @@
+import uuid
 from typing import Iterable
 
 from django.contrib.auth import get_user_model
@@ -138,7 +139,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 @transaction.atomic
 def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None = None, task: Task | None = None) -> \
-        Iterable[str]:
+        list[Pallet]:
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
@@ -192,7 +193,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                     continue
                 PalletContent.objects.create(pallet=pallet, aggregation_code=aggregation_code, product=pallet.product)
 
-        result.append(pallet.id)
+        result.append(pallet)
 
     return result
 
@@ -211,11 +212,14 @@ def fill_operation_products(operation: OperationBaseOperation, raw_data: Iterabl
         operation_products.fill_properties(operation)
 
 
-def fill_operation_pallets(operation: OperationBaseOperation, raw_data: Iterable[str]) -> None:
+def fill_operation_pallets(operation: OperationBaseOperation, raw_data: Iterable[str | Pallet]) -> None:
     """ Заполняет информацию о паллетах абстрактной операции """
 
-    for pallet_id in raw_data:
-        pallet = Pallet.objects.filter(id=pallet_id).first()
+    for pallet_instance in raw_data:
+        if isinstance(pallet_instance, Pallet):
+            pallet = pallet_instance
+        else:
+            pallet = Pallet.objects.filter(id=pallet_instance).first()
         if pallet is None:
             continue
         operation_pallets = OperationPallet.objects.create(pallet=pallet)

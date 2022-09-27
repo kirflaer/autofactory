@@ -85,4 +85,4 @@ class OrderOperationAdmin(admin.ModelAdmin):
 @admin.register(PalletProduct)
 class PalletProductAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'product', 'weight', 'count', 'batch_number', 'production_date')
-    search_fields = ('pallet__id', 'pallet_guid')
+    search_fields = ('pallet__id', 'pallet__guid')

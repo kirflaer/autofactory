@@ -1,7 +1,9 @@
 import base64
+import uuid
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.exceptions import APIException
@@ -318,16 +320,15 @@ class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
             return PalletUpdateSerializer
 
     def get_object(self):
-        filter_lf = {self.lookup_field: self.kwargs[self.lookup_field]}
-        qs_lf = self.queryset.filter(**filter_lf)
 
-        filter_alf = {self.adv_lookup_field: self.kwargs[self.lookup_field]}
-        qs_alf = self.queryset.filter(**filter_alf)
-
-        if not qs_lf.count() and qs_alf.count():
-            return qs_alf.first()
-        else:
+        filter_value = self.kwargs[self.lookup_field]
+        try:
+            uuid.UUID(filter_value)
+        except ValueError:
             return super().get_object()
+
+        filter_kwargs = {self.adv_lookup_field: self.kwargs[self.lookup_field]}
+        return get_object_or_404(self.queryset, **filter_kwargs)
 
 
 class TasksViewSet(viewsets.ViewSet):

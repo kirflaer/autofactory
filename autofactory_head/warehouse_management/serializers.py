@@ -99,6 +99,7 @@ class PalletWriteSerializer(serializers.Serializer):
     status = serializers.CharField(required=False)
     production_shop = serializers.CharField(required=False)
     pallet_type = serializers.CharField(required=False)
+    marking_group = serializers.CharField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):
@@ -115,6 +116,7 @@ class PalletReadSerializer(serializers.Serializer):
     sources = serializers.SerializerMethodField()
     production_shop = serializers.SlugRelatedField(read_only=True, slug_field='pk')
     external_key = serializers.CharField(read_only=True)
+    marking_group = serializers.CharField(required=False)
 
     @staticmethod
     def get_sources(obj):

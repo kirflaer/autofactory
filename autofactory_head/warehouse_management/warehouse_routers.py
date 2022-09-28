@@ -65,7 +65,7 @@ def get_task_router() -> dict[str: RouterTask]:
                                 create_function=None,
                                 read_serializer=OrderReadSerializer,
                                 write_serializer=None,
-                                content_model=None,
+                                content_model=TaskBaseModel,
                                 change_content_function=None),
 
             'PALLET_COLLECT_SHIPMENT': RouterTask(task=PalletCollectOperation,

@@ -24,7 +24,7 @@ class MarkingOperation(OperationBaseModel, ExternalSystemExchangeMixin):
     line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name='Линия', blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура', blank=True, null=True)
     group = models.UUIDField('Группа', blank=True, null=True)
-    group_offline = models.UUIDField('Ключ группы оффлайн', blank=True, null=True)
+    group_offline = models.CharField('Ключ группы оффлайн', blank=True, null=True, max_length=10)
 
     class Meta:
         verbose_name = 'Операция маркировки'

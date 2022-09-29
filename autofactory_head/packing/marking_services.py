@@ -112,7 +112,6 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         ready_to_unload=False)
 
     settings = operation.author.settings
-    need_exchange = True
     if settings.type_marking_close == settings.ALL_IN_DAY_BY_LINE:
         markings = markings.filter(line=operation.line)
     elif settings.type_marking_close == settings.ALL_IN_DAY_BY_BAT_NUMBER:
@@ -128,7 +127,6 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         markings.update({'ready_to_unload': True})
 
         groups = list(map(str, [i for i in markings.values_list('group', flat=True) if i is not None]))
-        groups += [i for i in markings.values_list('group_offline', flat=True) if i is not None]
         task_pallets = Pallet.objects.filter(marking_group__in=groups)
         tasks_ids = OperationPallet.objects.filter(pallet__in=task_pallets)
         tasks = PalletCollectOperation.objects.filter(guid__in=tasks_ids.values_list('operation', flat=True))

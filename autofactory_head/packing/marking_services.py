@@ -1,5 +1,6 @@
 import base64
 import datetime
+import uuid
 from collections.abc import Iterable
 from datetime import datetime as dt, timedelta
 from typing import Optional, Dict, List
@@ -116,28 +117,49 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         markings = markings.filter(line=operation.line)
     elif settings.type_marking_close == settings.ALL_IN_DAY_BY_BAT_NUMBER:
         markings = markings.filter(batch_number=operation.batch_number)
-    elif (settings.type_marking_close ==
-          settings.ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER):
-        markings = markings.filter(line=operation.line,
-                                   batch_number=operation.batch_number)
+    elif settings.type_marking_close == settings.ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER:
+        markings = markings.filter(line=operation.line, batch_number=operation.batch_number)
 
     need_exchange = not bool(markings.exclude(guid=operation.guid).filter(closed=False).exists())
 
     if need_exchange:
-        markings.update({'ready_to_unload': True})
-
-        groups = list(map(str, [i for i in markings.values_list('group', flat=True) if i is not None]))
-        task_pallets = Pallet.objects.filter(marking_group__in=groups)
-        tasks_ids = OperationPallet.objects.filter(pallet__in=task_pallets)
-        tasks = PalletCollectOperation.objects.filter(guid__in=tasks_ids.values_list('operation', flat=True))
+        offline_marking_guids = dict()
+        marking_groups = [str(group) for group in markings.filter(group__isnull=False).values_list('group', flat=True)]
+        pallets_ids = list(Pallet.objects.filter(marking_group__in=marking_groups).values_list('guid', flat=True))
 
         for marking in markings:
-            group = str(marking.group) if marking.group is not None else marking.group_offline
-            if group is None:
+            marking.ready_to_unload = True
+
+            if marking.group is not None:
+                marking.save()
                 continue
 
-            pallets = task_pallets.filter(marking_group=group)
+            group = offline_marking_guids.get(marking.group_offline)
+            if group is None:
+                open_marking = markings.filter(group_offline=marking.group_offline, group__isnull=False).first()
+                if open_marking is None:
+                    group = uuid.uuid4()
+                else:
+                    group = open_marking.group
 
+                offline_marking_guids[marking.group_offline] = group
+                marking.group = group
+                marking.save()
+
+            filter_kwargs = {'batch_number': marking.batch_number,
+                             'production_date': marking.production_date,
+                             'marking_group': marking.group_offline}
+            pallets = Pallet.objects.filter(**filter_kwargs)
+            for pallet in pallets:
+                pallet.marking_group = str(group)
+                pallets_ids.append(pallet.guid)
+                pallet.save()
+
+        tasks_ids = OperationPallet.objects.filter(pallet__guid__in=pallets_ids).values_list('operation', flat=True)
+        tasks = PalletCollectOperation.objects.filter(guid__in=tasks_ids)
+        for task in tasks:
+            task.ready_to_unload = True
+            task.save()
 
     return need_exchange
 

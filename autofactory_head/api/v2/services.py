@@ -45,5 +45,6 @@ def _get_fields_to_unload() -> Iterable[Field]:
               Field(source='operation__line__department__external_key', destination='department'),
               Field(source='operation__line__type_factory_operation__external_key', destination='type_factory_operation'),
               Field(source='operation__organization__external_key', destination='organization'),
-              Field(source='operation__production_date', destination='production_date')]
+              Field(source='operation__production_date', destination='production_date'),
+              Field(source='operation__group', destination='group')]
     return fields

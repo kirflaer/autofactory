@@ -7,15 +7,12 @@ from typing import Optional, Dict, List
 import pytz
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from catalogs.models import (
-    Product,
-    ExternalSource,
-    Direction,
-    Client
+    Product
 )
-from warehouse_management.models import PalletContent
+from warehouse_management.models import Pallet, OperationPallet, PalletCollectOperation
 
 from .models import (
     RawMark,
@@ -87,18 +84,6 @@ def _get_data_report_marking_dynamics(start: datetime, end: datetime, lines: Lis
     return result
 
 
-# def change_pallet_content(content: Dict) -> None:
-#     source = Pallet.objects.get(id=content['source'])
-#     destination = Pallet.objects.get(id=content['destination'])
-#
-#     for code in content['codes']:
-#         pallet_code = PalletCode.objects.filter(pallet=source,
-#                                                 code=code).first()
-#         if not pallet_code is None:
-#             pallet_code.pallet = destination
-#             pallet_code.save()
-
-
 def remove_marks(marks: list) -> None:
     """Ищет марки за последние три дня для невыгруженных операций маркировки
     если такие марки найдены она их удаляет"""
@@ -137,18 +122,24 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         markings = markings.filter(line=operation.line,
                                    batch_number=operation.batch_number)
 
-    for marking in markings:
-        if marking != operation and not marking.closed:
-            need_exchange = False
-            break
+    need_exchange = not bool(markings.exclude(guid=operation.guid).filter(closed=False).exists())
 
     if need_exchange:
-        for uuid in markings.values_list("guid", flat=True):
-            marking = MarkingOperation.objects.get(guid=uuid)
-            marking.ready_to_unload = True
-            marking.save()
-        operation.ready_to_unload = True
-        operation.save()
+        markings.update({'ready_to_unload': True})
+
+        groups = list(map(str, [i for i in markings.values_list('group', flat=True) if i is not None]))
+        groups += [i for i in markings.values_list('group_offline', flat=True) if i is not None]
+        task_pallets = Pallet.objects.filter(marking_group__in=groups)
+        tasks_ids = OperationPallet.objects.filter(pallet__in=task_pallets)
+        tasks = PalletCollectOperation.objects.filter(guid__in=tasks_ids.values_list('operation', flat=True))
+
+        for marking in markings:
+            group = str(marking.group) if marking.group is not None else marking.group_offline
+            if group is None:
+                continue
+
+            pallets = task_pallets.filter(marking_group=group)
+
 
     return need_exchange
 

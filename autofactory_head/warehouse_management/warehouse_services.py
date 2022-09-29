@@ -107,8 +107,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
     """ Создает операцию перемещения"""
     result = []
     for element in serializer_data:
-        operation = PalletCollectOperation.objects.create(ready_to_unload=True, closed=True, status=TaskStatus.CLOSE,
-                                                          user=user)
+        operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user)
         pallets = create_pallets(element['pallets'])
         fill_operation_pallets(operation, pallets)
         result.append(operation.guid)

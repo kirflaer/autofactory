@@ -128,10 +128,12 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         pallets_ids = list(Pallet.objects.filter(marking_group__in=marking_groups).values_list('guid', flat=True))
 
         for marking in markings:
+            if marking.guid == operation.guid:
+                marking.closed = True
             marking.ready_to_unload = True
+            marking.save()
 
             if marking.group is not None:
-                marking.save()
                 continue
 
             group = offline_marking_guids.get(marking.group_offline)
@@ -183,8 +185,8 @@ def marking_close(operation: MarkingOperation, data: Iterable) -> None:
     либо из сырых марок полученных из автоматического сканера"""
     with transaction.atomic():
         create_marking_marks(operation, data)
-        register_to_exchange(operation)
-        operation.close()
+        if not register_to_exchange(operation):
+            operation.close()
         if operation.author.role == User.VISION_OPERATOR:
             clear_raw_marks(operation)
 

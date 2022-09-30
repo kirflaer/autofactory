@@ -100,6 +100,7 @@ def remove_marks(marks: list) -> None:
             MarkingOperationMark.objects.get(pk=index).delete()
 
 
+@transaction.atomic
 def register_to_exchange(operation: MarkingOperation) -> bool:
     """Регистрирует к обмену операцию маркировки если есть возможность
     Возвращает Истина в случае если операция зарегистрирована к обмену"""
@@ -126,7 +127,8 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         offline_marking_guids = dict()
         marking_groups = [str(group) for group in markings.filter(group__isnull=False).values_list('group', flat=True)]
         pallets_ids = list(Pallet.objects.filter(marking_group__in=marking_groups).values_list('guid', flat=True))
-
+        markings_full_group = {value['group_offline']: value['group'] for value in
+                               markings.filter(group__isnull=False).values('group', 'group_offline')}
         for marking in markings:
             if marking.guid == operation.guid:
                 marking.closed = True
@@ -136,17 +138,13 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
             if marking.group is not None:
                 continue
 
-            group = offline_marking_guids.get(marking.group_offline)
+            group = offline_marking_guids.get(marking.group_offline) or markings_full_group.get(marking.group_offline)
             if group is None:
-                open_marking = markings.filter(group_offline=marking.group_offline, group__isnull=False).first()
-                if open_marking is None:
-                    group = uuid.uuid4()
-                else:
-                    group = open_marking.group
-
+                group = uuid.uuid4()
                 offline_marking_guids[marking.group_offline] = group
-                marking.group = group
-                marking.save()
+
+            marking.group = group
+            marking.save()
 
             filter_kwargs = {'batch_number': marking.batch_number,
                              'production_date': marking.production_date,

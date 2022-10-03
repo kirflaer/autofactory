@@ -80,8 +80,8 @@ class PalletViewSet(generics.ListCreateAPIView):
         serializer = PalletWriteSerializer(data=request.data, many=True)
         if serializer.is_valid():
             create_pallets(serializer.validated_data)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            headers = self.get_success_headers(serializer.validated_data)
+            return Response(serializer.validated_data, status=status.HTTP_201_CREATED, headers=headers)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):

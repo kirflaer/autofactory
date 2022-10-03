@@ -45,13 +45,14 @@ class Pallet(models.Model):
     production_shop = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Цех производства', blank=True,
                                         null=True)
     pallet_type = models.CharField('Статус', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
+    marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
 
     class Meta:
         verbose_name = 'Паллета'
         verbose_name_plural = 'Паллеты'
 
     def __str__(self):
-        return self.id
+        return f'{self.status} / {self.batch_number} / {self.id} / {self.guid}'
 
 
 class PalletContent(models.Model):
@@ -134,7 +135,7 @@ class AcceptanceOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Приемка на склад'
-        verbose_name_plural = 'Приемка товаров'
+        verbose_name_plural = 'Приемка товаров (Заказ на перемещение)'
 
 
 class PlacementToCellsOperation(OperationBaseOperation):

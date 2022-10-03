@@ -1,5 +1,6 @@
 import base64
 import datetime
+import uuid
 from collections.abc import Iterable
 from datetime import datetime as dt, timedelta
 from typing import Optional, Dict, List
@@ -7,15 +8,12 @@ from typing import Optional, Dict, List
 import pytz
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from catalogs.models import (
-    Product,
-    ExternalSource,
-    Direction,
-    Client
+    Product
 )
-from warehouse_management.models import PalletContent
+from warehouse_management.models import Pallet, OperationPallet, PalletCollectOperation
 
 from .models import (
     RawMark,
@@ -87,18 +85,6 @@ def _get_data_report_marking_dynamics(start: datetime, end: datetime, lines: Lis
     return result
 
 
-# def change_pallet_content(content: Dict) -> None:
-#     source = Pallet.objects.get(id=content['source'])
-#     destination = Pallet.objects.get(id=content['destination'])
-#
-#     for code in content['codes']:
-#         pallet_code = PalletCode.objects.filter(pallet=source,
-#                                                 code=code).first()
-#         if not pallet_code is None:
-#             pallet_code.pallet = destination
-#             pallet_code.save()
-
-
 def remove_marks(marks: list) -> None:
     """Ищет марки за последние три дня для невыгруженных операций маркировки
     если такие марки найдены она их удаляет"""
@@ -114,6 +100,7 @@ def remove_marks(marks: list) -> None:
             MarkingOperationMark.objects.get(pk=index).delete()
 
 
+@transaction.atomic
 def register_to_exchange(operation: MarkingOperation) -> bool:
     """Регистрирует к обмену операцию маркировки если есть возможность
     Возвращает Истина в случае если операция зарегистрирована к обмену"""
@@ -127,28 +114,52 @@ def register_to_exchange(operation: MarkingOperation) -> bool:
         ready_to_unload=False)
 
     settings = operation.author.settings
-    need_exchange = True
     if settings.type_marking_close == settings.ALL_IN_DAY_BY_LINE:
         markings = markings.filter(line=operation.line)
     elif settings.type_marking_close == settings.ALL_IN_DAY_BY_BAT_NUMBER:
         markings = markings.filter(batch_number=operation.batch_number)
-    elif (settings.type_marking_close ==
-          settings.ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER):
-        markings = markings.filter(line=operation.line,
-                                   batch_number=operation.batch_number)
+    elif settings.type_marking_close == settings.ALL_IN_DAY_BY_LINE_BY_BAT_NUMBER:
+        markings = markings.filter(line=operation.line, batch_number=operation.batch_number)
 
-    for marking in markings:
-        if marking != operation and not marking.closed:
-            need_exchange = False
-            break
+    need_exchange = not bool(markings.exclude(guid=operation.guid).filter(closed=False).exists())
 
     if need_exchange:
-        for uuid in markings.values_list("guid", flat=True):
-            marking = MarkingOperation.objects.get(guid=uuid)
+        offline_marking_guids = dict()
+        marking_groups = [str(group) for group in markings.filter(group__isnull=False).values_list('group', flat=True)]
+        pallets_ids = list(Pallet.objects.filter(marking_group__in=marking_groups).values_list('guid', flat=True))
+        markings_full_group = {value['group_offline']: value['group'] for value in
+                               markings.filter(group__isnull=False).values('group', 'group_offline')}
+        for marking in markings:
+            if marking.guid == operation.guid:
+                marking.closed = True
             marking.ready_to_unload = True
             marking.save()
-        operation.ready_to_unload = True
-        operation.save()
+
+            if marking.group is not None:
+                continue
+
+            group = offline_marking_guids.get(marking.group_offline) or markings_full_group.get(marking.group_offline)
+            if group is None:
+                group = uuid.uuid4()
+                offline_marking_guids[marking.group_offline] = group
+
+            marking.group = group
+            marking.save()
+
+            filter_kwargs = {'batch_number': marking.batch_number,
+                             'production_date': marking.production_date,
+                             'marking_group': marking.group_offline}
+            pallets = Pallet.objects.filter(**filter_kwargs)
+            for pallet in pallets:
+                pallet.marking_group = str(group)
+                pallets_ids.append(pallet.guid)
+                pallet.save()
+
+        tasks_ids = OperationPallet.objects.filter(pallet__guid__in=pallets_ids).values_list('operation', flat=True)
+        tasks = PalletCollectOperation.objects.filter(guid__in=tasks_ids)
+        for task in tasks:
+            task.ready_to_unload = True
+            task.save()
 
     return need_exchange
 
@@ -172,8 +183,8 @@ def marking_close(operation: MarkingOperation, data: Iterable) -> None:
     либо из сырых марок полученных из автоматического сканера"""
     with transaction.atomic():
         create_marking_marks(operation, data)
-        register_to_exchange(operation)
-        operation.close()
+        if not register_to_exchange(operation):
+            operation.close()
         if operation.author.role == User.VISION_OPERATOR:
             clear_raw_marks(operation)
 

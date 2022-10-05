@@ -8,10 +8,15 @@ def make_log_level_info(model, request, queryset):
     queryset.update(log_level='INFO')
 
 
+@admin.action(description='Установить уровень логирования ERROR')
+def make_log_level_error(model, request, queryset):
+    queryset.update(log_level='ERROR')
+
+
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'settings', 'line', 'role', 'scanner', 'device', 'is_superuser', 'log_level')
     list_filter = ('role',)
-    actions = [make_log_level_info]
+    actions = [make_log_level_info, make_log_level_error]
 
 
 class ConfigEventAdmin(admin.ModelAdmin):

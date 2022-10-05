@@ -44,7 +44,7 @@ class Pallet(models.Model):
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
     production_shop = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Цех производства', blank=True,
                                         null=True)
-    pallet_type = models.CharField('Статус', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
+    pallet_type = models.CharField('Тип', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
 
     class Meta:

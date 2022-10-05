@@ -16,12 +16,18 @@ from warehouse_management.models import (
 )
 
 
+@admin.action(description='Принять паллеты')
+def make_pallet_confirmed(model, request, queryset):
+    queryset.update(status='CONFIRMED')
+
+
 @admin.register(Pallet)
 class PalletAdmin(admin.ModelAdmin):
     list_display = ('creation_date', 'status', 'collector', 'product', 'id', 'external_key', 'guid')
     list_filter = (('creation_date', DateRangeFilter), 'status')
     ordering = ('-creation_date',)
     search_fields = ('id',)
+    actions = [make_pallet_confirmed]
 
 
 @admin.register(PalletSource)

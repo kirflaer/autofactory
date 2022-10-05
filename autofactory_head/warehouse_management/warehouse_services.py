@@ -117,6 +117,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
             except ValueError:
                 ready_to_unload = False
             operation.ready_to_unload = ready_to_unload
+            operation.save()
         result.append(operation.guid)
     return result
 

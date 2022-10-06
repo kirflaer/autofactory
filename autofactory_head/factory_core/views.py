@@ -30,6 +30,7 @@ def check_status_view(request):
 
 class LogListView(LoginRequiredMixin, ListView):
     model = Log
+    paginate_by = 50
     context_object_name = 'data'
     ordering = '-date'
     template_name = 'log.html'

@@ -111,12 +111,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
         pallets = create_pallets(element['pallets'])
         fill_operation_pallets(operation, pallets)
         if len(pallets) == 1:
-            try:
-                uuid.UUID(pallets[0].marking_group)
-                ready_to_unload = True
-            except ValueError:
-                ready_to_unload = False
-            operation.ready_to_unload = ready_to_unload
+            operation.ready_to_unload = len(pallets[0].marking_group) == 36
             operation.save()
         result.append(operation.guid)
     return result

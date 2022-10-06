@@ -12,19 +12,22 @@ from warehouse_management.serializers import (AcceptanceOperationReadSerializer,
                                               ShipmentOperationReadSerializer,
                                               ShipmentOperationWriteSerializer,
                                               PalletReadSerializer,
-                                              PalletCollectShipmentSerializer, OrderReadSerializer)
+                                              PalletCollectShipmentSerializer, OrderReadSerializer,
+                                              ArrivalAtStockOperationWriteSerializer,
+                                              ArrivalAtStockOperationReadSerializer)
 
 from warehouse_management.models import (AcceptanceOperation,
                                          PalletCollectOperation,
                                          PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PlacementToCellsTask, OperationPallet, Pallet)
+                                         PlacementToCellsTask, OperationPallet, Pallet, ArrivalAtStockOperation)
 from warehouse_management.warehouse_services import (create_acceptance_operation,
                                                      create_collect_operation,
                                                      create_placement_operation,
                                                      change_content_placement_operation,
                                                      create_movement_cell_operation,
-                                                     create_shipment_operation, create_order_operation)
+                                                     create_shipment_operation,
+                                                     create_arrival_operation)
 
 
 def get_task_router() -> dict[str: RouterTask]:
@@ -74,6 +77,12 @@ def get_task_router() -> dict[str: RouterTask]:
                                                   write_serializer=None,
                                                   content_model=TaskBaseModel,
                                                   change_content_function=None),
+            'ARRIVAL_AT_STOCK': RouterTask(task=ArrivalAtStockOperation,
+                                           create_function=create_arrival_operation,
+                                           read_serializer=ArrivalAtStockOperationReadSerializer,
+                                           write_serializer=ArrivalAtStockOperationWriteSerializer,
+                                           content_model=TaskBaseModel,
+                                           change_content_function=None),
             }
 
 

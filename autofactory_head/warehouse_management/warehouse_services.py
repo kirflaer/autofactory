@@ -107,11 +107,12 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
     """ Создает операцию перемещения"""
     result = []
     for element in serializer_data:
-        operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user)
+        operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
+                                                          ready_to_unload=True)
         pallets = create_pallets(element['pallets'])
         fill_operation_pallets(operation, pallets)
-        if len(pallets) == 1:
-            operation.ready_to_unload = len(pallets[0].marking_group) == 36
+        if len(pallets) == 1 and pallets[0].marking_group is not None and len(pallets[0].marking_group) < 36:
+            operation.ready_to_unload = False
             operation.save()
         result.append(operation.guid)
     return result

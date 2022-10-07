@@ -404,3 +404,29 @@ class OrderReadSerializer(serializers.ModelSerializer):
         pallets = Pallet.objects.filter(guid__in=pallet_guids)
         serializer = PalletShipmentSerializer(pallets, many=True)
         return serializer.data
+
+
+class ArrivalAtStockOperationWriteSerializer(OperationBaseSerializer):
+    products = OperationProductsSerializer(many=True)
+    storage = serializers.CharField()
+
+    class Meta:
+        fields = ('external_source', 'products', 'storage')
+
+
+class ArrivalAtStockOperationReadSerializer(serializers.ModelSerializer):
+    """ Приход на склад. Сериализатор для читающих запросов """
+    products = serializers.SerializerMethodField()
+    storage = StorageSerializer()
+    date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
+    external_source = ExternalSerializer()
+
+    class Meta:
+        model = AcceptanceOperation
+        fields = ('guid', 'number', 'status', 'date', 'storage', 'products', 'external_source')
+
+    @staticmethod
+    def get_products(obj):
+        products = OperationProduct.objects.filter(operation=obj.guid)
+        serializer = OperationProductsSerializer(products, many=True)
+        return serializer.data

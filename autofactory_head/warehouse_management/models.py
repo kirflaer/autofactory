@@ -248,6 +248,15 @@ class PalletSource(models.Model):
         verbose_name_plural = 'Паллеты источники'
 
 
+class ArrivalAtStockOperation(OperationBaseOperation):
+    type_task = 'ARRIVAL_AT_STOCK'
+    storage = models.ForeignKey(Storage, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Склад')
+
+    class Meta:
+        verbose_name = 'Приход на склад'
+        verbose_name_plural = 'Приход на склад (Поступление товаров и услуг)'
+
+
 @dataclass
 class CellContent:
     cell: str

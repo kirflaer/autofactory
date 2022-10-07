@@ -12,7 +12,7 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          PlacementToCellsOperation,
                                          OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletContent, PalletProduct, PalletSource)
+                                         PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation)
 
 User = get_user_model()
 
@@ -107,11 +107,12 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
     """ Создает операцию перемещения"""
     result = []
     for element in serializer_data:
-        operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user)
+        operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
+                                                          ready_to_unload=True)
         pallets = create_pallets(element['pallets'])
         fill_operation_pallets(operation, pallets)
-        if len(pallets) == 1:
-            operation.ready_to_unload = len(pallets[0].marking_group) == 36
+        if len(pallets) == 1 and pallets[0].marking_group is not None and len(pallets[0].marking_group) < 36:
+            operation.ready_to_unload = False
             operation.save()
         result.append(operation.guid)
     return result
@@ -134,6 +135,25 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
                                                        batch_number=element['batch_number'],
                                                        production_date=parser.parse(element['production_date']))
         fill_operation_pallets(operation, element['pallets'])
+        fill_operation_products(operation, element['products'])
+
+    return result
+
+
+@transaction.atomic
+def create_arrival_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию приенмки товаров. Возвращает идентификаторы внешнего источника """
+
+    result = []
+    for element in serializer_data:
+        external_source = get_or_create_external_source(element)
+        result.append(external_source.external_key)
+        operation = ArrivalAtStockOperation.objects.filter(external_source=external_source).first()
+        if operation is not None:
+            continue
+
+        storage = Storage.objects.filter(external_key=element['storage']).first()
+        operation = ArrivalAtStockOperation.objects.create(external_source=external_source, storage=storage)
         fill_operation_products(operation, element['products'])
 
     return result

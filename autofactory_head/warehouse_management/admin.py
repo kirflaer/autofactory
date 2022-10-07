@@ -12,7 +12,7 @@ from warehouse_management.models import (
     ShipmentOperation,
     PalletProduct,
     OrderOperation,
-    PalletSource
+    PalletSource, ArrivalAtStockOperation
 )
 
 
@@ -45,6 +45,8 @@ class OperationPalletAdmin(admin.ModelAdmin):
 @admin.register(OperationProduct)
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('product', 'type_operation', 'external_source')
+    list_filter = ('type_operation',)
+    search_fields = ('operation',)
 
 
 @admin.register(AcceptanceOperation)
@@ -93,3 +95,10 @@ class OrderOperationAdmin(admin.ModelAdmin):
 class PalletProductAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'product', 'weight', 'count', 'batch_number', 'production_date')
     search_fields = ('pallet__id', 'pallet__guid')
+
+
+@admin.register(ArrivalAtStockOperation)
+class AcceptanceOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'storage', 'number', 'status', 'external_source',
+        'closed', 'ready_to_unload', 'unloaded')

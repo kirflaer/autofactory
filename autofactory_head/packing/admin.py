@@ -20,7 +20,7 @@ class MarkingOperationAdmin(admin.ModelAdmin):
         'number', 'guid', 'date', 'author', 'device', 'manual_editing',
         'closed', 'ready_to_unload', 'unloaded', 'line', 'batch_number')
     list_filter = (('date', DateRangeFilter), 'author', 'closed', 'ready_to_unload', 'unloaded', 'line',)
-    search_fields = ('batch_number', 'number')
+    search_fields = ('batch_number', 'number', 'guid', 'group')
     ordering = ('-date',)
 
 

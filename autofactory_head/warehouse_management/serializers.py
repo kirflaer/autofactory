@@ -7,7 +7,7 @@ from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletProduct, PalletStatus, PalletSource, OperationCell)
+                                         PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation)
 from warehouse_management.warehouse_services import check_and_collect_orders
 
 
@@ -165,6 +165,7 @@ class OperationProductsSerializer(serializers.Serializer):
     product = serializers.CharField()
     weight = serializers.FloatField(required=False)
     count = serializers.FloatField(required=False)
+    count_fact = serializers.FloatField(required=False)
 
     class Meta:
         fields = ('product', 'weight', 'count')
@@ -423,6 +424,30 @@ class ArrivalAtStockOperationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AcceptanceOperation
+        fields = ('guid', 'number', 'status', 'date', 'storage', 'products', 'external_source')
+
+    @staticmethod
+    def get_products(obj):
+        products = OperationProduct.objects.filter(operation=obj.guid)
+        serializer = OperationProductsSerializer(products, many=True)
+        return serializer.data
+
+
+class InventoryOperationWriteSerializer(OperationBaseSerializer):
+    products = OperationProductsSerializer(many=True)
+
+    class Meta:
+        fields = ('external_source', 'products', 'storage')
+
+
+class InventoryOperationReadSerializer(serializers.ModelSerializer):
+    """ Инвентаризация. Сериализатор для читающих запросов """
+    products = serializers.SerializerMethodField()
+    date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
+    external_source = ExternalSerializer()
+
+    class Meta:
+        model = InventoryOperation
         fields = ('guid', 'number', 'status', 'date', 'storage', 'products', 'external_source')
 
     @staticmethod

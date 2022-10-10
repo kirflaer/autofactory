@@ -109,6 +109,7 @@ class OperationProduct(ManyToManyOperationMixin):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура')
     weight = models.FloatField('Вес', default=0.0)
     count = models.PositiveIntegerField('Количество', default=0.0)
+    count_fact = models.PositiveIntegerField('Количество факт (для операций сбора)', default=0.0)
 
     class Meta:
         verbose_name = 'Номенклатура операции'
@@ -255,6 +256,14 @@ class ArrivalAtStockOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Приход на склад'
         verbose_name_plural = 'Приход на склад (Поступление товаров и услуг)'
+
+
+class InventoryOperation(OperationBaseOperation):
+    type_task = 'INVENTORY'
+
+    class Meta:
+        verbose_name = 'Инвентаризация'
+        verbose_name_plural = 'Инвентаризация'
 
 
 @dataclass

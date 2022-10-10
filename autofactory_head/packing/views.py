@@ -43,6 +43,7 @@ class MarkingOperationListView(OperationBasicListView):
         queryset = MarkingOperation.objects.all()
         if len(self.request.GET):
             marking_filter = get_marking_filters(self.request.GET)
+            # TODO: можеть быть ошибка если передан некорректный параметр. нужна проверка как в api
             if len(marking_filter):
                 queryset = queryset.filter(**marking_filter)
         return queryset.order_by('-date')[:200]

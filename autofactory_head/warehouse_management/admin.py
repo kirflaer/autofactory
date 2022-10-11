@@ -12,7 +12,7 @@ from warehouse_management.models import (
     ShipmentOperation,
     PalletProduct,
     OrderOperation,
-    PalletSource, ArrivalAtStockOperation
+    PalletSource, ArrivalAtStockOperation, InventoryOperation
 )
 
 
@@ -102,3 +102,9 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'storage', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(InventoryOperation)
+class InventoryOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')

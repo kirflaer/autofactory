@@ -163,12 +163,10 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 
 class OperationProductsSerializer(serializers.Serializer):
     product = serializers.CharField()
+    product_guid = serializers.SlugRelatedField(many=False, read_only=True, slug_field='pk', source='product')
     weight = serializers.FloatField(required=False)
     count = serializers.FloatField(required=False)
     count_fact = serializers.FloatField(required=False)
-
-    class Meta:
-        fields = ('product', 'weight', 'count')
 
 
 class OperationCellsSerializer(serializers.Serializer):
@@ -448,7 +446,7 @@ class InventoryOperationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InventoryOperation
-        fields = ('guid', 'number', 'status', 'date', 'storage', 'products', 'external_source')
+        fields = ('guid', 'number', 'status', 'date', 'products', 'external_source')
 
     @staticmethod
     def get_products(obj):

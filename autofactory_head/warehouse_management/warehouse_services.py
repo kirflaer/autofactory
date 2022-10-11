@@ -315,3 +315,17 @@ def change_content_placement_operation(content: dict[str: str], instance: Placem
         # cell_row.cell = StorageCell.objects.filter(guid=element.cell).first()
         # cell_row.save()
     return instance.guid
+
+
+@transaction.atomic
+def change_content_inventory_operation(content: dict[str: str], instance: InventoryOperation) -> str:
+    """ Изменяет содержимое строки товаров для инвентаризации"""
+    for element in content["products"]:
+        product_row = OperationProduct.objects.filter(operation=instance.guid, product__guid=element.product,
+                                                      count=element.count).first()
+        if product_row is None:
+            continue
+
+        product_row.count_fact = element.count_fact
+        product_row.save()
+    return instance.guid

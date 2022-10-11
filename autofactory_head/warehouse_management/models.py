@@ -280,3 +280,19 @@ class PlacementToCellsContent:
 
 class PlacementToCellsTask(TaskBaseModel):
     content: PlacementToCellsContent
+
+
+@dataclass
+class ProductContent:
+    count: int
+    count_fact: int
+    product: str
+
+
+@dataclass
+class InventoryTaskContent:
+    products: List[ProductContent]
+
+
+class InventoryTask(TaskBaseModel):
+    content: InventoryTaskContent

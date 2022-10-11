@@ -22,14 +22,15 @@ from warehouse_management.models import (AcceptanceOperation,
                                          PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PlacementToCellsTask, OperationPallet, Pallet, ArrivalAtStockOperation,
-                                         InventoryOperation)
+                                         InventoryOperation, InventoryTask)
 from warehouse_management.warehouse_services import (create_acceptance_operation,
                                                      create_collect_operation,
                                                      create_placement_operation,
                                                      change_content_placement_operation,
                                                      create_movement_cell_operation,
                                                      create_shipment_operation,
-                                                     create_arrival_operation, create_inventory_operation)
+                                                     create_arrival_operation, create_inventory_operation,
+                                                     change_content_inventory_operation)
 
 
 def get_task_router() -> dict[str: RouterTask]:
@@ -89,8 +90,8 @@ def get_task_router() -> dict[str: RouterTask]:
                                     create_function=create_inventory_operation,
                                     read_serializer=InventoryOperationReadSerializer,
                                     write_serializer=InventoryOperationWriteSerializer,
-                                    content_model=TaskBaseModel,
-                                    change_content_function=None),
+                                    content_model=InventoryTask,
+                                    change_content_function=change_content_inventory_operation),
             }
 
 

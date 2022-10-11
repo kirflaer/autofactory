@@ -207,11 +207,11 @@ class OrderOperation(OperationBaseOperation):
 
     def close(self):
         super().close()
-        open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
-            guid=self.guid).count()
-        if not open_orders_count:
-            self.parent_task.status = TaskStatus.CLOSE
-            self.parent_task.close()
+        # open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
+        #     guid=self.guid).count()
+        # if not open_orders_count:
+        #     self.parent_task.status = TaskStatus.CLOSE
+        #     self.parent_task.close()
 
 
 class PalletProduct(models.Model):

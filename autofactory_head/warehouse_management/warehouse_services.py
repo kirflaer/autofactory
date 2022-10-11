@@ -12,7 +12,8 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          PlacementToCellsOperation,
                                          OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation)
+                                         PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
+                                         InventoryOperation)
 
 User = get_user_model()
 
@@ -160,6 +161,24 @@ def create_arrival_operation(serializer_data: Iterable[dict[str: str]], user: Us
 
 
 @transaction.atomic
+def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию инвентаризации товаров. Возвращает идентификаторы внешнего источника """
+
+    result = []
+    for element in serializer_data:
+        external_source = get_or_create_external_source(element)
+        result.append(external_source.external_key)
+        operation = InventoryOperation.objects.filter(external_source=external_source).first()
+        if operation is not None:
+            continue
+
+        operation = InventoryOperation.objects.create(external_source=external_source)
+        fill_operation_products(operation, element['products'])
+
+    return result
+
+
+@transaction.atomic
 def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None = None, task: Task | None = None) -> \
         list[Pallet]:
     """ Создает паллету и наполняет ее кодами агрегации"""
@@ -295,4 +314,18 @@ def change_content_placement_operation(content: dict[str: str], instance: Placem
         # cell_row.changed_cell = cell_row.cell
         # cell_row.cell = StorageCell.objects.filter(guid=element.cell).first()
         # cell_row.save()
+    return instance.guid
+
+
+@transaction.atomic
+def change_content_inventory_operation(content: dict[str: str], instance: InventoryOperation) -> str:
+    """ Изменяет содержимое строки товаров для инвентаризации"""
+    for element in content["products"]:
+        product_row = OperationProduct.objects.filter(operation=instance.guid, product__guid=element.product,
+                                                      count=element.plan).first()
+        if product_row is None:
+            continue
+
+        product_row.count_fact = element.fact
+        product_row.save()
     return instance.guid

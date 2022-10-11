@@ -12,7 +12,7 @@ from warehouse_management.models import (
     ShipmentOperation,
     PalletProduct,
     OrderOperation,
-    PalletSource, ArrivalAtStockOperation
+    PalletSource, ArrivalAtStockOperation, InventoryOperation
 )
 
 
@@ -26,7 +26,7 @@ class PalletAdmin(admin.ModelAdmin):
     list_display = ('creation_date', 'status', 'collector', 'product', 'id', 'external_key', 'guid')
     list_filter = (('creation_date', DateRangeFilter), 'status')
     ordering = ('-creation_date',)
-    search_fields = ('id',)
+    search_fields = ('id', 'marking_group')
     actions = [make_pallet_confirmed]
 
 
@@ -88,7 +88,7 @@ class ShipmentOperationAdmin(admin.ModelAdmin):
 @admin.register(OrderOperation)
 class OrderOperationAdmin(admin.ModelAdmin):
     list_display = (
-        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+        'date', 'guid', 'user', 'number', 'parent_task', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
 
 
 @admin.register(PalletProduct)
@@ -102,3 +102,9 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'storage', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(InventoryOperation)
+class InventoryOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')

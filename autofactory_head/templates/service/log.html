@@ -1,40 +1,85 @@
 {% extends "list_base.html" %}
 {% load static %}
 
+{% block filter %}
+
+    <div class="col-12 col-xl-6">
+        <div class="card">
+            <div class="card-header pb-sm-0">
+                <h5 class="card-title">Фильтрация</h5>
+            </div>
+            <div class="card-body">
+                <form action="{% url 'logs' %}" method="get">
+                    {% csrf_token %}
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Имя пользователя</label>
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" id="username"
+                                   name="username"
+                                   placeholder="" aria-label="Search"
+                                   value={{ username|default_if_none:"" }}>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right"> Уровень логирования </label>
+                        <div class="col-sm-5">
+                            <select class="form-control " id="level" placeholder="Jane Doe" name="level">
+                                <option value="none"> ----</option>
+                                <option value="ERROR"> ERROR</option>
+                                <option value="INFO"> INFO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Версия приложения</label>
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" id="app_version"
+                                   name="app_version"
+                                   placeholder="" aria-label="Search"
+                                   value={{ app_version|default_if_none:"" }}>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Дата</label>
+                        <div class="col-sm-5">
+                            <input type="date" class="form-control" id="date"
+                                   name="date"
+                                   placeholder="Search projects…" aria-label="Search">
+                        </div>
+                    </div>
+
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-2 text-sm-right">Устройство</label>
+                        <div class="col-sm-5">
+                            <select class="form-control " id="device" placeholder="Jane Doe" name="device">
+                                <option value="none"> ----</option>
+                                {% for device in devices %}
+                                    <option value="{{ device.guid }}">{{ device.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <div class="mb-3 row">
+                        <div class="col-sm-10 ml-sm-auto">
+                            <button type="submit" class="btn btn-primary">Отобрать</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+
 {% block new_element %}
-    <div class="card-header">
-        <h5 class="card-title">Просмотр логов по устройству</h5>
-    </div>
 
-    <div class="card-body">
-        <form class="row row-cols-md-auto align-items-center" action="{% url 'logs_summary' %}" method="get">
-        {% csrf_token %}
-              <div class="col-12">
-                <label class="sr-only" for="inlineFormInputName2">Name</label>
-                <select class="form-control mb-2 mr-sm-2"
-                        id="device" placeholder="Jane Doe" name="device">
-                    {% for device in devices %}
-                        <option value="{{ device.guid }}">{{ device.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-12">
-                <label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
-                <div class="input-group mb-2 mr-sm-2">
-                    <input type="date" class="form-control" id="start"
-                           name="date_source"
-                           placeholder="Search projects…" aria-label="Search">
-                </div>
-            </div>
-
-            <div class="col-12">
-                <button type="submit" class="form-control mb-2" >Просмотреть
-                </button>
-            </div>
-
-        </form>
-    </div>
 {% endblock %}
 
 {% block table %}

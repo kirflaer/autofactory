@@ -163,10 +163,8 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 
 class OperationProductsSerializer(serializers.Serializer):
     product = serializers.CharField()
-    product_guid = serializers.SlugRelatedField(many=False, read_only=True, slug_field='pk', source='product')
     weight = serializers.FloatField(required=False)
     count = serializers.FloatField(required=False)
-    count_fact = serializers.FloatField(required=False)
 
 
 class OperationCellsSerializer(serializers.Serializer):
@@ -438,6 +436,13 @@ class InventoryOperationWriteSerializer(OperationBaseSerializer):
         fields = ('external_source', 'products', 'storage')
 
 
+class OperationInventoryProductsSerializer(serializers.Serializer):
+    product = serializers.CharField()
+    product_guid = serializers.SlugRelatedField(slug_field='pk', source='product', read_only=True)
+    plan = serializers.FloatField(required=False, source='count')
+    fact = serializers.FloatField(required=False, source='count_fact')
+
+
 class InventoryOperationReadSerializer(serializers.ModelSerializer):
     """ Инвентаризация. Сериализатор для читающих запросов """
     products = serializers.SerializerMethodField()
@@ -451,5 +456,5 @@ class InventoryOperationReadSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_products(obj):
         products = OperationProduct.objects.filter(operation=obj.guid)
-        serializer = OperationProductsSerializer(products, many=True)
+        serializer = OperationInventoryProductsSerializer(products, many=True)
         return serializer.data

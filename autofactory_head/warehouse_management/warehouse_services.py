@@ -322,10 +322,10 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
     """ Изменяет содержимое строки товаров для инвентаризации"""
     for element in content["products"]:
         product_row = OperationProduct.objects.filter(operation=instance.guid, product__guid=element.product,
-                                                      count=element.count).first()
+                                                      count=element.plan).first()
         if product_row is None:
             continue
 
-        product_row.count_fact = element.count_fact
+        product_row.count_fact = element.fact
         product_row.save()
     return instance.guid

@@ -284,8 +284,8 @@ class PlacementToCellsTask(TaskBaseModel):
 
 @dataclass
 class ProductContent:
-    count: int
-    count_fact: int
+    plan: int
+    fact: int
     product: str
 
 

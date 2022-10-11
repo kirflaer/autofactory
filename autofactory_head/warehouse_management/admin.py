@@ -88,7 +88,7 @@ class ShipmentOperationAdmin(admin.ModelAdmin):
 @admin.register(OrderOperation)
 class OrderOperationAdmin(admin.ModelAdmin):
     list_display = (
-        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+        'date', 'guid', 'user', 'number', 'parent_task', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
 
 
 @admin.register(PalletProduct)

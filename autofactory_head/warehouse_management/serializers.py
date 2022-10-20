@@ -377,7 +377,7 @@ class PalletCollectShipmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PalletCollectOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user')
 
     @staticmethod
     def get_pallets(obj):

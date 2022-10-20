@@ -14,6 +14,7 @@ from catalogs.models import (ActivationKey, Department, Device, Direction, Line,
 from packing.marking_services import (create_marking_marks,
                                       marking_close, remove_marks, )
 from packing.models import MarkingOperation, RawMark
+from tasks.models import TaskStatus
 from tasks.task_services import get_task_queryset, TaskException, get_content_queryset
 from warehouse_management.models import Pallet, PalletStatus
 from warehouse_management.serializers import PalletReadSerializer, PalletUpdateSerializer
@@ -365,6 +366,22 @@ class TasksViewSet(viewsets.ViewSet):
             return Response({'type_task': type_task, 'guids': result})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def take(self, request, type_task, guid):
+        task_router = self.router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+        instance = task_router.task.objects.filter(guid=guid).first()
+        if instance is None:
+            raise APIException('Задача не найдена')
+        if instance.status == TaskStatus.WORK:
+            raise APIException('Задача уже в работе')
+
+        instance.status = TaskStatus.WORK
+        instance.user = request.user
+        instance.save()
+
+        return Response({'type_task': type_task, 'guid': guid, 'status': TaskStatus.WORK})
 
 
 class RegExpList(generics.ListAPIView):

@@ -30,6 +30,7 @@ urlpatterns = [
     re_path(r'^v[0-9]/pallets/(?P<id>.+)/$', PalletRetrieveUpdate.as_view()),
     re_path(r'^v[0-9]/tasks/(?P<type_task>\w+)/$', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
     re_path(r'^v[0-9]/tasks/(?P<type_task>\w+)/(?P<content_type>\w+)/$', TasksContentViewSet.as_view({'get': 'list'})),
+    re_path(r'^v[2-9]/tasks/(?P<type_task>\w+)/(?P<guid>.{36})/take/$', TasksViewSet.as_view({'patch': 'take'})),
 
     path('v1/', include('api.v1.urls')),
     path('v2/', include('api.v2.urls')),

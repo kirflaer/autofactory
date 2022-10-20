@@ -24,13 +24,20 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
     if validated_data.get('sources') is not None:
         sources = validated_data.pop('sources')
         for source in sources:
-            if instance.content_count < source['count']:
+            pallet_source = Pallet.objects.filter(guid=source['pallet_source']).first()
+            if pallet_source is None:
+                raise APIException('Не найдена паллета источник')
+
+            if pallet_source.content_count < source['count']:
                 raise APIException('Не хватает коробок в паллете источнике')
 
-            instance.content_count -= source['count']
-            if instance.content_count == 0:
-                instance.status = PalletStatus.ARCHIVED
-            instance.save()
+            pallet_source.content_count -= source['count']
+            pallet_source.weight -= source['weight']
+            if pallet_source.content_count == 0:
+                pallet_source.status = PalletStatus.ARCHIVED
+            if pallet_source.weight < 0:
+                pallet_source.weight = 0
+            pallet_source.save()
 
             source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
             source['pallet'] = instance

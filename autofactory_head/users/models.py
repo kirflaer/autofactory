@@ -106,6 +106,8 @@ class User(AbstractUser):
     is_local_admin = models.BooleanField(
         verbose_name='Локальный администратор', default=False)
 
+    refresh_timeout = models.IntegerField('Интервал обновления', default=10)
+
     class Meta:
         ordering = ('username',)
         verbose_name = 'Пользователь'

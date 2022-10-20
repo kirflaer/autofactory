@@ -188,7 +188,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'pk', 'line', 'role', 'device', 'scanner', 'vision_controller',
             'settings', 'log_level', 'inactive_sound_enabled',
-            'inactive_period_in_sec', 'use_aggregations', 'stock')
+            'inactive_period_in_sec', 'use_aggregations', 'stock', 'refresh_timeout')
 
         model = User
 

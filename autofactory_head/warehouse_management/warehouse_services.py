@@ -5,6 +5,8 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q, Sum
 from dateutil import parser
+from rest_framework.exceptions import APIException
+
 from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
 from tasks.models import TaskStatus, Task
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
@@ -13,9 +15,38 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
-                                         InventoryOperation)
+                                         InventoryOperation, PalletStatus)
 
 User = get_user_model()
+
+
+def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Pallet) -> None:
+    if validated_data.get('sources') is not None:
+        sources = validated_data.pop('sources')
+        for source in sources:
+            if instance.content_count < source['count']:
+                raise APIException('Не хватает коробок в паллете источнике')
+
+            instance.content_count -= source['count']
+            if instance.content_count == 0:
+                instance.status = PalletStatus.ARCHIVED
+            instance.save()
+
+            source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
+            source['pallet'] = instance
+            source['product'] = Product.objects.filter(guid=source['product']).first()
+
+            PalletSource.objects.create(**source)
+            product_keys.append(source['external_key'])
+
+    if validated_data.get('collected_strings') is not None:
+        collected_strings = validated_data.pop('collected_strings')
+        product_keys += collected_strings
+        for string in collected_strings:
+            pallet_product_string = PalletProduct.objects.filter(external_key=string).first()
+            if pallet_product_string is not None:
+                pallet_product_string.is_collected = True
+                pallet_product_string.save()
 
 
 def check_and_collect_orders(product_keys: list[str]):

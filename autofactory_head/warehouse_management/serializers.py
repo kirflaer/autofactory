@@ -358,10 +358,14 @@ class PalletShipmentSerializer(serializers.ModelSerializer):
 
 class PalletCollectShipmentSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
 
     class Meta:
         model = PalletCollectOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user', 'is_owner')
+
+    def get_is_owner(self, instance):
+        return self.root.request_user == instance.user
 
     @staticmethod
     def get_pallets(obj):

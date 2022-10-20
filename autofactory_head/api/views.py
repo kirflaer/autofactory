@@ -351,7 +351,10 @@ class TasksViewSet(viewsets.ViewSet):
         except TaskException:
             raise APIException('Не найден переданный фильтр')
 
-        serializer = task_router.read_serializer(task_queryset, many=True)
+        serializer = task_router.read_serializer(data=task_queryset, many=True)
+        serializer.request_user = request.user
+        serializer.is_valid()
+        serializer.save()
         return Response(serializer.data)
 
     def create(self, request, type_task):

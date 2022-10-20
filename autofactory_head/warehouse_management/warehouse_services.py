@@ -84,8 +84,7 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
 
         pallets = create_pallets(element['pallets'], user, operation)
         for pallet in pallets:
-            child_operation = PalletCollectOperation.objects.create(user=user,
-                                                                    type_collect=PalletCollectOperation.SHIPMENT,
+            child_operation = PalletCollectOperation.objects.create(type_collect=PalletCollectOperation.SHIPMENT,
                                                                     parent_task=operation)
             fill_operation_pallets(child_operation, (pallet,))
 

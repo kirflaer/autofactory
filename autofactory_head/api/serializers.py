@@ -79,7 +79,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
             'name', 'gtin', 'guid', 'is_weight', 'expiration_date', 'units', 'external_key', 'semi_product',
-            'not_marked')
+            'not_marked', 'variable_pallet_weight')
         model = Product
         read_only_fields = ('guid', 'expiration_date', 'store_semi_product')
 

@@ -79,7 +79,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
             'name', 'gtin', 'guid', 'is_weight', 'expiration_date', 'units', 'external_key', 'semi_product',
-            'not_marked')
+            'not_marked', 'variable_pallet_weight')
         model = Product
         read_only_fields = ('guid', 'expiration_date', 'store_semi_product')
 
@@ -188,7 +188,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'pk', 'line', 'role', 'device', 'scanner', 'vision_controller',
             'settings', 'log_level', 'inactive_sound_enabled',
-            'inactive_period_in_sec', 'use_aggregations', 'stock')
+            'inactive_period_in_sec', 'use_aggregations', 'stock', 'refresh_timeout')
 
         model = User
 

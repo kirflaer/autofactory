@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
@@ -8,7 +9,7 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation)
-from warehouse_management.warehouse_services import check_and_collect_orders
+from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -137,27 +138,10 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         model = Pallet
 
     def update(self, instance, validated_data):
-        product_keys = []
-
-        if validated_data.get('sources') is not None:
-            sources = validated_data.pop('sources')
-            for source in sources:
-                source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
-                source['pallet'] = instance
-                source['product'] = Product.objects.filter(guid=source['product']).first()
-                PalletSource.objects.create(**source)
-                product_keys.append(source['external_key'])
-
-        if validated_data.get('collected_strings') is not None:
-            collected_strings = validated_data.pop('collected_strings')
-            product_keys += collected_strings
-            for string in collected_strings:
-                pallet_product_string = PalletProduct.objects.filter(external_key=string).first()
-                if pallet_product_string is not None:
-                    pallet_product_string.is_collected = True
-                    pallet_product_string.save()
-
-        check_and_collect_orders(product_keys)
+        with transaction.atomic():
+            product_keys = []
+            enrich_pallet_info(validated_data, product_keys, instance)
+            check_and_collect_orders(product_keys)
         return super().update(instance, validated_data)
 
 
@@ -374,10 +358,14 @@ class PalletShipmentSerializer(serializers.ModelSerializer):
 
 class PalletCollectShipmentSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
 
     class Meta:
         model = PalletCollectOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user', 'is_owner')
+
+    def get_is_owner(self, instance):
+        return self.root.request_user == instance.user
 
     @staticmethod
     def get_pallets(obj):

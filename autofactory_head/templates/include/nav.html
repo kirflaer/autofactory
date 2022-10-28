@@ -13,7 +13,7 @@
               c0.2,0.5,0,1.1-0.5,1.3l-9,4C10.3,20,10.1,20,10,20z"/>
           </svg>
 
-            <span class="align-middle me-3">Smartfactory</span>
+            <span class="align-middle me-3">Smartfactorio</span>
         </a>
         {% with request.resolver_match.view_name as view_name %}
             <ul class="sidebar-nav">
@@ -73,14 +73,21 @@
                     </a>
                 </li>
 
-                {% if user.settings.collect_pallet_mode_is_active %}
-                <li class="sidebar-item {% if view_name  == 'pallets' %}active{% endif %}">
-                    <a class="sidebar-link" href="{% url 'pallets' %}">
-                        <i class="align-middle" data-feather="package"></i> <span
-                            class="align-middle">Сбор паллет</span>
+                <li class="sidebar-item {% if view_name  == 'shifts' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'shifts' %}">
+                        <i class="align-middle" data-feather="briefcase"></i> <span
+                            class="align-middle">Смены</span>
                     </a>
                 </li>
-                {% endif %}
+
+{#                {% if user.settings.collect_pallet_mode_is_active %}#}
+{#                <li class="sidebar-item {% if view_name  == 'pallets' %}active{% endif %}">#}
+{#                    <a class="sidebar-link" href="{% url 'pallets' %}">#}
+{#                        <i class="align-middle" data-feather="package"></i> <span#}
+{#                            class="align-middle">Сбор паллет</span>#}
+{#                    </a>#}
+{#                </li>#}
+{#                {% endif %}#}
 
 {#                {% if user.settings.collect_pallet_mode_is_active %}#}
 {#                <li class="sidebar-item {% if view_name  == 'tasks' %}active{% endif %}">#}

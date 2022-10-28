@@ -1,7 +1,11 @@
+from random import randrange
+
 from django.db import models
 import uuid
 from django.contrib.auth import get_user_model
 from django.db.models import Max
+
+from catalogs.models import Line, Product
 
 User = get_user_model()
 
@@ -51,3 +55,36 @@ class OperationBaseModel(models.Model):
             self.number = number + 1
 
         super().save(force_insert, force_update, using, update_fields)
+
+
+class Shift(models.Model):
+    """ Смена """
+    creating_date = models.DateTimeField('Дата создания', auto_now_add=True)
+    batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
+    production_date = models.DateField('Дата выработки')
+    closing_date = models.DateTimeField('Дата закрытия', blank=True, null=True)
+    line = models.ForeignKey(Line, on_delete=models.SET_NULL, verbose_name='Линия', blank=True, null=True)
+    guid = models.UUIDField('ГУИД', primary_key=True, default=uuid.uuid4, editable=False)
+    code_offline = models.CharField('Ключ группы оффлайн', blank=True, null=True, max_length=10)
+    closed = models.BooleanField('Закрыта', default=False)
+    number = models.PositiveIntegerField('Номер', default=0)
+    author = models.ForeignKey(User, verbose_name='Автор', on_delete=models.SET_NULL, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Смена'
+        verbose_name_plural = 'Смены'
+
+    def __str__(self):
+        return f'{self.batch_number} - {self.production_date} - {self.line}'
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.creating_date is None:
+            number = Shift.objects.aggregate(Max('number')).get('number__max') or 0
+            self.number = number + 1
+            self.code_offline = str(randrange(100, 900, 1))
+        super().save(force_insert, force_update, using, update_fields)
+
+
+class ShiftProduct(models.Model):
+    shift = models.ForeignKey(Shift, verbose_name='Смена', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, verbose_name='Номенклатура', on_delete=models.CASCADE)

@@ -1,18 +1,18 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-
 from catalogs.models import Device, Line, ExternalSource
-from factory_core.models import OperationBaseModel, ExternalSystemExchangeMixin
+from factory_core.models import OperationBaseModel, ExternalSystemExchangeMixin, Shift
 from catalogs.models import Product, Organization, Direction, Client
 
 User = get_user_model()
 
 
 class MarkingOperation(OperationBaseModel, ExternalSystemExchangeMixin):
-    author = models.ForeignKey(User, on_delete=models.CASCADE,
+    """ Операция маркировки """
+    author = models.ForeignKey(User, on_delete=models.SET_NULL,
                                verbose_name='Автор', null=True)
 
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name='Организация', blank=True,
+    organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, verbose_name='Организация', blank=True,
                                      null=True)
 
     device = models.ForeignKey(Device, on_delete=models.CASCADE, verbose_name='Устройство', null=True, blank=True)
@@ -21,10 +21,13 @@ class MarkingOperation(OperationBaseModel, ExternalSystemExchangeMixin):
     production_date = models.DateField('Дата выработки')
     weight = models.FloatField('Вес', default=0)
 
-    line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name='Линия', blank=True, null=True)
+    line = models.ForeignKey(Line, on_delete=models.SET_NULL, verbose_name='Линия', blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура', blank=True, null=True)
     group = models.UUIDField('Группа', blank=True, null=True)
     group_offline = models.CharField('Ключ группы оффлайн', blank=True, null=True, max_length=10)
+    is_offline_operation = models.BooleanField('Оффлайн операция', default=False)
+    closing_date = models.DateTimeField('Дата закрытия', blank=True, null=True)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, verbose_name='Смена', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Операция маркировки'

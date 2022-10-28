@@ -4,6 +4,7 @@ from rest_framework.exceptions import APIException
 
 from catalogs.models import (Client, Department, Device, Direction, Line, Log, Organization, Product, RegularExpression,
                              Storage, TypeFactoryOperation, Unit, StorageCell)
+from factory_core.models import Shift, ShiftProduct
 from packing.marking_services import get_base64_string
 from packing.models import MarkingOperation
 from users.models import Setting
@@ -193,34 +194,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
 
 
-class AggregationsSerializer(serializers.Serializer):
-    aggregation_code = serializers.CharField(required=False)
-    product = serializers.CharField(required=False)
-    marks = serializers.ListField()
-
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
-
-class MarkingSerializer(serializers.ModelSerializer):
-    aggregations = AggregationsSerializer(required=False, many=True)
-    production_date = serializers.DateField(format="%Y-%m-%d")
-    product = serializers.CharField(write_only=True, required=False)
-    organization = serializers.CharField(write_only=True, required=False)
-    weight = serializers.FloatField(required=False)
-
-    class Meta:
-        fields = (
-            'batch_number', 'production_date', 'product', 'organization',
-            'guid', 'closed', 'line', 'organization', 'product',
-            'aggregations', 'unloaded', 'weight', 'group', 'group_offline')
-        read_only_fields = ('guid', 'closed', 'unloaded')
-        model = MarkingOperation
-
-
 class ProductShortSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'gtin', 'guid')
@@ -251,3 +224,16 @@ class StorageCellsSerializer(serializers.ModelSerializer):
         fields = ('guid', 'name', 'external_key', 'barcode')
         model = StorageCell
         read_only_fields = ('guid',)
+
+
+class AggregationsSerializer(serializers.Serializer):
+    aggregation_code = serializers.CharField(required=False)
+    product = serializers.CharField(required=False)
+    marks = serializers.ListField()
+
+
+class MarkingSerializer(serializers.ModelSerializer):
+    production_date = serializers.DateField(format="%Y-%m-%d")
+    product = serializers.CharField(write_only=True, required=False)
+    organization = serializers.CharField(write_only=True, required=False)
+    weight = serializers.FloatField(required=False)

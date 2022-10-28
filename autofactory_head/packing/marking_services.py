@@ -9,16 +9,18 @@ import pytz
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Q
+from rest_framework.exceptions import APIException
 
 from catalogs.models import (
     Product
 )
+from factory_core.models import Shift
 from warehouse_management.models import Pallet, OperationPallet, PalletCollectOperation
 
 from .models import (
     RawMark,
     MarkingOperation,
-    MarkingOperationMark
+    MarkingOperationMark,
 )
 
 User = get_user_model()
@@ -273,11 +275,12 @@ def _create_instance_marking_marks(marking_marks_instances: Iterable,
 def get_marking_filters(request_data: dict) -> dict:
     """ Формирует словарь для получения """
     marking_filter = {}
-
+    # TODO: сделать универсальную фильтрацию
     filters = dict()
     filters['author_id'] = 'user'
     filters['line_id'] = 'line'
     filters['batch_number'] = 'batch_number'
+    filters['shift'] = 'shift'
 
     date_source = request_data.get('date_source')
 
@@ -293,3 +296,33 @@ def get_marking_filters(request_data: dict) -> dict:
         marking_filter['date__day'] = int(date_parse[2])
 
     return marking_filter
+
+
+def register_to_exchange_marking_data(shift: Shift) -> None:
+    """ Отмечате готовность к обмену маркировки с сборы паллет по смене """
+    if not shift.closed:
+        raise APIException('Для регистрации зависимых данных к обмену необходимо закрыть смену')
+
+    for operation in MarkingOperation.objects.filter(shift=shift):
+        if not operation.closed:
+            raise APIException('Существуют незакрытие маркировки. Операция отменена')
+        operation.ready_to_unload = True
+        operation.save()
+
+    pallets_ids = Pallet.objects.filter(shift=shift).values_list('guid', flat=True)
+    tasks_ids = OperationPallet.objects.filter(pallet__guid__in=pallets_ids).values_list('operation', flat=True)
+    for task in PalletCollectOperation.objects.filter(guid__in=tasks_ids):
+        task.ready_to_unload = True
+        task.save()
+
+
+def load_offline_marking_data(instance: MarkingOperation, validated_data: dict) -> None:
+    shift = Shift.objects.filter(code_offline=instance.group_offline).first()
+    if shift is None:
+        shift = Shift.objects.create(line=instance.line, batch_number=instance.batch_number,
+                                     production_date=instance.production_date, code_offline=instance.group_offline,
+                                     author=instance.author)
+    instance.shift = shift
+    instance.is_offline_operation = True
+    instance.save()
+    create_marking_marks(instance, validated_data)

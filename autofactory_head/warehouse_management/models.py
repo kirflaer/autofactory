@@ -6,7 +6,7 @@ from django.db import models
 from pydantic.dataclasses import dataclass
 
 from catalogs.models import Product, Storage, StorageCell, Direction, Client
-from factory_core.models import OperationBaseModel
+from factory_core.models import OperationBaseModel, Shift
 from tasks.models import Task, TaskBaseModel, TaskStatus
 
 User = get_user_model()
@@ -45,6 +45,7 @@ class Pallet(models.Model):
     production_shop = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Цех производства', blank=True,
                                         null=True)
     pallet_type = models.CharField('Тип', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
+    shift = models.ForeignKey(Shift, on_delete=models.CASCADE, verbose_name='Смена', blank=True, null=True)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
 
     class Meta:
@@ -204,14 +205,6 @@ class OrderOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Заказ клиента'
         verbose_name_plural = 'Отгрузка со склада (Заказы клиентов)'
-
-    def close(self):
-        super().close()
-        # open_orders_count = OrderOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
-        #     guid=self.guid).count()
-        # if not open_orders_count:
-        #     self.parent_task.status = TaskStatus.CLOSE
-        #     self.parent_task.close()
 
 
 class PalletProduct(models.Model):

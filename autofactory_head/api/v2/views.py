@@ -8,12 +8,11 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 import api.views
-from api.serializers import AggregationsSerializer
 from api.v2.serializers import MarkingSerializer
 from api.v2.services import get_marks_to_unload
 from catalogs.models import ExternalSource
 from packing.marking_services import marking_close
-from packing.models import MarkingOperation, RawMark
+from packing.models import MarkingOperation
 from tasks.models import TaskStatus
 from tasks.task_services import change_task_properties
 from warehouse_management.models import Pallet, PalletStatus
@@ -122,32 +121,6 @@ class MarkingListCreateViewSet(api.views.MarkingListCreateViewSet):
             marking_close(instance, data)
 
 
-class MarkingViewSet(viewsets.ViewSet):
-    @staticmethod
-    def close(request, pk=None):
-        """Закрывает текущую маркировку
-        Если закрытие происходит с ТСД отправляется набор марок
-        Если закрытие от автоматического сканера марки берутся из RawMark"""
-
-        marking = MarkingOperation.objects.filter(guid=pk)
-
-        if not marking.exists():
-            raise APIException("Маркировка не найдена")
-
-        marking = MarkingOperation.objects.get(guid=pk)
-        if marking.closed:
-            raise APIException("Маркировка уже закрыта")
-
-        if request.user.role == User.PACKER:
-            serializer = AggregationsSerializer(data=request.data, many=True)
-            if serializer.is_valid():
-                data = serializer.data
-            else:
-                return Response(serializer.errors)
-        elif request.user.role == User.VISION_OPERATOR:
-            data = RawMark.objects.filter(operation=marking).values()
-        else:
-            data = []
-
-        marking_close(marking, data)
-        return Response({'detail': 'success'})
+class MarkingViewSet(api.views.MarkingViewSet):
+    def close_marking(self, instance: MarkingOperation, validated_data: dict):
+        marking_close(instance, validated_data)

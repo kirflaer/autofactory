@@ -13,7 +13,7 @@ from catalogs.models import (ActivationKey, Department, Device, Direction, Line,
                              RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
 from factory_core.models import Shift
 from packing.marking_services import create_marking_marks, remove_marks
-from packing.models import MarkingOperation
+from packing.models import MarkingOperation, RawMark
 from tasks.models import TaskStatus
 from tasks.task_services import get_task_queryset, TaskException, get_content_queryset
 from warehouse_management.models import Pallet, PalletStatus
@@ -25,7 +25,8 @@ from .serializers import (ConfirmUnloadingSerializer, DepartmentSerializer,
                           DeviceSerializer, DirectionSerializer, LineCreateSerializer, LogSerializer,
                           MarksSerializer, OrganizationSerializer, ProductSerializer,
                           RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
-                          UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer, MarkingSerializer)
+                          UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer, MarkingSerializer,
+                          AggregationsSerializer)
 from .services import confirm_marks_unloading
 
 User = get_user_model()
@@ -401,3 +402,36 @@ class TasksContentViewSet(viewsets.ViewSet):
 
         serializer = content_router.serializer(content_queryset, many=True)
         return Response(serializer.data)
+
+
+class MarkingViewSet(viewsets.ViewSet):
+    def close_marking(self, instance: MarkingOperation, validated_data: dict):
+        pass
+
+    def close(self, request, pk=None):
+        """Закрывает текущую маркировку
+        Если закрытие происходит с ТСД отправляется набор марок
+        Если закрытие от автоматического сканера марки берутся из RawMark"""
+
+        marking = MarkingOperation.objects.filter(guid=pk)
+
+        if not marking.exists():
+            raise APIException("Маркировка не найдена")
+
+        marking = MarkingOperation.objects.get(guid=pk)
+        if marking.closed:
+            raise APIException("Маркировка уже закрыта")
+
+        if request.user.role == User.PACKER:
+            serializer = AggregationsSerializer(data=request.data, many=True)
+            if serializer.is_valid():
+                data = serializer.data
+            else:
+                return Response(serializer.errors)
+        elif request.user.role == User.VISION_OPERATOR:
+            data = RawMark.objects.filter(operation=marking).values()
+        else:
+            data = []
+
+        self.close_marking(marking, data)
+        return Response({'detail': 'success'})

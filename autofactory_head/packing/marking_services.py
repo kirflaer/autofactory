@@ -224,7 +224,6 @@ def create_marking_marks(operation: MarkingOperation, data: Iterable) -> None:
                 marking_marks_instances,
                 operation,
                 product,
-                None,
                 marks=(mark,))
 
     MarkingOperationMark.objects.bulk_create(marking_marks_instances)
@@ -255,8 +254,8 @@ def _get_product(gtin: Optional[int] = None,
 def _create_instance_marking_marks(marking_marks_instances: Iterable,
                                    operation: MarkingOperation,
                                    product: Optional[Product],
-                                   aggregation_code: Optional[str],
-                                   marks: Iterable) -> None:
+                                   marks: Iterable,
+                                   aggregation_code: Optional[str] = None) -> None:
     """Создает экземпляры модели MarkingOperationMark
     сырые марки кодируются в base64
     Экземпляры добавляются в массив marking_operation_marks
@@ -308,6 +307,16 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
             raise APIException('Существуют незакрытие маркировки. Операция отменена')
         operation.ready_to_unload = True
         operation.save()
+
+    filter_kwargs = {'batch_number': shift.batch_number,
+                     'production_date': shift.production_date,
+                     'marking_group': shift.code_offline,
+                     'shift__is_null': True}
+
+    pallets = Pallet.objects.filter(**filter_kwargs)
+    for pallet in pallets:
+        pallet.shift = shift
+        pallet.save()
 
     pallets_ids = Pallet.objects.filter(shift=shift).values_list('guid', flat=True)
     tasks_ids = OperationPallet.objects.filter(pallet__guid__in=pallets_ids).values_list('operation', flat=True)

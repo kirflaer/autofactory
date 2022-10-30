@@ -34,7 +34,7 @@ class ShiftSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shift
-        fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'line_products')
+        fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products')
         read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products')
 
     @staticmethod
@@ -42,7 +42,7 @@ class ShiftSerializer(serializers.ModelSerializer):
         return ShiftProduct.objects.filter(shift=obj).values_list('product__guid', flat=True)
 
     def update(self, instance, validated_data):
-        for product_guid in validated_data['line_products']:
+        for product_guid in validated_data['shift_products']:
             product = Product.objects.filter(guid=product_guid).first()
             if product is None:
                 continue

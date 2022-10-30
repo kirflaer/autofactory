@@ -195,7 +195,7 @@ class DeviceViewSet(viewsets.ViewSet):
 class MarkingListCreateViewSet(generics.ListCreateAPIView):
     """Используется для создания маркировок и отображения списка маркировок"""
 
-    queryset = MarkingOperation.objects.all()[:100]
+    queryset = MarkingOperation.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('line', 'closed', 'unloaded', 'guid')
 

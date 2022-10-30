@@ -30,7 +30,7 @@ class MarkingSerializerOffline(MarkingSerializer):
 
 class ShiftSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
-    line_products = serializers.ListField(write_only=True)
+    shift_products = serializers.ListField(write_only=True)
 
     class Meta:
         model = Shift

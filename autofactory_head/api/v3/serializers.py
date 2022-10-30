@@ -34,7 +34,7 @@ class ShiftSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shift
-        fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'line_products')
+        fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products')
         read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products')
 
     @staticmethod

@@ -8,6 +8,7 @@ from dateutil import parser
 from rest_framework.exceptions import APIException
 
 from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
+from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct, PalletCollectOperation,
@@ -243,6 +244,13 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
             else:
                 production_shop = element['production_shop']
             element['production_shop'] = Storage.objects.filter(guid=production_shop).first()
+
+            if element.get('shift') is not None:
+                shift = Shift.objects.filter(pk=element.get('shift')).first()
+                element['shift'] = shift
+
+            if element.get('code_offline') is not None:
+                element['marking_group'] = element['code_offline']
 
             serializer_keys = set(element.keys())
             class_keys = set(dir(Pallet))

@@ -101,6 +101,8 @@ class PalletWriteSerializer(serializers.Serializer):
     production_shop = serializers.CharField(required=False)
     pallet_type = serializers.CharField(required=False)
     marking_group = serializers.CharField(required=False)
+    shift = serializers.CharField(required=False)
+    code_offline = serializers.CharField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):

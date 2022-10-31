@@ -1,5 +1,7 @@
-from django.forms import ModelForm, DateInput, CharField
+from django.forms import ModelForm, DateInput, CharField, ModelChoiceField, BaseModelFormSet
+from django.forms.utils import ErrorList
 
+from catalogs.models import Line
 from factory_core.models import Shift
 from packing.models import MarkingOperation
 

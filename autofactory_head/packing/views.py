@@ -143,7 +143,7 @@ class ShiftListView(OperationBasicListView):
         user = self.request.user
         if user.is_superuser or user.is_local_admin:
             return qs
-        return qs.filter(author=user)
+        return qs.filter(line__storage=user.shop)
 
 
 @login_required
@@ -171,6 +171,14 @@ class ShiftCreateView(LoginRequiredMixin, CreateView):
     template_name = 'new_base.html'
     form_class = ShiftForm
     success_url = reverse_lazy('shifts')
+    extra_context = {'new_element_text': 'Открытие новой смены'}
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        if not (self.request.user.is_superuser or self.request.user.is_local_admin):
+            form.fields['line'].queryset = Line.objects.filter(storage=self.request.user.shop)
+        return form
 
     def form_valid(self, form):
         shift = form.save(commit=False)

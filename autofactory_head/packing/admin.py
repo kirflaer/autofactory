@@ -1,7 +1,7 @@
 from django.contrib import admin
 from rangefilter.filters import DateRangeFilter
 
-from factory_core.models import Shift
+from factory_core.models import Shift, ShiftProduct
 from .models import (
     RawMark,
     MarkingOperation,
@@ -13,6 +13,14 @@ from .models import (
 class ShiftAdmin(admin.ModelAdmin):
     list_display = ('creating_date', 'closing_date', 'author', 'batch_number', 'line', 'closed')
     ordering = ('-creating_date',)
+    search_fields = ('batch_number',)
+
+
+@admin.register(ShiftProduct)
+class ShiftAdmin(admin.ModelAdmin):
+    list_display = ('shift', 'product')
+    ordering = ('-shift__creating_date',)
+    search_fields = ('shift__batch_number',)
 
 
 @admin.register(RawMark)

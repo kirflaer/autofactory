@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from catalogs.models import Line, Device, RegularExpression, Storage
@@ -106,7 +107,10 @@ class User(AbstractUser):
     is_local_admin = models.BooleanField(
         verbose_name='Локальный администратор', default=False)
 
-    refresh_timeout = models.IntegerField('Интервал обновления', default=10)
+    refresh_timeout = models.IntegerField('Интервал обновления', default=10,
+                                          validators=[MinValueValidator(4), MaxValueValidator(1200)])
+    data_send_interval = models.IntegerField('Интервал отправки данных', default=10,
+                                             validators=[MinValueValidator(4), MaxValueValidator(1200)])
 
     class Meta:
         ordering = ('username',)

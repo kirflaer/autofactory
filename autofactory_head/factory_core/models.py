@@ -88,3 +88,7 @@ class Shift(models.Model):
 class ShiftProduct(models.Model):
     shift = models.ForeignKey(Shift, verbose_name='Смена', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, verbose_name='Номенклатура', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Номенклатура смен'
+        verbose_name_plural = 'Номенклатура смен'

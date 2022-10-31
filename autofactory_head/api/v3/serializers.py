@@ -6,8 +6,8 @@ from factory_core.models import ShiftProduct, Shift
 from packing.models import MarkingOperation
 
 
-class MarkingSerializerOnline(MarkingSerializer):
-    shift = serializers.CharField(required=True)
+class MarkingSerializerOnlineWrite(MarkingSerializer):
+    shift = serializers.CharField(required=True, write_only=True)
 
     class Meta:
         fields = (
@@ -15,6 +15,10 @@ class MarkingSerializerOnline(MarkingSerializer):
             'guid', 'closed', 'line', 'organization', 'product', 'unloaded', 'weight', 'shift')
         read_only_fields = ('guid', 'closed', 'unloaded')
         model = MarkingOperation
+
+
+class MarkingSerializerOnlineRead(MarkingSerializerOnlineWrite):
+    shift = serializers.SlugRelatedField(read_only=True, slug_field='pk')
 
 
 class MarkingSerializerOffline(MarkingSerializer):
@@ -29,7 +33,7 @@ class MarkingSerializerOffline(MarkingSerializer):
 
 
 class ShiftSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField()
+    products = serializers.HiddenField(default='')
     shift_products = serializers.ListField(write_only=True)
 
     class Meta:
@@ -37,12 +41,12 @@ class ShiftSerializer(serializers.ModelSerializer):
         fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products')
         read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products')
 
-    @staticmethod
-    def get_products(obj):
-        return ShiftProduct.objects.filter(shift=obj).values_list('product__guid', flat=True)
+
+class ShiftUpdateSerializer(ShiftSerializer):
+    products = serializers.ListField()
 
     def update(self, instance, validated_data):
-        for product_guid in validated_data['shift_products']:
+        for product_guid in validated_data['products']:
             product = Product.objects.filter(guid=product_guid).first()
             if product is None:
                 continue
@@ -50,3 +54,11 @@ class ShiftSerializer(serializers.ModelSerializer):
                 continue
             ShiftProduct.objects.create(shift=instance, product=product)
         return super().update(instance, validated_data)
+
+
+class ShiftRetrieveSerializer(ShiftSerializer):
+    products = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_products(obj):
+        return ShiftProduct.objects.filter(shift=obj).values_list('product__guid', flat=True)

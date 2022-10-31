@@ -18,14 +18,20 @@ class ShiftListViewSet(generics.ListAPIView):
     filterset_fields = ('line', 'closed')
 
 
-class ShiftUpdateView(generics.UpdateAPIView):
+class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = Shift.objects.all()
     lookup_field = 'pk'
     serializer_class = api_serializers.ShiftSerializer
 
+    def get_serializer_class(self):
+        if self.request.stream is None:
+            return api_serializers.ShiftRetrieveSerializer
+        else:
+            return api_serializers.ShiftUpdateSerializer
+
 
 class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):
-    serializer_class = api_serializers.MarkingSerializerOnline
+    serializer_class = api_serializers.MarkingSerializerOnlineRead
 
     def get_model_not_required_fields(self):
         fields = super().get_model_not_required_fields()
@@ -35,6 +41,12 @@ class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):
     def perform_create(self, serializer):
         values = self.get_marking_init_data(serializer)
         serializer.save(**values)
+
+    def get_serializer_class(self):
+        if self.request.stream is None:
+            return api_serializers.MarkingSerializerOnlineRead
+        else:
+            return api_serializers.MarkingSerializerOnlineWrite
 
 
 class MarkingOffLineViewSet(api_views.MarkingListCreateViewSet):

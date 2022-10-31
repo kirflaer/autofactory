@@ -311,7 +311,7 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
     filter_kwargs = {'batch_number': shift.batch_number,
                      'production_date': shift.production_date,
                      'marking_group': shift.code_offline,
-                     'shift__is_null': True}
+                     'shift__isnull': True}
 
     pallets = Pallet.objects.filter(**filter_kwargs)
     for pallet in pallets:

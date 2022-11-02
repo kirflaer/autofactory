@@ -80,6 +80,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-item {% if view_name  == 'shipment' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'shipment' %}">
+                        <i class="align-middle" data-feather="truck"></i> <span
+                            class="align-middle">Отгрузка</span>
+                    </a>
+                </li>
+
 {#                {% if user.settings.collect_pallet_mode_is_active %}#}
 {#                <li class="sidebar-item {% if view_name  == 'pallets' %}active{% endif %}">#}
 {#                    <a class="sidebar-link" href="{% url 'pallets' %}">#}

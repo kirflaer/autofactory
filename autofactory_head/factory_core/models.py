@@ -81,6 +81,8 @@ class Shift(models.Model):
         if self.creating_date is None:
             number = Shift.objects.aggregate(Max('number')).get('number__max') or 0
             self.number = number + 1
+
+        if self.code_offline is None:
             self.code_offline = str(randrange(100, 900, 1))
         super().save(force_insert, force_update, using, update_fields)
 

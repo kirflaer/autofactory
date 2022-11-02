@@ -328,10 +328,13 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
 def load_offline_marking_data(instance: MarkingOperation, validated_data: dict) -> None:
     shift = Shift.objects.filter(code_offline=instance.group_offline).first()
     if shift is None:
-        shift = Shift.objects.create(line=instance.line, batch_number=instance.batch_number,
-                                     production_date=instance.production_date, code_offline=instance.group_offline,
+        shift = Shift.objects.create(line=instance.line,
+                                     batch_number=instance.batch_number,
+                                     production_date=instance.production_date,
+                                     code_offline=instance.group_offline,
                                      author=instance.author)
     instance.shift = shift
     instance.is_offline_operation = True
+    instance.closed = True
     instance.save()
     create_marking_marks(instance, validated_data)

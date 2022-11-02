@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block menu %}
+    {% include './include/top_menu.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid p-0">
+        <h1 class="h3 mb-3">Подтвердите закрытие смены</h1>
+
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="alert alert-primary alert-outline alert-dismissible" role="alert">
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="Close"></button>
+                                <div class="alert-message">
+                                    <h4 class="alert-heading">Внимание!</h4>
+                                    <p>Данное действие необратимо, вы действительно хотите закрыть смену?</p>
+                                    <hr>
+                                    <div class="btn-list">
+                                        <form method="post" action="{% url  'shift_close' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" id="shift" name="shift" value="{{ shift }}">
+                                            <button type="submit" class="btn btn-success">Да
+                                            </button>
+
+                                            <a href="{% url 'shifts' %}">
+                                            <button class="btn btn-danger" type="button">Отмена</button>
+                                        </a>
+                                        </form>
+
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

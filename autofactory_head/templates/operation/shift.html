@@ -10,13 +10,15 @@
             </div>
         </div>
     {% endfor %}
+
+
 {% endblock %}
 
 
 {% block table %}
     <thead>
     <tr>
-        <th style="width:5%;">Номер</th>
+        <th style="width:5%;">Номер группы (оффлайн)</th>
         <th style="width:20%;">Дата открытия</th>
         <th style="width:20%;">Линия</th>
         <th style="width:20%;">Автор</th>
@@ -29,7 +31,7 @@
     <tbody>
     {% for element in data %}
         <tr>
-            <td> {{ element.number }} </td>
+            <td> {{ element.code_offline }} </td>
             <td> {{ element.creating_date|date:"d.m.y H:i" }} </td>
             <td> {{ element.line|default_if_none:"-" }} </td>
             <td> {{ element.author }} </td>
@@ -45,16 +47,14 @@
             <td class="table-action">
                 {% if element.closed %}
                     <a href="{% url 'marking' %}?shift={{ element.guid }}">
-                    <button type="submit" class="btn btn-outline-secondary" >Маркировки
-                    </button>
+                        <button type="submit" class="btn btn-outline-secondary">Маркировки
+                        </button>
                     </a>
                 {% else %}
-                <form method="post" action="{% url  'shift_close' %}">
-                            {% csrf_token %}
-                    <input type="hidden" id="shift" name="shift" value="{{ element.guid }}">
-                    <button type="submit" class="btn btn-outline-secondary" >Закрыть
-                    </button>
-                </form>
+                    <a href="{% url 'shift_close' %}?shift={{ element.guid }} ">
+                        <button type="submit" class="btn btn-outline-secondary">Закрыть
+                        </button>
+                    </a>
                 {% endif %}
             </td>
         </tr>

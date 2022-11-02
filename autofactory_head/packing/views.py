@@ -65,7 +65,7 @@ class MarkingOperationListView(OperationBasicListView):
 class MarkingOperationRemoveView(LoginRequiredMixin, DeleteView):
     model = MarkingOperation
     success_url = reverse_lazy('marking')
-    template_name = 'confirm_base.html'
+    template_name = 'confirm_pages/confirm_base.html'
 
 
 class MarkingOperationUpdateView(LoginRequiredMixin, UpdateView):
@@ -78,7 +78,7 @@ class MarkingOperationUpdateView(LoginRequiredMixin, UpdateView):
 class MarkRemoveView(LoginRequiredMixin, DeleteView):
     model = MarkingOperationMark
     success_url = reverse_lazy('marking')
-    template_name = 'confirm_base.html'
+    template_name = 'confirm_pages/confirm_base.html'
 
 
 @login_required
@@ -147,8 +147,11 @@ class ShiftListView(OperationBasicListView):
 
 
 @login_required
-@require_http_methods(['POST'])
+@require_http_methods(['POST', 'GET'])
 def shift_close(request):
+    if len(request.GET):
+        return render(request, 'confirm_shift.html', {'shift': request.GET['shift']})
+
     shift_guid = request.POST.get('shift')
     if shift_guid is None:
         return redirect(f'{reverse_lazy("shifts")}?message={"Не корректные параметры для закрытия смены"}')
@@ -181,6 +184,12 @@ class ShiftCreateView(LoginRequiredMixin, CreateView):
         return form
 
     def form_valid(self, form):
+        form_line = form.cleaned_data['line']
+        if Shift.objects.filter(line=form_line, closed=False).exists():
+            message = f'Невозможно открыть смену. На линии {form_line} уже открыта смена.'
+            return redirect(
+                f'{reverse_lazy("shifts")}?message={message}')
+
         shift = form.save(commit=False)
         shift.author = self.request.user
         shift.save()

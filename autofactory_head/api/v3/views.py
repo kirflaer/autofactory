@@ -1,12 +1,15 @@
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
+
 from rest_framework.response import Response
 
 import api.views as api_views
 import api.v3.serializers as api_serializers
+
+from api.v3.services import load_manual_marks, load_offline_marking_data
 from factory_core.models import Shift
-from packing.marking_services import load_offline_marking_data, create_marking_marks
+
 from packing.models import MarkingOperation
 
 
@@ -66,8 +69,10 @@ class MarkingOffLineViewSet(api_views.MarkingListCreateViewSet):
 
 
 class MarkingViewSet(api_views.MarkingViewSet):
-    def close_marking(self, instance: MarkingOperation, validated_data: dict):
+    def close_marking(self, instance: MarkingOperation, validated_data: dict | list):
         with transaction.atomic():
             instance.closed = True
+            instance.group = instance.shift.guid
             instance.save()
-            create_marking_marks(instance, validated_data)
+
+            load_manual_marks(instance, validated_data)

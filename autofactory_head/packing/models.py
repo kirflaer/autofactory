@@ -40,6 +40,7 @@ class MarkingOperationMark(models.Model):
     encoded_mark = models.CharField('Зашифрованная марка', max_length=500, null=True)
     aggregation_code = models.CharField('Код агрегации', max_length=500, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='Номенклатура', blank=True, null=True)
+    scan_date = models.DateTimeField('Время сканирования', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Марка'

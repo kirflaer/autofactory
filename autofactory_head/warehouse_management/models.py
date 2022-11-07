@@ -46,6 +46,8 @@ class Pallet(models.Model):
                                         null=True)
     pallet_type = models.CharField('Тип', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, verbose_name='Смена', blank=True, null=True)
+
+    # Для совместимости со второй версие везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
 
     class Meta:

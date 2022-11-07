@@ -1,19 +1,25 @@
 from json import JSONDecodeError
 
+from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from pydantic.error_wrappers import ValidationError
-from rest_framework import generics, status, filters
+from rest_framework import generics, status, filters, viewsets
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 import api.views
+from api.v2.serializers import MarkingSerializer
 from api.v2.services import get_marks_to_unload
 from catalogs.models import ExternalSource
+from packing.marking_services import marking_close
+from packing.models import MarkingOperation
 from tasks.models import TaskStatus
 from tasks.task_services import change_task_properties
 from warehouse_management.models import Pallet, PalletStatus
 from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer
 from warehouse_management.warehouse_services import create_pallets
+
+User = get_user_model()
 
 
 class TasksChangeViewSet(api.views.TasksViewSet):
@@ -85,6 +91,7 @@ class PalletViewSet(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
+        # реализация фильртров на вхождение в диапазон
         list_params = {
             'ids': 'id__in',
             'keys': 'external_key__in'
@@ -98,3 +105,22 @@ class PalletViewSet(generics.ListCreateAPIView):
             qs = qs.filter(**qs_filter)
 
         return qs
+
+
+class MarkingListCreateViewSet(api.views.MarkingListCreateViewSet):
+    serializer_class = MarkingSerializer
+
+    def perform_create(self, serializer):
+        values = self.get_marking_init_data(serializer)
+        if serializer.validated_data.get('aggregations') is None:
+            serializer.save(**values)
+        else:
+            # оффлайн маркировка
+            data = serializer.validated_data.pop('aggregations')
+            instance = serializer.save(**values)
+            marking_close(instance, data)
+
+
+class MarkingViewSet(api.views.MarkingViewSet):
+    def close_marking(self, instance: MarkingOperation, validated_data: dict):
+        marking_close(instance, validated_data)

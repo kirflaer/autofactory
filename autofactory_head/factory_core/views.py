@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
 
 from packing.marking_services import get_dashboard_data
 from catalogs.models import (
@@ -19,6 +20,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 @login_required
 def index(request):
+    if len(request.user.default_page):
+        return redirect(reverse_lazy(request.user.default_page))
     dashboard_data = get_dashboard_data()
     dashboard_data['version'] = settings.VERSION
     return render(request, 'index.html', dashboard_data)

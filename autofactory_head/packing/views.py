@@ -1,12 +1,15 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_http_methods
 
-from packing.forms import MarkingOperationForm
-from packing.marking_services import get_marking_filters
+from factory_core.models import Shift
+from packing.forms import MarkingOperationForm, ShiftForm
+from packing.marking_services import get_marking_filters, register_to_exchange_marking_data
 from packing.models import (
     MarkingOperation,
     MarkingOperationMark,
@@ -17,7 +20,7 @@ from warehouse_management.models import PalletContent
 from catalogs.models import Line
 
 from django.views.generic import (
-    ListView, DeleteView, UpdateView,
+    ListView, DeleteView, UpdateView, CreateView,
 )
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -27,13 +30,13 @@ User = get_user_model()
 
 class OperationBasicListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
-    ordering = '-date'
 
 
 class MarkingOperationListView(OperationBasicListView):
     model = MarkingOperation
     paginate_by = 50
     template_name = 'marking.html'
+    ordering = '-date'
     extra_context = {
         'title': 'Маркировка',
         'element_new_link': 'organization_new',
@@ -62,7 +65,7 @@ class MarkingOperationListView(OperationBasicListView):
 class MarkingOperationRemoveView(LoginRequiredMixin, DeleteView):
     model = MarkingOperation
     success_url = reverse_lazy('marking')
-    template_name = 'confirm_base.html'
+    template_name = 'confirm_pages/confirm_base.html'
 
 
 class MarkingOperationUpdateView(LoginRequiredMixin, UpdateView):
@@ -75,7 +78,7 @@ class MarkingOperationUpdateView(LoginRequiredMixin, UpdateView):
 class MarkRemoveView(LoginRequiredMixin, DeleteView):
     model = MarkingOperationMark
     success_url = reverse_lazy('marking')
-    template_name = 'confirm_base.html'
+    template_name = 'confirm_pages/confirm_base.html'
 
 
 @login_required
@@ -117,3 +120,77 @@ def marking_detail(request, pk):
     return render(request, 'marking_detail.html', {'page_obj': page_obj, 'paginator': paginator})
 
 
+class ShiftListView(OperationBasicListView):
+    model = Shift
+    paginate_by = 50
+    template_name = 'shift.html'
+    ordering = '-creating_date'
+    extra_context = {
+        'title': 'Смена',
+        'element_new_link': 'shift_new',
+        'possibility_of_adding': True
+    }
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context_data = super().get_context_data(object_list=object_list, **kwargs)
+        message = self.request.GET.get('message')
+        if message is not None:
+            context_data['messages'] = [message]
+        return context_data
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        if user.is_superuser or user.is_local_admin:
+            return qs
+        return qs.filter(line__storage=user.shop)
+
+
+@login_required
+@require_http_methods(['POST', 'GET'])
+def shift_close(request):
+    if len(request.GET):
+        return render(request, 'confirm_shift.html', {'shift': request.GET['shift']})
+
+    shift_guid = request.POST.get('shift')
+    if shift_guid is None:
+        return redirect(f'{reverse_lazy("shifts")}?message={"Не корректные параметры для закрытия смены"}')
+    shift = get_object_or_404(Shift, pk=shift_guid)
+    shift_marking = MarkingOperation.objects.filter(shift=shift)
+    if shift_marking.filter(closed=False).exists():
+        return redirect(
+            f'{reverse_lazy("shifts")}?message={"Существуют незакрытые маркировкм. Закрытие смены невозможно"}')
+
+    with transaction.atomic():
+        shift.closed = True
+        shift.save()
+        register_to_exchange_marking_data(shift)
+
+    return redirect(reverse_lazy('shifts'))
+
+
+class ShiftCreateView(LoginRequiredMixin, CreateView):
+    model = Shift
+    template_name = 'new_base.html'
+    form_class = ShiftForm
+    success_url = reverse_lazy('shifts')
+    extra_context = {'new_element_text': 'Открытие новой смены'}
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+
+        if not (self.request.user.is_superuser or self.request.user.is_local_admin):
+            form.fields['line'].queryset = Line.objects.filter(storage=self.request.user.shop)
+        return form
+
+    def form_valid(self, form):
+        form_line = form.cleaned_data['line']
+        if Shift.objects.filter(line=form_line, closed=False).exists():
+            message = f'Невозможно открыть смену. На линии {form_line} уже открыта смена.'
+            return redirect(
+                f'{reverse_lazy("shifts")}?message={message}')
+
+        shift = form.save(commit=False)
+        shift.author = self.request.user
+        shift.save()
+        return super().form_valid(form)

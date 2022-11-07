@@ -52,12 +52,13 @@ TEMPLATES_ADDITIONAL_DIR = os.path.join(ADDITIONAL_BASE_DIR, "templates")
 CATALOGS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "catalogs")
 OPERATIONS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "operation")
 SERVICES_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "service")
+CONFIRM_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "confirm_pages")
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [TEMPLATES_DIR, CATALOGS_TEMPLATES_DIR,
                  TEMPLATES_ADDITIONAL_DIR, OPERATIONS_TEMPLATES_DIR,
-                 SERVICES_TEMPLATES_DIR],
+                 SERVICES_TEMPLATES_DIR, CONFIRM_TEMPLATES_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -114,4 +115,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-VERSION = '1.1.12.3'
+VERSION = '1.2.1.1'

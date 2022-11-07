@@ -1,0 +1,63 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block messages %}
+    {% for message in messages %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert-message">
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+
+
+{% endblock %}
+
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:5%;">Номер группы (оффлайн)</th>
+        <th style="width:20%;">Дата открытия</th>
+        <th style="width:20%;">Линия</th>
+        <th style="width:20%;">Автор</th>
+        <th style="width:10%;">Номер партии</th>
+        <th style="width:15%;">Дата выработки</th>
+        <th style="width:5%;">Закрыта</th>
+        <th style="width:5%;">Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.code_offline }} </td>
+            <td> {{ element.creating_date|date:"d.m.y H:i" }} </td>
+            <td> {{ element.line|default_if_none:"-" }} </td>
+            <td> {{ element.author }} </td>
+            <td> {{ element.batch_number|default_if_none:"-" }} </td>
+            <td> {{ element.production_date|date:"d.m" }} </td>
+            <td>
+                {% if element.closed %}
+                    <span class="badge bg-success">V</span>
+                {% else %}
+                    <span class="badge bg-warning">X</span>
+                {% endif %}
+            </td>
+            <td class="table-action">
+                {% if element.closed %}
+                    <a href="{% url 'marking' %}?shift={{ element.guid }}">
+                        <button type="submit" class="btn btn-outline-secondary">Маркировки
+                        </button>
+                    </a>
+                {% else %}
+                    <a href="{% url 'shift_close' %}?shift={{ element.guid }} ">
+                        <button type="submit" class="btn btn-outline-secondary">Закрыть
+                        </button>
+                    </a>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

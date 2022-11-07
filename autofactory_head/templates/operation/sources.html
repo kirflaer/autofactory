@@ -1,0 +1,37 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:15%;">Паллета</th>
+        <th style="width:15%;">Паллета источник</th>
+        <th style="width:15%;">Номенклатура</th>
+        <th style="width:5%;">Вес</th>
+        <th style="width:5%;">Количество</th>
+        <th style="width:5%;">Номер партии</th>
+        <th style="width:5%;">Дата выработки</th>
+        <th style="width:5%;">Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.pallet.guid }} </td>
+            <td> {{ element.pallet_source.guid }} </td>
+            <td> {{ element.product.guid }} </td>
+            <td> {{ element.weight }} </td>
+            <td> {{ element.count }} </td>
+            <td> {{ element.batch_number }} </td>
+            <td> {{ element.production_date }} </td>
+            <td class="table-action">
+                <a href="{% url  'sources_remove' element.pk %}"><i
+                        class="align-middle"
+                        data-feather="trash-2"></i></a>
+
+            </td>
+        </tr>
+
+    {% endfor %}
+    </tbody>
+{% endblock %}

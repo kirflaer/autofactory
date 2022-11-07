@@ -26,7 +26,7 @@ class PalletAdmin(admin.ModelAdmin):
     list_display = ('creation_date', 'status', 'collector', 'product', 'id', 'external_key', 'guid')
     list_filter = (('creation_date', DateRangeFilter), 'status')
     ordering = ('-creation_date',)
-    search_fields = ('id', 'marking_group')
+    search_fields = ('id', 'marking_group', 'guid')
     actions = [make_pallet_confirmed]
 
 

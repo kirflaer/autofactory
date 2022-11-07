@@ -8,6 +8,7 @@ from dateutil import parser
 from rest_framework.exceptions import APIException
 
 from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
+from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
                                          OperationProduct, PalletCollectOperation,
@@ -24,7 +25,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
     if validated_data.get('sources') is not None:
         sources = validated_data.pop('sources')
         for source in sources:
-            pallet_source = Pallet.objects.filter(guid=source['pallet_source']).first()
+            pallet_source = Pallet.objects.select_for_update().filter(guid=source['pallet_source']).first()
             if pallet_source is None:
                 raise APIException('Не найдена паллета источник')
 
@@ -70,9 +71,11 @@ def check_and_collect_orders(product_keys: list[str]):
         order_product.is_collected = True
         order_product.save()
 
-    order_need_close = PalletProduct.objects.filter(order__in=orders).exclude(is_collected=False).values_list('order',
-                                                                                                              flat=True)
-    for order_guid in order_need_close:
+    not_collected_orders = PalletProduct.objects.filter(order__in=orders, is_collected=False).values_list('order',
+                                                                                                          flat=True)
+    for order_guid in orders:
+        if order_guid in not_collected_orders:
+            continue
         order = OrderOperation.objects.get(guid=order_guid)
         order.close()
 
@@ -243,6 +246,14 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
             else:
                 production_shop = element['production_shop']
             element['production_shop'] = Storage.objects.filter(guid=production_shop).first()
+
+            if element.get('code_offline') is not None:
+                element['marking_group'] = element['code_offline']
+
+            if element.get('shift') is not None:
+                shift = Shift.objects.filter(pk=element.get('shift')).first()
+                element['shift'] = shift
+                element['marking_group'] = shift.guid
 
             serializer_keys = set(element.keys())
             class_keys = set(dir(Pallet))

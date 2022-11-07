@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from catalogs.models import Line, Device, RegularExpression, Storage
@@ -53,6 +54,7 @@ class User(AbstractUser):
     REJECTER = 'REJECTER'
     SERVICE = 'SERVICE'
     LOADER = 'LOADER'
+    STOREKEEPER = 'STOREKEEPER'
 
     ROLE = (
         (VISION_OPERATOR, VISION_OPERATOR),
@@ -60,7 +62,8 @@ class User(AbstractUser):
         (PALLET_COLLECTOR, PALLET_COLLECTOR),
         (REJECTER, REJECTER),
         (SERVICE, SERVICE),
-        (LOADER, LOADER)
+        (LOADER, LOADER),
+        (STOREKEEPER, STOREKEEPER)
     )
 
     role = models.CharField(max_length=255, choices=ROLE, default=PACKER,
@@ -106,7 +109,11 @@ class User(AbstractUser):
     is_local_admin = models.BooleanField(
         verbose_name='Локальный администратор', default=False)
 
-    refresh_timeout = models.IntegerField('Интервал обновления', default=10)
+    refresh_timeout = models.IntegerField('Интервал обновления', default=10,
+                                          validators=[MinValueValidator(4), MaxValueValidator(1200)])
+    data_send_interval = models.IntegerField('Интервал отправки данных', default=10,
+                                             validators=[MinValueValidator(4), MaxValueValidator(1200)])
+    default_page = models.CharField('Страница по умолчанию', default='', max_length=100, blank=True, null=True)
 
     class Meta:
         ordering = ('username',)

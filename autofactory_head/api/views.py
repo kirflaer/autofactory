@@ -11,8 +11,8 @@ from rest_framework.response import Response
 
 from catalogs.models import (ActivationKey, Department, Device, Direction, Line, LineProduct, Organization, Product,
                              RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
-from packing.marking_services import (create_marking_marks,
-                                      marking_close, remove_marks, )
+from factory_core.models import Shift
+from packing.marking_services import create_marking_marks, remove_marks
 from packing.models import MarkingOperation, RawMark
 from tasks.models import TaskStatus
 from tasks.task_services import get_task_queryset, TaskException, get_content_queryset
@@ -21,11 +21,12 @@ from warehouse_management.serializers import PalletReadSerializer, PalletUpdateS
 
 from api.exceptions import ActivationFailed
 from warehouse_management.warehouse_routers import get_task_router, get_content_router
-from .serializers import (AggregationsSerializer, ConfirmUnloadingSerializer, DepartmentSerializer,
+from .serializers import (ConfirmUnloadingSerializer, DepartmentSerializer,
                           DeviceSerializer, DirectionSerializer, LineCreateSerializer, LogSerializer,
-                          MarkingSerializer, MarksSerializer, OrganizationSerializer, ProductSerializer,
+                          MarksSerializer, OrganizationSerializer, ProductSerializer,
                           RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
-                          UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer)
+                          UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer, MarkingSerializer,
+                          AggregationsSerializer)
 from .services import confirm_marks_unloading
 
 User = get_user_model()
@@ -193,7 +194,7 @@ class DeviceViewSet(viewsets.ViewSet):
 
 class MarkingListCreateViewSet(generics.ListCreateAPIView):
     """Используется для создания маркировок и отображения списка маркировок"""
-    serializer_class = MarkingSerializer
+
     queryset = MarkingOperation.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('line', 'closed', 'unloaded', 'guid')
@@ -206,59 +207,27 @@ class MarkingListCreateViewSet(generics.ListCreateAPIView):
             queryset = queryset.filter(line__storage=storage)
         return queryset
 
-    def perform_create(self, serializer):
+    def marking_close(self, instance: MarkingOperation, validated_data: dict):
+        pass
+
+    def get_model_not_required_fields(self):
+        return {'product': Product, 'organization': Organization}
+
+    def get_marking_init_data(self, serializer: MarkingSerializer) -> dict:
         line = serializer.validated_data.get('line')
         line = self.request.user.line if line is None else line
 
         values = {'author': self.request.user,
                   'line': line}
 
-        product = serializer.validated_data.get('product')
-        if product is not None:
-            values['product'] = Product.objects.filter(pk=product).first()
+        model_not_required_fields = self.get_model_not_required_fields()
 
-        organization = serializer.validated_data.get('organization')
-        if organization is not None:
-            values['organization'] = Organization.objects.filter(
-                pk=organization).first()
-
-        if serializer.validated_data.get('aggregations') is None:
-            serializer.save(**values)
-        else:
-            data = serializer.validated_data.pop('aggregations')
-            instance = serializer.save(**values)
-            marking_close(instance, data)
-
-
-class MarkingViewSet(viewsets.ViewSet):
-    @staticmethod
-    def close(request, pk=None):
-        """Закрывает текущую маркировку
-        Если закрытие происходит с ТСД отправляется набор марок
-        Если закрытие от автоматического сканера марки берутся из RawMark"""
-
-        marking = MarkingOperation.objects.filter(guid=pk)
-
-        if not marking.exists():
-            raise APIException("Маркировка не найдена")
-
-        marking = MarkingOperation.objects.get(guid=pk)
-        if marking.closed:
-            raise APIException("Маркировка уже закрыта")
-
-        if request.user.role == User.PACKER:
-            serializer = AggregationsSerializer(data=request.data, many=True)
-            if serializer.is_valid():
-                data = serializer.data
-            else:
-                return Response(serializer.errors)
-        elif request.user.role == User.VISION_OPERATOR:
-            data = RawMark.objects.filter(operation=marking).values()
-        else:
-            data = []
-
-        marking_close(marking, data)
-        return Response({'detail': 'success'})
+        for key, value in model_not_required_fields.items():
+            guid = serializer.validated_data.get(key)
+            if guid is None:
+                continue
+            values[key] = value.objects.filter(pk=guid).first()
+        return values
 
 
 class MarksViewSet(viewsets.ViewSet):
@@ -414,7 +383,6 @@ class StorageCellsListCreateViewSet(generics.ListCreateAPIView):
 
 
 class TasksContentViewSet(viewsets.ViewSet):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # TODO здесь будут прочие роутеры
@@ -434,3 +402,36 @@ class TasksContentViewSet(viewsets.ViewSet):
 
         serializer = content_router.serializer(content_queryset, many=True)
         return Response(serializer.data)
+
+
+class MarkingViewSet(viewsets.ViewSet):
+    def close_marking(self, instance: MarkingOperation, validated_data: dict):
+        pass
+
+    def close(self, request, pk=None):
+        """Закрывает текущую маркировку
+        Если закрытие происходит с ТСД отправляется набор марок
+        Если закрытие от автоматического сканера марки берутся из RawMark"""
+
+        marking = MarkingOperation.objects.filter(guid=pk)
+
+        if not marking.exists():
+            raise APIException("Маркировка не найдена")
+
+        marking = MarkingOperation.objects.get(guid=pk)
+        if marking.closed:
+            raise APIException("Маркировка уже закрыта")
+
+        if request.user.role == User.PACKER:
+            serializer = AggregationsSerializer(data=request.data, many=True)
+            if serializer.is_valid():
+                data = serializer.data
+            else:
+                return Response(serializer.errors)
+        elif request.user.role == User.VISION_OPERATOR:
+            data = RawMark.objects.filter(operation=marking).values()
+        else:
+            data = []
+
+        self.close_marking(marking, data)
+        return Response({'detail': 'success'})

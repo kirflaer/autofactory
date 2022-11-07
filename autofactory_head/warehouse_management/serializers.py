@@ -171,7 +171,6 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 
 class PalletShortSerializer(serializers.ModelSerializer):
     product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
-    marking_group = serializers.SlugRelatedField(many=False, read_only=True, slug_field='pk', source='shift')
 
     class Meta:
         model = Pallet

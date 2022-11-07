@@ -54,6 +54,7 @@ class User(AbstractUser):
     REJECTER = 'REJECTER'
     SERVICE = 'SERVICE'
     LOADER = 'LOADER'
+    STOREKEEPER = 'STOREKEEPER'
 
     ROLE = (
         (VISION_OPERATOR, VISION_OPERATOR),
@@ -61,7 +62,8 @@ class User(AbstractUser):
         (PALLET_COLLECTOR, PALLET_COLLECTOR),
         (REJECTER, REJECTER),
         (SERVICE, SERVICE),
-        (LOADER, LOADER)
+        (LOADER, LOADER),
+        (STOREKEEPER, STOREKEEPER)
     )
 
     role = models.CharField(max_length=255, choices=ROLE, default=PACKER,

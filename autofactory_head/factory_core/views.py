@@ -20,8 +20,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 @login_required
 def index(request):
-    if request.user.default_page is not None:
-        return redirect(reverse_lazy(request.user.default_page))
     dashboard_data = get_dashboard_data()
     dashboard_data['version'] = settings.VERSION
     return render(request, 'index.html', dashboard_data)

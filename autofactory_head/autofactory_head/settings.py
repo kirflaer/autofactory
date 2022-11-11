@@ -31,7 +31,8 @@ INSTALLED_APPS = [
     'tests',
     'tasks',
     'warehouse_management',
-    'rangefilter'
+    'rangefilter',
+    'reports'
 ]
 
 MIDDLEWARE = [
@@ -53,12 +54,13 @@ CATALOGS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "catalogs")
 OPERATIONS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "operation")
 SERVICES_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "service")
 CONFIRM_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "confirm_pages")
+REPORTS = os.path.join(TEMPLATES_DIR, "reports")
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [TEMPLATES_DIR, CATALOGS_TEMPLATES_DIR,
                  TEMPLATES_ADDITIONAL_DIR, OPERATIONS_TEMPLATES_DIR,
-                 SERVICES_TEMPLATES_DIR, CONFIRM_TEMPLATES_DIR],
+                 SERVICES_TEMPLATES_DIR, CONFIRM_TEMPLATES_DIR, REPORTS],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -115,4 +117,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-VERSION = '1.2.1.5'
+VERSION = '1.2.2.0'

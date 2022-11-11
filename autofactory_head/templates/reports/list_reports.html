@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="row">
+        <div class="row">
+            <div class="col-12 col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Отчеты</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>
+                                <a href="{% url 'report_line_loads' %}"> Загруженность линий. Сводно. </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'report_line_loads_detail' %}"> Загруженность линий. Детально. </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+

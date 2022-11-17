@@ -12,9 +12,25 @@
             <div class="col-12 col-xl-12">
                 <div class="card">
                     <div class="card-body">
-                        <a href="{% url 'marking' %}"
-                           class="btn btn-outline-secondary">Назад к документам</a>
+                    <form action="{% url 'marking_detail' pk %}" method="get">
+                    {% csrf_token %}
+                    <div class="mb-3 row">
+                        <label class="col-form-label col-sm-1 text-sm-right">Марка</label>
+                        <div class="col-sm-3">
+                            <input type="text" class="form-control" id="mark"
+                                   name="mark"
+                                   placeholder="" aria-label="Search"
+                                   value={{ mark|default_if_none:"" }}>
+                        </div>
                     </div>
+                    <div class="mb-3 row">
+                        <div class="col-sm-10 ml-sm-auto">
+                            <button type="submit" class="btn btn-outline-secondary">Отобрать</button>
+                        </div>
+                    </div>
+                </form>
+                    </div>
+
                     <table class="table table-striped ">
                         <thead>
                         <tr>

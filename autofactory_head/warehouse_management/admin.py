@@ -60,9 +60,9 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 class PalletCollectOperationAdmin(admin.ModelAdmin):
     list_filter = (('date', DateRangeFilter), 'type_collect')
     list_display = (
-        'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source', 'parent_task',
+        'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
-    search_fields = ('guid', 'parent_task__guid')
+    search_fields = ('guid', 'parent_task')
     ordering = ('-date',)
 
 

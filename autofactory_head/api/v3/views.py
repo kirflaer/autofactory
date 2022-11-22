@@ -4,13 +4,16 @@ from rest_framework import generics, status
 
 from rest_framework.response import Response
 
+import api.v1.views
 import api.views as api_views
 import api.v3.serializers as api_serializers
+from api.v3.routers import get_task_router
 
 from api.v3.services import load_manual_marks, load_offline_marking_data
 from factory_core.models import Shift
 
 from packing.models import MarkingOperation
+from tasks.task_services import RouterTask
 
 
 class ShiftListViewSet(generics.ListAPIView):
@@ -76,3 +79,10 @@ class MarkingViewSet(api_views.MarkingViewSet):
             instance.save()
 
             load_manual_marks(instance, validated_data)
+
+
+class TasksViewSet(api.v1.views.TasksViewSet):
+
+    def get_routers(self) -> dict[str: RouterTask]:
+        parent_routers = super().get_routers()
+        return parent_routers | get_task_router()

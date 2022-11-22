@@ -16,7 +16,7 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
-                                         InventoryOperation, PalletStatus)
+                                         InventoryOperation, PalletStatus, TypeCollect, SelectionOperation)
 
 User = get_user_model()
 
@@ -92,14 +92,35 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         direction = Direction.objects.filter(external_key=element['direction']).first()
         operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source)
 
-        pallets = create_pallets(element['pallets'], user, operation)
-        for pallet in pallets:
-            child_operation = PalletCollectOperation.objects.create(type_collect=PalletCollectOperation.SHIPMENT,
-                                                                    parent_task=operation)
-            fill_operation_pallets(child_operation, (pallet,))
-
+        _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SHIPMENT)
         result.append(operation.guid)
     return result
+
+
+@transaction.atomic
+def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию отборп со склада"""
+    result = []
+    for element in serializer_data:
+        external_source = get_or_create_external_source(element)
+        task = SelectionOperation.objects.filter(external_source=external_source).first()
+        if task is not None:
+            continue
+        operation = SelectionOperation.objects.create(user=user, external_source=external_source)
+
+        _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SELECTION)
+        result.append(operation.guid)
+    return result
+
+
+def _create_child_task_shipment(pallets_data: Iterable[dict[str: str]], user: User, operation: Task,
+                                type_collect: TypeCollect) -> None:
+    """ Создает операцию отгрузки либо отбора с дочерней операцией сбора паллет со склада"""
+    pallets = create_pallets(pallets_data, user, operation)
+    for pallet in pallets:
+        child_operation = PalletCollectOperation.objects.create(type_collect=type_collect,
+                                                                parent_task=operation.pk)
+        fill_operation_pallets(child_operation, (pallet,))
 
 
 @transaction.atomic

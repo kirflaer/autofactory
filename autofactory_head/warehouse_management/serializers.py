@@ -8,7 +8,8 @@ from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation)
+                                         PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
+                                         SelectionOperation)
 from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info
 
 
@@ -318,10 +319,11 @@ class ShipmentOperationWriteSerializer(serializers.ModelSerializer):
     direction = serializers.CharField()
     external_source = ExternalSerializer()
     pallets = PalletWriteSerializer(many=True)
+    has_selection = serializers.BooleanField(required=False)
 
     class Meta:
         model = ShipmentOperation
-        fields = ('direction', 'external_source', 'pallets')
+        fields = ('direction', 'external_source', 'pallets', 'has_selection')
 
 
 class ShipmentOperationReadSerializer(serializers.ModelSerializer):
@@ -332,7 +334,7 @@ class ShipmentOperationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShipmentOperation
-        fields = ('direction_name', 'date', 'number', 'guid', 'external_key')
+        fields = ('direction_name', 'date', 'number', 'guid', 'external_key', 'has_selection')
 
 
 class PalletShipmentSerializer(serializers.ModelSerializer):
@@ -448,3 +450,22 @@ class InventoryOperationReadSerializer(serializers.ModelSerializer):
         products = OperationProduct.objects.filter(operation=obj.guid)
         serializer = OperationInventoryProductsSerializer(products, many=True)
         return serializer.data
+
+
+class SelectionOperationReadSerializer(serializers.ModelSerializer):
+    date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
+    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
+
+    class Meta:
+        model = ShipmentOperation
+        fields = ('date', 'number', 'guid', 'external_key')
+
+
+class SelectionOperationWriteSerializer(serializers.ModelSerializer):
+    external_source = ExternalSerializer()
+    pallets = PalletWriteSerializer(many=True)
+
+    class Meta:
+        model = SelectionOperation
+        fields = ('external_source', 'pallets')

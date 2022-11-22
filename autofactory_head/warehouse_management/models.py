@@ -20,12 +20,19 @@ class PalletStatus(models.TextChoices):
     ARCHIVED = 'ARCHIVED'
     WAITED = 'WAITED'
     FOR_SHIPMENT = 'FOR_SHIPMENT'
+    SELECTED = 'SELECTED'
 
 
 class PalletType(models.TextChoices):
     SHIPPED = 'SHIPPED'
     FULLED = 'FULLED'
     COMBINED = 'COMBINED'
+
+
+class TypeCollect(models.TextChoices):
+    SHIPMENT = 'SHIPMENT'
+    ACCEPTANCE = 'ACCEPTANCE'
+    SELECTION = 'SELECTION'
 
 
 class Pallet(models.Model):
@@ -49,6 +56,7 @@ class Pallet(models.Model):
 
     # Для совместимости со второй версие везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
+    cell = models.ForeignKey(StorageCell, verbose_name='Ячейка', blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -164,23 +172,33 @@ class ShipmentOperation(OperationBaseOperation):
     type_task = 'SHIPMENT'
     direction = models.ForeignKey(Direction, on_delete=models.SET_NULL, null=True, blank=True,
                                   verbose_name='Направление')
+    has_selection = models.BooleanField('Есть отбор', default=False, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
         verbose_name_plural = 'Отгрузка со со склада (Заявка на завод)'
 
 
-class PalletCollectOperation(OperationBaseOperation):
-    type_task = 'PALLET_COLLECT'
+class SelectionOperation(OperationBaseOperation):
+    type_task = 'SELECTION'
     parent_task = models.ForeignKey(ShipmentOperation, on_delete=models.CASCADE, verbose_name='Родительское задание',
                                     null=True,
                                     blank=True)
 
-    SHIPMENT = 'SHIPMENT'
-    ACCEPTANCE = 'ACCEPTANCE'
+    class Meta:
+        verbose_name = 'Отбор со склада'
+        verbose_name_plural = 'Отбор со со склада (Заявка на завод)'
 
-    TYPE_COLLECT = ((SHIPMENT, SHIPMENT), (ACCEPTANCE, ACCEPTANCE),)
-    type_collect = models.CharField('Тип сбора', max_length=255, choices=TYPE_COLLECT, default=ACCEPTANCE)
+
+class PalletCollectOperation(OperationBaseOperation):
+    PARENT_TASK_TYPES = {'SHIPMENT': ShipmentOperation,
+                         'SELECTION': SelectionOperation}
+
+    type_task = 'PALLET_COLLECT'
+    parent_task = models.CharField('Родительское задание', null=True, blank=True, max_length=36)
+
+    type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
+                                    default=TypeCollect.ACCEPTANCE)
 
     class Meta:
         verbose_name = 'Сбор паллет'
@@ -188,11 +206,16 @@ class PalletCollectOperation(OperationBaseOperation):
 
     def close(self):
         super().close()
+        if self.parent_task is None:
+            return
+
         open_task_count = PalletCollectOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
             guid=self.guid).count()
+
         if not open_task_count:
-            self.parent_task.status = TaskStatus.CLOSE
-            self.parent_task.close()
+            instance = self.PARENT_TASK_TYPES[self.type_collect].objects.get(guid=self.parent_task)
+            instance.status = TaskStatus.CLOSE
+            instance.close()
 
 
 class OrderOperation(OperationBaseOperation):

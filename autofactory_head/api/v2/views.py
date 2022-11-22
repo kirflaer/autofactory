@@ -3,11 +3,12 @@ from json import JSONDecodeError
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from pydantic.error_wrappers import ValidationError
-from rest_framework import generics, status, filters, viewsets
+from rest_framework import generics, status, filters
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 import api.views
+from api.v1.views import TasksViewSet
 from api.v2.serializers import MarkingSerializer
 from api.v2.services import get_marks_to_unload
 from catalogs.models import ExternalSource
@@ -20,52 +21,6 @@ from warehouse_management.serializers import PalletReadSerializer, PalletWriteSe
 from warehouse_management.warehouse_services import create_pallets
 
 User = get_user_model()
-
-
-class TasksChangeViewSet(api.views.TasksViewSet):
-    def change_task(self, request, type_task, guid):
-        task_router = self.router.get(type_task.upper())
-        if not task_router:
-            raise APIException('Тип задачи не найден')
-
-        instance = task_router.task.objects.filter(guid=guid).first()
-        if instance is None:
-            external_source = ExternalSource.objects.filter(external_key=guid).first()
-            instance = task_router.task.objects.filter(external_source=external_source).first()
-
-        if instance is None:
-            raise APIException('Задача не найдена')
-
-        guid = instance.pk
-
-        try:
-            task_data = task_router.content_model(**request.data)
-        except TypeError:
-            raise APIException('Переданы некорректные данные, возможно указана некорректная базовая модель')
-        except JSONDecodeError:
-            raise APIException('Переданы некорректные данные, возможно не указана некорректная базовая модель')
-        except ValidationError:
-            raise APIException(
-                'Переданы некорректные данные, возможно не верно указаны значения передаваемых полей')
-
-        old_status = instance.status
-        if task_data.properties is not None:
-            change_task_properties(instance, task_data.__dict__['properties'])
-
-        instance = task_router.task.objects.get(guid=guid)
-
-        if old_status != instance.status and instance.user is None:
-            instance.user = request.user
-            instance.save()
-
-        if instance.status == TaskStatus.CLOSE and not instance.closed:
-            instance.close()
-
-        result = {'status': 'success'}
-        if task_data.content is not None:
-            result = task_router.change_content_function(task_data.__dict__['content'].__dict__, instance)
-
-        return Response(result)
 
 
 class MarksViewSet(api.views.MarksViewSet):
@@ -124,3 +79,49 @@ class MarkingListCreateViewSet(api.views.MarkingListCreateViewSet):
 class MarkingViewSet(api.views.MarkingViewSet):
     def close_marking(self, instance: MarkingOperation, validated_data: dict):
         marking_close(instance, validated_data)
+
+
+class TasksChangeViewSet(TasksViewSet):
+    def change_task(self, request, type_task, guid):
+        task_router = self.router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+
+        instance = task_router.task.objects.filter(guid=guid).first()
+        if instance is None:
+            external_source = ExternalSource.objects.filter(external_key=guid).first()
+            instance = task_router.task.objects.filter(external_source=external_source).first()
+
+        if instance is None:
+            raise APIException('Задача не найдена')
+
+        guid = instance.pk
+
+        try:
+            task_data = task_router.content_model(**request.data)
+        except TypeError:
+            raise APIException('Переданы некорректные данные, возможно указана некорректная базовая модель')
+        except JSONDecodeError:
+            raise APIException('Переданы некорректные данные, возможно не указана некорректная базовая модель')
+        except ValidationError:
+            raise APIException(
+                'Переданы некорректные данные, возможно не верно указаны значения передаваемых полей')
+
+        old_status = instance.status
+        if task_data.properties is not None:
+            change_task_properties(instance, task_data.__dict__['properties'])
+
+        instance = task_router.task.objects.get(guid=guid)
+
+        if old_status != instance.status and instance.user is None:
+            instance.user = request.user
+            instance.save()
+
+        if instance.status == TaskStatus.CLOSE and not instance.closed:
+            instance.close()
+
+        result = {'status': 'success'}
+        if task_data.content is not None:
+            result = task_router.change_content_function(task_data.__dict__['content'].__dict__, instance)
+
+        return Response(result)

@@ -104,6 +104,7 @@ class PalletWriteSerializer(serializers.Serializer):
     marking_group = serializers.CharField(required=False)
     shift = serializers.CharField(required=False)
     code_offline = serializers.CharField(required=False)
+    cell = serializers.CharField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):
@@ -119,6 +120,7 @@ class PalletReadSerializer(serializers.Serializer):
     guid = serializers.UUIDField()
     sources = serializers.SerializerMethodField()
     production_shop = serializers.SlugRelatedField(read_only=True, slug_field='pk')
+    cell = serializers.SlugRelatedField(read_only=True, slug_field='name')
     external_key = serializers.CharField(read_only=True)
     marking_group = serializers.CharField(required=False)
 

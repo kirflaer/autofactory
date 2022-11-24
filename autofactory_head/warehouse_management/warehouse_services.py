@@ -262,6 +262,12 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                 product = element['product']
             element['product'] = Product.objects.filter(guid=product).first()
 
+            if not element.get('cell'):
+                cell = None
+            else:
+                cell = element['cell']
+            element['cell'] = StorageCell.objects.filter(guid=cell).first()
+
             if not element.get('production_shop'):
                 production_shop = None
             else:

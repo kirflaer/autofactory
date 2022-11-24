@@ -40,6 +40,7 @@ def change_task_properties(instance: Task, properties: TaskProperties) -> None:
 def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
     """ Получает выборку из стандартного менеджера модели и сериализатор по типу задачи из роутера.
      В роутере содержатся модели наследуемые от Task """
+    transform_incoming_data(filter_task)
     queryset = task.objects.all()
 
     class_keys = set(dir(task)) | {'not_closed', 'only_close'}
@@ -69,6 +70,7 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
 def get_content_queryset(router: RouterContent, type_task: str, filter_object: dict[str: str]) -> QuerySet:
     """ Получает данные объектов по модели object_model из роутера. Фильтрация по любому полю модели объекта.
      Дополнительный фильтр по типу задания: класс - content_model """
+    transform_incoming_data(filter_object)
     objects_queryset = router.object_model.objects.all()
     class_keys = set(dir(router.object_model))
     filter_keys = set(filter_object.keys())
@@ -87,5 +89,12 @@ def get_content_queryset(router: RouterContent, type_task: str, filter_object: d
     return objects_queryset
 
 
+def transform_incoming_data(request_params: dict[str:str]) -> None:
+    for key, value in request_params.items():
+        if str(value).capitalize() == 'True' or str(value).capitalize() == 'False':
+            request_params[key] = bool(str(value).capitalize())
+
+
 class TaskException(Exception):
     """ Не возможно сформировать список заданий """
+    pass

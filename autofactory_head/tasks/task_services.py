@@ -92,7 +92,7 @@ def get_content_queryset(router: RouterContent, type_task: str, filter_object: d
 def transform_incoming_data(request_params: dict[str:str]) -> None:
     for key, value in request_params.items():
         if str(value).capitalize() == 'True' or str(value).capitalize() == 'False':
-            request_params[key] = bool(str(value).capitalize())
+            request_params[key] = str(value).capitalize()
 
 
 class TaskException(Exception):

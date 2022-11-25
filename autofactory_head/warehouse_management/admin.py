@@ -58,7 +58,7 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 
 @admin.register(PalletCollectOperation)
 class PalletCollectOperationAdmin(admin.ModelAdmin):
-    list_filter = (('date', DateRangeFilter), 'type_collect')
+    list_filter = (('date', DateRangeFilter), 'type_collect', 'ready_to_unload', 'unloaded')
     list_display = (
         'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')

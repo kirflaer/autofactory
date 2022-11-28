@@ -51,7 +51,7 @@ class OperationProductAdmin(admin.ModelAdmin):
 
 @admin.register(OperationCell)
 class OperationPalletAdmin(admin.ModelAdmin):
-    list_display = ('cell_source', 'cell_destination')
+    list_display = ('operation', 'cell_source', 'cell_destination')
     search_fields = ('operation',)
 
 
@@ -120,6 +120,6 @@ class InventoryOperationAdmin(admin.ModelAdmin):
 @admin.register(SelectionOperation)
 class SelectionOperationAdmin(admin.ModelAdmin):
     ordering = ('-date',)
-    list_filter = (('creation_date', DateRangeFilter), 'status')
+    list_filter = (('date', DateRangeFilter), 'status')
     list_display = (
         'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')

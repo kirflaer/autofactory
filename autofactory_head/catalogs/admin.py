@@ -87,3 +87,4 @@ class RegularExpressionAdmin(admin.ModelAdmin):
 @admin.register(StorageCell)
 class CellsAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid', 'external_key')
+    search_fields = ('external_key',)

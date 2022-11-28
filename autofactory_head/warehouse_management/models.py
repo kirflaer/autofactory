@@ -132,7 +132,7 @@ class OperationCell(ManyToManyOperationMixin):
     cell_source = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
                                     related_name='operation_cell')
     cell_destination = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,
-                                         verbose_name='Измененная ячейка')
+                                         verbose_name='Ячейка (назначение / измененная)')
 
     class Meta:
         verbose_name = 'Складские ячейки операции'

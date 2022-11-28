@@ -99,7 +99,7 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
 
 @transaction.atomic
 def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
-    """ Создает операцию отборп со склада"""
+    """ Создает операцию отбора со склада"""
     result = []
     for element in serializer_data:
         external_source = get_or_create_external_source(element)
@@ -108,7 +108,7 @@ def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: 
             continue
         operation = SelectionOperation.objects.create(user=user, external_source=external_source)
 
-        _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SELECTION)
+        fill_operation_cells(operation, [{'cell': cell} for cell in element['cells']])
         result.append(operation.guid)
     return result
 
@@ -350,19 +350,13 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         if cell is None:
             continue
 
-        product = Pallet.objects.filter(Q(external_key=element['pallet']) | Q(guid=element['pallet'])).first()
-        if product is None:
-            continue
-
         if element.get('cell_destination') is not None:
             cell_destination = StorageCell.objects.filter(
                 Q(external_key=element['cell_destination']) | Q(guid=element['cell_destination'])).first()
         else:
             cell_destination = None
 
-        count = 0 if element.get('count') is None else element['count']
-        operation_products = OperationCell.objects.create(cell_source=cell, count=count, product=product,
-                                                          cell_destination=cell_destination)
+        operation_products = OperationCell.objects.create(cell_source=cell, cell_destination=cell_destination)
         operation_products.fill_properties(operation)
 
 

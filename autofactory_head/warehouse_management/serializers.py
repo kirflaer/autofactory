@@ -174,10 +174,12 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 
 class PalletShortSerializer(serializers.ModelSerializer):
     product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
+    cell = serializers.SlugRelatedField(many=False, read_only=True, slug_field='name')
 
     class Meta:
         model = Pallet
-        fields = ('id', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group')
+        fields = (
+            'id', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group', 'cell')
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
@@ -458,16 +460,28 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
     date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
     number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
+    pallets = serializers.SerializerMethodField()
 
     class Meta:
-        model = ShipmentOperation
-        fields = ('date', 'number', 'guid', 'external_key')
+        model = SelectionOperation
+        fields = ('date', 'number', 'guid', 'external_key', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj):
+        cells = OperationCell.objects.filter(operation=obj.guid).values_list('cell_source', flat=True)
+
+        if not cells.count():
+            return []
+
+        pallets = Pallet.objects.filter(cell__in=cells, status=PalletStatus.CONFIRMED)
+        serializer = PalletShortSerializer(pallets, many=True)
+        return serializer.data
 
 
 class SelectionOperationWriteSerializer(serializers.ModelSerializer):
     external_source = ExternalSerializer()
-    pallets = PalletWriteSerializer(many=True)
+    cells = serializers.ListField()
 
     class Meta:
         model = SelectionOperation
-        fields = ('external_source', 'pallets')
+        fields = ('external_source', 'cells')

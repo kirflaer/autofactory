@@ -12,7 +12,7 @@ from warehouse_management.models import (
     ShipmentOperation,
     PalletProduct,
     OrderOperation,
-    PalletSource, ArrivalAtStockOperation, InventoryOperation
+    PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation
 )
 
 
@@ -43,9 +43,15 @@ class OperationPalletAdmin(admin.ModelAdmin):
 
 
 @admin.register(OperationProduct)
-class OperationPalletAdmin(admin.ModelAdmin):
+class OperationProductAdmin(admin.ModelAdmin):
     list_display = ('product', 'type_operation', 'external_source')
     list_filter = ('type_operation',)
+    search_fields = ('operation',)
+
+
+@admin.register(OperationCell)
+class OperationPalletAdmin(admin.ModelAdmin):
+    list_display = ('cell_source', 'cell_destination')
     search_fields = ('operation',)
 
 
@@ -88,7 +94,8 @@ class ShipmentOperationAdmin(admin.ModelAdmin):
 @admin.register(OrderOperation)
 class OrderOperationAdmin(admin.ModelAdmin):
     list_display = (
-        'date', 'guid', 'user', 'number', 'parent_task', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+        'date', 'guid', 'user', 'number', 'parent_task', 'external_source', 'status', 'closed', 'ready_to_unload',
+        'unloaded')
 
 
 @admin.register(PalletProduct)
@@ -98,7 +105,7 @@ class PalletProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(ArrivalAtStockOperation)
-class AcceptanceOperationAdmin(admin.ModelAdmin):
+class ArrivalAtStockOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'storage', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
@@ -108,3 +115,11 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 class InventoryOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(SelectionOperation)
+class SelectionOperationAdmin(admin.ModelAdmin):
+    ordering = ('-date',)
+    list_filter = (('creation_date', DateRangeFilter), 'status')
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')

@@ -11,6 +11,7 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
                                          SelectionOperation)
 from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info
+from datetime import datetime as dt
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -458,14 +459,23 @@ class InventoryOperationReadSerializer(serializers.ModelSerializer):
 
 
 class SelectionOperationReadSerializer(serializers.ModelSerializer):
-    date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
+    date = serializers.SerializerMethodField()
     number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     pallets = serializers.SerializerMethodField()
 
     class Meta:
         model = SelectionOperation
-        fields = ('status', 'date', 'number', 'guid', 'external_key', 'pallets')
+        fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'pallets')
+
+    @staticmethod
+    def get_date(obj):
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%m.%d.%Y %H:%M:%S')
+        except ValueError:
+            date = obj.external_source.date
+        return date
 
     @staticmethod
     def get_pallets(obj):

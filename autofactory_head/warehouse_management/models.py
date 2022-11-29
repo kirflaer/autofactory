@@ -176,7 +176,7 @@ class ShipmentOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
-        verbose_name_plural = 'Отгрузка со со склада (Заявка на завод)'
+        verbose_name_plural = 'Отгрузка со склада (Заявка на завод)'
 
 
 class SelectionOperation(OperationBaseOperation):
@@ -187,7 +187,7 @@ class SelectionOperation(OperationBaseOperation):
 
     class Meta:
         verbose_name = 'Отбор со склада'
-        verbose_name_plural = 'Отбор со со склада (Заявка на завод)'
+        verbose_name_plural = 'Отбор со склада (Заявка на завод)'
 
 
 class PalletCollectOperation(OperationBaseOperation):

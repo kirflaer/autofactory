@@ -108,7 +108,7 @@ def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: 
         if task is not None:
             result.append(task.guid)
             continue
-        operation = SelectionOperation.objects.create(user=user, external_source=external_source)
+        operation = SelectionOperation.objects.create(external_source=external_source)
 
         fill_operation_cells(operation, [{'cell': cell} for cell in element['cells']])
         result.append(operation.guid)

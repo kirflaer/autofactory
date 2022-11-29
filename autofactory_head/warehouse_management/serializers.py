@@ -463,6 +463,7 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
     number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     pallets = serializers.SerializerMethodField()
+    user = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         model = SelectionOperation

@@ -465,7 +465,7 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SelectionOperation
-        fields = ('date', 'number', 'guid', 'external_key', 'pallets')
+        fields = ('status', 'date', 'number', 'guid', 'external_key', 'pallets')
 
     @staticmethod
     def get_pallets(obj):

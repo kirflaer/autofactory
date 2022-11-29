@@ -473,7 +473,7 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
     def get_date(obj):
         try:
             date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
-            date = date.strftime('%m.%d.%Y %H:%M:%S')
+            date = date.strftime('%d.%m.%Y %H:%M:%S')
         except ValueError:
             date = obj.external_source.date
         return date

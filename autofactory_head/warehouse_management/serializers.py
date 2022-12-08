@@ -485,7 +485,7 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
         if not cells.count():
             return []
 
-        pallets = Pallet.objects.filter(cell__in=cells, status=PalletStatus.CONFIRMED)
+        pallets = Pallet.objects.filter(cell__in=cells)
         serializer = PalletShortSerializer(pallets, many=True)
         return serializer.data
 

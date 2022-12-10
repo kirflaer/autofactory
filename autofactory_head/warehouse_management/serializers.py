@@ -288,7 +288,7 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
         for element in cells:
             result.append(
                 {'cell_source': element.cell_source.guid if element.cell_source is not None else None,
-                 'cell_destination': element.cell_destination.guid if element.cell_destination is not None else None,
+                 'cell_destination': element.cell_destination.external_key if element.cell_destination is not None else None,
                  'pallet': element.pallet.guid if element.pallet is not None else None
                  })
         return result

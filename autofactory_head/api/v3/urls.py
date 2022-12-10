@@ -5,8 +5,8 @@ from api.v3.views import (ShiftListViewSet, ShiftUpdateView, MarkingOnLineViewSe
                           TasksViewSet)
 
 urlpatterns = [
-    path('tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('tasks/<str:type_task>/<uuid:guid>/', TasksViewSet.as_view({'patch': 'change_task'})),
+    path('tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
     path('marking/', MarkingOnLineViewSet.as_view()),
     path('marking/<uuid:pk>/', MarkingViewSet.as_view({'put': 'close'})),
     path('marking/offline/', MarkingOffLineViewSet.as_view()),

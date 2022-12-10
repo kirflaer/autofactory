@@ -51,7 +51,7 @@ class OperationProductAdmin(admin.ModelAdmin):
 
 @admin.register(OperationCell)
 class OperationPalletAdmin(admin.ModelAdmin):
-    list_display = ('operation', 'cell_source', 'cell_destination')
+    list_display = ('operation', 'cell_source', 'cell_destination', 'pallet')
     search_fields = ('operation',)
 
 

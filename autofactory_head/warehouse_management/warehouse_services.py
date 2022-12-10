@@ -358,8 +358,13 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         else:
             cell_destination = None
 
-        operation_products = OperationCell.objects.create(cell_source=cell, cell_destination=cell_destination)
-        operation_products.fill_properties(operation)
+        if element.get('pallet') is not None:
+            pallet = Pallet.objects.filter(id=element['pallet']).first()
+        else:
+            pallet = None
+        operation_cell = OperationCell.objects.create(cell_source=cell, cell_destination=cell_destination,
+                                                      pallet=pallet)
+        operation_cell.fill_properties(operation)
 
 
 def get_or_create_external_source(raw_data=dict[str: str], field_name='external_source') -> ExternalSource:
@@ -376,15 +381,12 @@ def get_or_create_external_source(raw_data=dict[str: str], field_name='external_
 def change_content_placement_operation(content: dict[str: str], instance: PlacementToCellsOperation) -> str:
     """ Изменяет содержимое операции размещение в ячейках"""
     for element in content['cells']:
-        pass
-        # cell_row = OperationCell.objects.filter(operation=instance.guid, product__guid=element.product,
-        #                                         cell__guid=element.changed_cell).first()
-        # if cell_row is None:
-        #     continue
-        #
-        # cell_row.changed_cell = cell_row.cell
-        # cell_row.cell = StorageCell.objects.filter(guid=element.cell).first()
-        # cell_row.save()
+        cell_row = OperationCell.objects.filter(operation=instance.guid, cell_source=element.cell_source).first()
+        if cell_row is None:
+            continue
+
+        cell_row.cell_destination = StorageCell.objects.filter(guid=element.cell_destination).first()
+        cell_row.save()
     return instance.guid
 
 

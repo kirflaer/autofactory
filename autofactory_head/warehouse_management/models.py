@@ -286,9 +286,8 @@ class InventoryOperation(OperationBaseOperation):
 
 @dataclass
 class CellContent:
-    cell: str
-    changed_cell: str
-    product: str
+    cell_source: str
+    cell_destination: str
 
 
 @dataclass

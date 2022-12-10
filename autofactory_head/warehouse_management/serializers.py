@@ -162,9 +162,6 @@ class OperationCellsSerializer(serializers.Serializer):
     cell = serializers.CharField()
     count = serializers.FloatField(required=False)
 
-    class Meta:
-        fields = ('product', 'cell', 'count')
-
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
     pallets = PalletWriteSerializer(many=True)
@@ -292,7 +289,6 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
             result.append(
                 {'cell_source': element.cell_source.guid if element.cell_source is not None else None,
                  'cell_destination': element.cell_destination.guid if element.cell_destination is not None else None,
-                 'count': element.count,
                  'pallet': element.pallet.guid if element.pallet is not None else None
                  })
         return result

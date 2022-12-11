@@ -21,6 +21,7 @@ class PalletStatus(models.TextChoices):
     WAITED = 'WAITED'
     FOR_SHIPMENT = 'FOR_SHIPMENT'
     SELECTED = 'SELECTED'
+    PLACED = 'PLACED'
 
 
 class PalletType(models.TextChoices):

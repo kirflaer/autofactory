@@ -2,7 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
-from api.serializers import StorageSerializer
+from api.serializers import StorageSerializer, StorageCellsSerializer
 from catalogs.models import ExternalSource, Product
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
@@ -267,6 +267,16 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
         return result
 
 
+class OperationCellFullSerializer(serializers.ModelSerializer):
+    pallet = PalletShortSerializer()
+    cell_source = StorageCellsSerializer()
+    cell_destination = StorageCellsSerializer(required=False)
+
+    class Meta:
+        model = OperationCell
+        fields = ('cell_source', 'cell_destination', 'pallet')
+
+
 class PlacementToCellsOperationWriteSerializer(OperationBaseSerializer):
     cells = OperationCellsSerializer(many=True)
     storage = serializers.CharField(required=False)
@@ -284,14 +294,8 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_cells(obj):
         cells = OperationCell.objects.filter(operation=obj.guid)
-        result = []
-        for element in cells:
-            result.append(
-                {'cell_source': element.cell_source.guid if element.cell_source is not None else None,
-                 'cell_destination': element.cell_destination.external_key if element.cell_destination is not None else None,
-                 'pallet': element.pallet.guid if element.pallet is not None else None
-                 })
-        return result
+        serializer = OperationCellFullSerializer(cells, many=True)
+        return serializer.data
 
 
 class MovementCellContent(serializers.Serializer):

@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -297,7 +297,7 @@ class PlacementToCellsContent:
 
 
 class PlacementToCellsTask(TaskBaseModel):
-    content: PlacementToCellsContent
+    content: Optional[PlacementToCellsContent] = None
 
 
 @dataclass

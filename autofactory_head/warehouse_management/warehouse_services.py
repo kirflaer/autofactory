@@ -381,11 +381,12 @@ def get_or_create_external_source(raw_data=dict[str: str], field_name='external_
 def change_content_placement_operation(content: dict[str: str], instance: PlacementToCellsOperation) -> str:
     """ Изменяет содержимое операции размещение в ячейках"""
     for element in content['cells']:
-        cell_row = OperationCell.objects.filter(operation=instance.guid, cell_source=element.cell_source).first()
+        cell_row = OperationCell.objects.filter(operation=instance.guid,
+                                                cell_source__external_key=element.cell_source).first()
         if cell_row is None:
             continue
 
-        cell_row.cell_destination = StorageCell.objects.filter(guid=element.cell_destination).first()
+        cell_row.cell_destination = StorageCell.objects.filter(external_key=element.cell_destination).first()
         cell_row.save()
     return instance.guid
 

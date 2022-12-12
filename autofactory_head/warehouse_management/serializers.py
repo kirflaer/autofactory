@@ -268,7 +268,7 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
 
 
 class OperationCellFullSerializer(serializers.ModelSerializer):
-    pallet = PalletShortSerializer()
+    pallet = PalletReadSerializer()
     cell_source = StorageCellsSerializer()
     cell_destination = StorageCellsSerializer(required=False)
 

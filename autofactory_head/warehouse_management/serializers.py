@@ -286,10 +286,11 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
     storage = StorageSerializer()
     date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
     cells = serializers.SerializerMethodField()
+    external_source = ExternalSerializer()
 
     class Meta:
         model = PlacementToCellsOperation
-        fields = ('guid', 'number', 'status', 'date', 'storage', 'cells')
+        fields = ('external_source', 'guid', 'number', 'status', 'date', 'storage', 'cells')
 
     @staticmethod
     def get_cells(obj):

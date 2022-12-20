@@ -111,13 +111,18 @@ def marking_pallets_detail(request, operation, pallet):
 @login_required
 def marking_detail(request, pk):
     operation = get_object_or_404(MarkingOperation, pk=pk)
-    marks = MarkingOperationMark.objects.all().filter(operation=operation).order_by('product')[:100]
+    marks = MarkingOperationMark.objects.all().filter(operation=operation).order_by('product')
 
+    if len(request.GET) and request.GET.get('mark') is not None:
+        marks = marks.filter(mark__startswith=request.GET.get('mark'))
+
+    marks = marks[:100]
     paginator = Paginator(marks, 30)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'marking_detail.html', {'page_obj': page_obj, 'paginator': paginator})
+    return render(request, 'marking_detail.html',
+                  {'page_obj': page_obj, 'paginator': paginator, 'pk': pk, 'mark': request.GET.get('mark')})
 
 
 class ShiftListView(OperationBasicListView):

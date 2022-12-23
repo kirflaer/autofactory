@@ -10,11 +10,11 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 from catalogs.models import (ActivationKey, Department, Device, Direction, Line, LineProduct, Organization, Product,
-                             RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell)
+                             RegularExpression, Storage, TypeFactoryOperation, Unit)
 from packing.marking_services import create_marking_marks, remove_marks
 from packing.models import MarkingOperation, RawMark
 from tasks.task_services import TaskException, get_content_queryset
-from warehouse_management.models import Pallet, PalletStatus
+from warehouse_management.models import Pallet, PalletStatus, StorageCell
 from warehouse_management.serializers import PalletReadSerializer, PalletUpdateSerializer
 
 from api.exceptions import ActivationFailed

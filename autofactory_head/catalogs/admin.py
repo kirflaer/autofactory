@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import (ActivationKey, Client, Department, Device, Direction,
                      Line, LineProduct, Log, Organization, Product,
-                     RegularExpression, Storage, TypeFactoryOperation, Unit, StorageCell, ExternalSource)
+                     RegularExpression, Storage, TypeFactoryOperation, Unit, ExternalSource)
 
 
 @admin.register(ExternalSource)
@@ -20,7 +20,7 @@ class ActivationKeyAdmin(admin.ModelAdmin):
 @admin.register(Log)
 class LogAdmin(admin.ModelAdmin):
     list_display = ('date', 'device', 'username', 'app_version', 'server_version')
-    search_fields = ('username', )
+    search_fields = ('username',)
 
 
 @admin.register(TypeFactoryOperation)
@@ -82,9 +82,3 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(RegularExpression)
 class RegularExpressionAdmin(admin.ModelAdmin):
     list_display = ('value', 'type_expression')
-
-
-@admin.register(StorageCell)
-class CellsAdmin(admin.ModelAdmin):
-    list_display = ('name', 'guid', 'external_key')
-    search_fields = ('external_key', 'name')

@@ -121,7 +121,6 @@ class PalletReadSerializer(serializers.Serializer):
     guid = serializers.UUIDField()
     sources = serializers.SerializerMethodField()
     production_shop = serializers.SlugRelatedField(read_only=True, slug_field='pk')
-    cell = serializers.SlugRelatedField(read_only=True, slug_field='name')
     external_key = serializers.CharField(read_only=True)
     marking_group = serializers.CharField(required=False)
 
@@ -161,6 +160,7 @@ class OperationCellsSerializer(serializers.Serializer):
     pallet = serializers.CharField()
     cell = serializers.CharField()
     count = serializers.FloatField(required=False)
+    cell_destination = serializers.CharField(required=False)
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -172,13 +172,11 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 
 class PalletShortSerializer(serializers.ModelSerializer):
     product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
-    cell = serializers.SlugRelatedField(many=False, read_only=True, slug_field='name')
 
     class Meta:
         model = Pallet
         fields = (
-            'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group',
-            'cell')
+            'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group')
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
@@ -463,12 +461,12 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
     number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
-    pallets = serializers.SerializerMethodField()
+    storage_areas = serializers.SerializerMethodField()
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         model = SelectionOperation
-        fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'pallets')
+        fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'storage_areas')
 
     @staticmethod
     def get_date(obj):
@@ -480,20 +478,27 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
         return date
 
     @staticmethod
-    def get_pallets(obj):
-        cells = OperationCell.objects.filter(operation=obj.guid).values_list('cell_source', flat=True)
+    def get_storage_areas(obj):
+        operation_cells = OperationCell.objects.filter(operation=obj.guid)
+        storage_areas = {key: [] for key in
+                         list(operation_cells.values_list('cell_source__storage_area__name', flat=True).distinct())}
 
-        if not cells.count():
-            return []
+        for row in operation_cells:
+            area = storage_areas.get(row.cell_source.storage_area.name)
+            cell_source = StorageCellsSerializer(row.cell_source)
+            cell_destination = StorageCellsSerializer(row.cell_destination)
+            pallet = PalletReadSerializer(row.pallet)
+            pallet_in_area = {'cell_source': cell_source.data,
+                              'cell_destination': cell_destination.data,
+                              'pallet': pallet.data}
+            area.append(pallet_in_area)
 
-        pallets = Pallet.objects.filter(cell__in=cells)
-        serializer = PalletShortSerializer(pallets, many=True)
-        return serializer.data
+        return [{'name': key, 'pallets': value} for key, value in storage_areas.items()]
 
 
 class SelectionOperationWriteSerializer(serializers.ModelSerializer):
     external_source = ExternalSerializer()
-    cells = serializers.ListField()
+    cells = OperationCellsSerializer(many=True)
 
     class Meta:
         model = SelectionOperation

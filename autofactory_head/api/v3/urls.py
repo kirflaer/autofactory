@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from api.v3.views import (ShiftListViewSet, ShiftUpdateView, MarkingOnLineViewSet, MarkingOffLineViewSet,
                           MarkingViewSet,
-                          TasksViewSet)
+                          TasksViewSet, StorageAreaListCreateViewSet)
 
 urlpatterns = [
     path('tasks/<str:type_task>/<uuid:guid>/', TasksViewSet.as_view({'patch': 'change_task'})),
@@ -12,5 +12,6 @@ urlpatterns = [
     path('marking/offline/', MarkingOffLineViewSet.as_view()),
     path('shifts/', ShiftListViewSet.as_view()),
     path('shifts/<uuid:pk>/', ShiftUpdateView.as_view()),
+    path('area/', StorageAreaListCreateViewSet.as_view()),
     path('', include('api.v2.urls')),
 ]

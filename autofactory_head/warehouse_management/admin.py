@@ -12,7 +12,8 @@ from warehouse_management.models import (
     ShipmentOperation,
     PalletProduct,
     OrderOperation,
-    PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation
+    PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
+    StorageArea
 )
 
 
@@ -123,3 +124,14 @@ class SelectionOperationAdmin(admin.ModelAdmin):
     list_filter = (('date', DateRangeFilter), 'status')
     list_display = (
         'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(StorageCell)
+class CellsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'guid', 'external_key')
+    search_fields = ('external_key', 'name')
+
+
+@admin.register(StorageArea)
+class StorageAreaAdmin(admin.ModelAdmin):
+    list_display = ('name', 'guid', 'external_key')

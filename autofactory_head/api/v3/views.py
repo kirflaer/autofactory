@@ -13,6 +13,7 @@ from factory_core.models import Shift
 
 from packing.models import MarkingOperation
 from tasks.task_services import RouterTask
+from warehouse_management.models import StorageArea
 
 
 class ShiftListViewSet(generics.ListAPIView):
@@ -84,3 +85,16 @@ class TasksViewSet(TasksChangeViewSet):
     def get_routers(self) -> dict[str: RouterTask]:
         parent_routers = super().get_routers()
         return parent_routers | get_task_router()
+
+
+class StorageAreaListCreateViewSet(generics.ListCreateAPIView):
+    """Список и создание складских ячеек"""
+    queryset = StorageArea.objects.all()
+    serializer_class = api_serializers.StorageAreaSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.META['REQUEST_METHOD'] == 'GET':
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return api_serializers.StorageAreaSerializer(data=self.request.data, many=True)
+

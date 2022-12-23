@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from pydantic.dataclasses import dataclass
 
-from catalogs.models import Product, Storage, StorageCell, Direction, Client
+from catalogs.models import Product, Storage, Direction, Client, BaseExternalModel
 from factory_core.models import OperationBaseModel, Shift
 from tasks.models import Task, TaskBaseModel, TaskStatus
 
@@ -22,6 +22,7 @@ class PalletStatus(models.TextChoices):
     FOR_SHIPMENT = 'FOR_SHIPMENT'
     SELECTED = 'SELECTED'
     PLACED = 'PLACED'
+    FOR_REPACKING = 'FOR_REPACKING'
 
 
 class PalletType(models.TextChoices):
@@ -34,6 +35,30 @@ class TypeCollect(models.TextChoices):
     SHIPMENT = 'SHIPMENT'
     ACCEPTANCE = 'ACCEPTANCE'
     SELECTION = 'SELECTION'
+
+
+class StatusCellContent(models.TextChoices):
+    PLACED = 'PLACED'
+    REMOVED = 'REMOVED'
+
+
+class StorageArea(BaseExternalModel):
+    new_status_on_admission = models.CharField('Статус', max_length=20, choices=PalletStatus.choices,
+                                               default=PalletStatus.SELECTED)
+
+    class Meta:
+        verbose_name = 'Область хранения'
+        verbose_name_plural = 'Области хранения'
+
+
+class StorageCell(BaseExternalModel):
+    barcode = models.CharField('Штрихкод', max_length=100, default='-')
+    storage_area = models.ForeignKey(StorageArea, verbose_name='Область хранения', null=True, blank=True,
+                                     on_delete=models.SET_NULL)
+
+    class Meta:
+        verbose_name = 'Складская ячейка'
+        verbose_name_plural = 'Складские ячейки'
 
 
 class Pallet(models.Model):
@@ -57,7 +82,6 @@ class Pallet(models.Model):
 
     # Для совместимости со второй версие везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
-    cell = models.ForeignKey(StorageCell, verbose_name='Ячейка', blank=True, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -283,6 +307,14 @@ class InventoryOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Инвентаризация'
         verbose_name_plural = 'Инвентаризация'
+
+
+class StorageCellContentState(models.model):
+    creating_date = models.DateTimeField('Дата создания', auto_now_add=True)
+    cell = models.ForeignKey(StorageCell, verbose_name='Ячейка', on_delete=models.CASCADE)
+    pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)
+    status = models.CharField('Статус', max_length=20, choices=StatusCellContent.choices,
+                              default=StatusCellContent.PLACED)
 
 
 @dataclass

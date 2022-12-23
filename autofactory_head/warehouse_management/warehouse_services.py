@@ -7,7 +7,7 @@ from django.db.models import Q, Sum
 from dateutil import parser
 from rest_framework.exceptions import APIException
 
-from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
+from catalogs.models import ExternalSource, Product, Storage, Direction, Client
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
@@ -16,7 +16,8 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
-                                         InventoryOperation, PalletStatus, TypeCollect, SelectionOperation)
+                                         InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
+                                         StorageCellContentState)
 
 User = get_user_model()
 
@@ -110,7 +111,7 @@ def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: 
             continue
         operation = SelectionOperation.objects.create(external_source=external_source)
 
-        fill_operation_cells(operation, [{'cell': cell} for cell in element['cells']])
+        fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
     return result
 
@@ -162,6 +163,7 @@ def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: 
         storage = Storage.objects.filter(external_key=element['storage']).first()
         operation = PlacementToCellsOperation.objects.create(storage=storage, external_source=external_source)
         fill_operation_cells(operation, element['cells'])
+
         result.append(operation.guid)
     return result
 

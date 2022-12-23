@@ -3,12 +3,12 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from catalogs.models import (Client, Department, Device, Direction, Line, Log, Organization, Product, RegularExpression,
-                             Storage, TypeFactoryOperation, Unit, StorageCell)
+                             Storage, TypeFactoryOperation, Unit)
 from factory_core.models import Shift, ShiftProduct
 from packing.marking_services import get_base64_string
 from packing.models import MarkingOperation
 from users.models import Setting
-from warehouse_management.models import PalletContent, Pallet
+from warehouse_management.models import PalletContent, Pallet, StorageCell, StorageArea
 
 User = get_user_model()
 
@@ -220,10 +220,19 @@ class RegularExpressionSerializer(serializers.ModelSerializer):
 
 
 class StorageCellsSerializer(serializers.ModelSerializer):
+    storage_area = serializers.CharField(required=False)
+
     class Meta:
-        fields = ('guid', 'name', 'external_key', 'barcode')
+        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area')
         model = StorageCell
         read_only_fields = ('guid',)
+
+    def create(self, validated_data):
+        storage_area_key = validated_data.pop('storage_area')
+        storage_area = StorageArea.objects.filter(external_key=storage_area_key).first()
+        validated_data['storage_area'] = storage_area
+        cell = StorageCell.objects.create(**validated_data)
+        return cell
 
 
 class AggregationsSerializer(serializers.Serializer):

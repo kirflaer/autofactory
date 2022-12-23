@@ -175,6 +175,14 @@ class AcceptanceOperation(OperationBaseOperation):
         verbose_name_plural = 'Приемка товаров (Заказ на перемещение)'
 
 
+class StorageCellContentState(models.Model):
+    creating_date = models.DateTimeField('Дата создания', auto_now_add=True)
+    cell = models.ForeignKey(StorageCell, verbose_name='Ячейка', on_delete=models.CASCADE)
+    pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)
+    status = models.CharField('Статус', max_length=20, choices=StatusCellContent.choices,
+                              default=StatusCellContent.PLACED)
+
+
 class PlacementToCellsOperation(OperationBaseOperation):
     type_task = 'PLACEMENT_TO_CELLS'
     storage = models.ForeignKey(Storage, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Склад')
@@ -182,6 +190,13 @@ class PlacementToCellsOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Размещение в ячейки'
         verbose_name_plural = 'Размещения в ячейки'
+
+    def close(self):
+        cells = OperationCell.objects.filter(operation=self.guid)
+        for row in cells:
+            cell = row.cell_source if not row.cell_destination else row.cell_destination
+            StorageCellContentState.objects.create(pallet=row.pallet, cell=cell)
+        super().close()
 
 
 class MovementBetweenCellsOperation(OperationBaseOperation):
@@ -307,14 +322,6 @@ class InventoryOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Инвентаризация'
         verbose_name_plural = 'Инвентаризация'
-
-
-class StorageCellContentState(models.Model):
-    creating_date = models.DateTimeField('Дата создания', auto_now_add=True)
-    cell = models.ForeignKey(StorageCell, verbose_name='Ячейка', on_delete=models.CASCADE)
-    pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)
-    status = models.CharField('Статус', max_length=20, choices=StatusCellContent.choices,
-                              default=StatusCellContent.PLACED)
 
 
 @dataclass

@@ -309,7 +309,7 @@ class InventoryOperation(OperationBaseOperation):
         verbose_name_plural = 'Инвентаризация'
 
 
-class StorageCellContentState(models.model):
+class StorageCellContentState(models.Model):
     creating_date = models.DateTimeField('Дата создания', auto_now_add=True)
     cell = models.ForeignKey(StorageCell, verbose_name='Ячейка', on_delete=models.CASCADE)
     pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)

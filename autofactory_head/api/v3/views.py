@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
@@ -9,8 +10,11 @@ import api.v3.serializers as api_serializers
 
 from api.v3.services import load_manual_marks, load_offline_marking_data
 from factory_core.models import Shift
+from packing.marking_services import create_marking_marks, clear_raw_marks
 
 from packing.models import MarkingOperation
+
+User = get_user_model()
 
 
 class ShiftListViewSet(generics.ListAPIView):
@@ -75,4 +79,8 @@ class MarkingViewSet(api_views.MarkingViewSet):
             instance.group = instance.shift.guid
             instance.save()
 
-            load_manual_marks(instance, validated_data)
+            if self.request.user.role == User.VISION_OPERATOR:
+                create_marking_marks(instance, validated_data)
+                clear_raw_marks(instance)
+            else:
+                load_manual_marks(instance, validated_data)

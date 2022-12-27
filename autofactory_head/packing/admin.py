@@ -26,7 +26,7 @@ class ShiftAdmin(admin.ModelAdmin):
 @admin.register(RawMark)
 class RawMarkAdmin(admin.ModelAdmin):
     list_display = ('operation', 'mark')
-    list_filter = ('operation',)
+    search_fields = ('operation__guid',)
 
 
 @admin.register(MarkingOperation)

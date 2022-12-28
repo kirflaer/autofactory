@@ -21,6 +21,11 @@ def make_pallet_confirmed(model, request, queryset):
     queryset.update(status='CONFIRMED')
 
 
+@admin.action(description='Пометить задание как выгруженное')
+def make_task_unloaded(model, request, queryset):
+    queryset.update(unloaded=True)
+
+
 @admin.register(Pallet)
 class PalletAdmin(admin.ModelAdmin):
     list_display = ('creation_date', 'status', 'collector', 'product', 'id', 'external_key', 'guid')
@@ -51,9 +56,11 @@ class OperationPalletAdmin(admin.ModelAdmin):
 
 @admin.register(AcceptanceOperation)
 class AcceptanceOperationAdmin(admin.ModelAdmin):
+    list_filter = (('date', DateRangeFilter), 'unloaded', 'closed')
     list_display = (
         'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
+    actions = [make_task_unloaded]
 
 
 @admin.register(PalletCollectOperation)

@@ -176,7 +176,8 @@ class PalletShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pallet
         fields = (
-            'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group')
+            'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group',
+            'weight')
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):

@@ -1,4 +1,7 @@
-from rest_framework import status, viewsets
+import uuid
+
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets, generics
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
@@ -9,8 +12,8 @@ from tasks.models import TaskStatus
 from tasks.serializers import TaskPropertiesSerializer
 from tasks.task_services import change_task_properties, get_task_queryset, TaskException, get_content_queryset, \
     RouterTask
-from warehouse_management.models import Pallet
-from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer
+from warehouse_management.models import Pallet, PalletStatus
+from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer, PalletUpdateSerializer
 from warehouse_management.warehouse_services import create_pallets
 
 
@@ -140,3 +143,27 @@ class PalletViewSet(viewsets.ViewSet):
 
         serializer = PalletReadSerializer(queryset, many=True)
         return Response(serializer.data)
+
+
+class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
+    queryset = Pallet.objects.all().exclude(status=PalletStatus.ARCHIVED)
+    lookup_field = 'id'
+    adv_lookup_field = 'guid'
+    serializer_class = PalletReadSerializer
+
+    def get_serializer_class(self):
+        if self.request.stream is None:
+            return PalletReadSerializer
+        else:
+            return PalletUpdateSerializer
+
+    def get_object(self):
+
+        filter_value = self.kwargs[self.lookup_field]
+        try:
+            uuid.UUID(filter_value)
+        except ValueError:
+            return super().get_object()
+
+        filter_kwargs = {self.adv_lookup_field: self.kwargs[self.lookup_field]}
+        return get_object_or_404(self.queryset, **filter_kwargs)

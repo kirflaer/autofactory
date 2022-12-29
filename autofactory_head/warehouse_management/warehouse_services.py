@@ -17,7 +17,7 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
                                          InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
-                                         StorageCellContentState)
+                                         StorageCellContentState, StatusCellContent)
 
 User = get_user_model()
 
@@ -405,3 +405,18 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
         product_row.count_fact = element.fact
         product_row.save()
     return instance.guid
+
+
+@transaction.atomic
+def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
+    """ Меняет расположение паллеты в ячейке. Возвращает статус из области новой ячейки """
+    cell_source = StorageCell.objects.get(guid=content['cell_source'])
+    cell_destination = StorageCell.objects.get(guid=content['cell_destination'])
+    StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
+    StorageCellContentState.objects.create(cell=cell_destination, pallet=pallet)
+
+    new_status = cell_destination.storage_area.new_status_on_admission
+    pallet.status = new_status
+    pallet.save()
+
+    return new_status

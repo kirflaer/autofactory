@@ -9,7 +9,7 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
-                                         SelectionOperation)
+                                         SelectionOperation, StorageCellContentState, StatusCellContent, StorageCell)
 from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info
 from datetime import datetime as dt
 
@@ -123,11 +123,25 @@ class PalletReadSerializer(serializers.Serializer):
     production_shop = serializers.SlugRelatedField(read_only=True, slug_field='pk')
     external_key = serializers.CharField(read_only=True)
     marking_group = serializers.CharField(required=False)
+    cell = serializers.SerializerMethodField()
 
     @staticmethod
     def get_sources(obj):
         sources = PalletSource.objects.filter(pallet=obj)
         serializer = PalletSourceReadSerializer(sources, many=True)
+        return serializer.data
+
+    @staticmethod
+    def get_cell(obj):
+        if not StorageCellContentState.objects.filter(pallet=obj, status=StatusCellContent.PLACED).exists():
+            return None
+        change_state_row = StorageCellContentState.objects.filter(pallet=obj, status=StatusCellContent.PLACED).latest(
+            'creating_date')
+        last_state_row = StorageCellContentState.objects.filter(pallet=obj).latest('creating_date')
+        if change_state_row.pk != last_state_row.pk:
+            return None
+
+        serializer = StorageCellsSerializer(change_state_row.cell)
         return serializer.data
 
 
@@ -504,3 +518,17 @@ class SelectionOperationWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = SelectionOperation
         fields = ('external_source', 'cells')
+
+
+class ChangeCellSerializer(serializers.Serializer):
+    cell_source = serializers.CharField()
+    cell_destination = serializers.CharField()
+
+    def validate(self, attrs):
+        if not StorageCell.objects.filter(guid=attrs.get('cell_source')).first():
+            raise APIException('Не найдена ячейка источник')
+
+        if not StorageCell.objects.filter(guid=attrs.get('cell_destination')).first():
+            raise APIException('Не найдена ячейка назначения')
+
+        return super().validate(attrs)

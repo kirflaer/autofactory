@@ -1,6 +1,9 @@
+import uuid
+
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, status
+from rest_framework import generics, status, viewsets
+from rest_framework.exceptions import APIException
 
 from rest_framework.response import Response
 import api.views as api_views
@@ -13,7 +16,9 @@ from factory_core.models import Shift
 
 from packing.models import MarkingOperation
 from tasks.task_services import RouterTask
-from warehouse_management.models import StorageArea
+from warehouse_management.models import StorageArea, Pallet
+from warehouse_management.serializers import OperationCellsSerializer, ChangeCellSerializer
+from warehouse_management.warehouse_services import change_cell_content_state
 
 
 class ShiftListViewSet(generics.ListAPIView):
@@ -97,4 +102,27 @@ class StorageAreaListCreateViewSet(generics.ListCreateAPIView):
             return super().get_serializer(*args, **kwargs)
         else:
             return api_serializers.StorageAreaSerializer(data=self.request.data, many=True)
+
+
+class PalletViewSet(viewsets.ViewSet):
+    @staticmethod
+    def change_cell(request, pallet_id):
+
+        try:
+            guid = uuid.UUID(pallet_id)
+            filter_kwargs = {'guid': guid}
+        except ValueError:
+            filter_kwargs = {'id': pallet_id}
+
+        pallet = Pallet.objects.filter(**filter_kwargs).first()
+
+        if not pallet:
+            raise APIException('Паллета не найдена')
+
+        serializer = ChangeCellSerializer(data=request.data)
+        if serializer.is_valid():
+            new_status = change_cell_content_state(serializer.validated_data, pallet)
+            return Response({'status': new_status})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -274,30 +274,6 @@ class LogCreateViewSet(generics.CreateAPIView):
                         data=base64.b64decode(data))
 
 
-class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
-    queryset = Pallet.objects.all().exclude(status=PalletStatus.ARCHIVED)
-    lookup_field = 'id'
-    adv_lookup_field = 'guid'
-    serializer_class = PalletReadSerializer
-
-    def get_serializer_class(self):
-        if self.request.stream is None:
-            return PalletReadSerializer
-        else:
-            return PalletUpdateSerializer
-
-    def get_object(self):
-
-        filter_value = self.kwargs[self.lookup_field]
-        try:
-            uuid.UUID(filter_value)
-        except ValueError:
-            return super().get_object()
-
-        filter_kwargs = {self.adv_lookup_field: self.kwargs[self.lookup_field]}
-        return get_object_or_404(self.queryset, **filter_kwargs)
-
-
 class RegExpList(generics.ListAPIView):
     """Список организаций"""
     queryset = RegularExpression.objects.all()

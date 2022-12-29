@@ -1,7 +1,7 @@
 from django.urls import path, re_path, include
 
 from .views import (DepartmentList, DeviceViewSet, DirectionListCreateView, LineListCreateView, LogCreateViewSet,
-                    MarksViewSet, OrganizationList, PalletRetrieveUpdate,
+                    MarksViewSet, OrganizationList,
                     ProductViewSet, RegExpList, StorageList, TypeFactoryOperationViewSet,
                     UnitsCreateListSet, UserRetrieve, StorageCellsListCreateViewSet)
 
@@ -25,7 +25,6 @@ urlpatterns = [
     re_path(r'v[1-9]/units/$', UnitsCreateListSet.as_view()),
     re_path(r'v[1-9]/arks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
     re_path(r'v[1-9]/marks/remove/', MarksViewSet.as_view({'post': 'remove_marks'})),
-    re_path(r'^v[1-9]/pallets/(?P<id>.+)/$', PalletRetrieveUpdate.as_view()),
 
     path('v1/', include('api.v1.urls')),
     path('v2/', include('api.v2.urls')),

@@ -13,7 +13,7 @@ from warehouse_management.models import (
     PalletProduct,
     OrderOperation,
     PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
-    StorageArea
+    StorageArea, StorageCellContentState
 )
 
 
@@ -135,3 +135,8 @@ class CellsAdmin(admin.ModelAdmin):
 @admin.register(StorageArea)
 class StorageAreaAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid', 'external_key')
+
+
+@admin.register(StorageCellContentState)
+class StorageCellContentStateAdmin(admin.ModelAdmin):
+    list_display = ('creating_date', 'cell', 'pallet', 'status')

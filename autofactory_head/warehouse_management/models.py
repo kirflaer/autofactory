@@ -182,6 +182,10 @@ class StorageCellContentState(models.Model):
     status = models.CharField('Статус', max_length=20, choices=StatusCellContent.choices,
                               default=StatusCellContent.PLACED)
 
+    class Meta:
+        verbose_name = 'Состояние складских ячеек'
+        verbose_name_plural = 'Состояние складских ячеек'
+
 
 class PlacementToCellsOperation(OperationBaseOperation):
     type_task = 'PLACEMENT_TO_CELLS'

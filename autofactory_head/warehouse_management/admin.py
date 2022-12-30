@@ -129,6 +129,7 @@ class SelectionOperationAdmin(admin.ModelAdmin):
 @admin.register(StorageCell)
 class CellsAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid', 'external_key', 'storage_area')
+    list_filter = ('storage_area',)
     search_fields = ('external_key', 'name')
 
 

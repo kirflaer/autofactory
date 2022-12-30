@@ -496,10 +496,10 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
     def get_storage_areas(obj):
         operation_cells = OperationCell.objects.filter(operation=obj.guid)
         storage_areas = {key: [] for key in
-                         list(operation_cells.values_list('cell_source__storage_area__name', flat=True).distinct())}
+                         list(operation_cells.values_list('cell_destination__storage_area__name', flat=True).distinct())}
 
         for row in operation_cells:
-            area = storage_areas.get(row.cell_source.storage_area.name)
+            area = storage_areas.get(row.cell_destination.storage_area.name)
             cell_source = StorageCellsSerializer(row.cell_source)
             cell_destination = StorageCellsSerializer(row.cell_destination)
             pallet = PalletReadSerializer(row.pallet)

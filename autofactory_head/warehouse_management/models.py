@@ -29,6 +29,7 @@ class PalletType(models.TextChoices):
     SHIPPED = 'SHIPPED'
     FULLED = 'FULLED'
     COMBINED = 'COMBINED'
+    REPACKING = 'REPACKING'
 
 
 class TypeCollect(models.TextChoices):
@@ -82,6 +83,7 @@ class Pallet(models.Model):
 
     # Для совместимости со второй версие везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
+    not_fully_collected = models.BooleanField('Собрана не полностью', default=False, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -134,7 +136,11 @@ class ManyToManyOperationMixin(models.Model):
 
 
 class OperationPallet(ManyToManyOperationMixin):
-    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета')
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета',
+                               related_name='operation_pallets')
+    dependent_pallet = models.ForeignKey(Pallet, on_delete=models.SET_NULL, blank=True, null=True,
+                                         verbose_name='Зависимая паллета', related_name='depended_pallets')
+    count = models.PositiveIntegerField('Количество', default=0, blank=True)
 
     class Meta:
         verbose_name = 'Паллета операции'
@@ -305,6 +311,7 @@ class PalletSource(models.Model):
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
     order = models.ForeignKey(OrderOperation, verbose_name='Заказ клиента', blank=True, null=True,
                               on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Пользователь')
 
     class Meta:
         verbose_name = 'Паллета источник'
@@ -326,6 +333,14 @@ class InventoryOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Инвентаризация'
         verbose_name_plural = 'Инвентаризация'
+
+
+class RepackingOperation(OperationBaseOperation):
+    type_task = 'REPACKING'
+
+    class Meta:
+        verbose_name = 'Переупаковка'
+        verbose_name_plural = 'Переупаковка'
 
 
 @dataclass

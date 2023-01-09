@@ -9,7 +9,8 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
-                                         SelectionOperation, StorageCellContentState, StatusCellContent, StorageCell)
+                                         SelectionOperation, StorageCellContentState, StatusCellContent, StorageCell,
+                                         RepackingOperation)
 from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info
 from datetime import datetime as dt
 
@@ -151,17 +152,34 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
     sources = PalletSourceCreateSerializer(many=True, required=False)
     weight = serializers.IntegerField(required=False)
     collected_strings = serializers.ListField(required=False)
+    changed_product_keys = []
 
     class Meta:
-        fields = ('status', 'content_count', 'id', 'sources', 'weight', 'collected_strings')
+        fields = ('status', 'content_count', 'id', 'sources', 'weight', 'collected_strings', 'not_fully_collected')
         model = Pallet
 
     def update(self, instance, validated_data):
         with transaction.atomic():
-            product_keys = []
-            enrich_pallet_info(validated_data, product_keys, instance)
-            check_and_collect_orders(product_keys)
+            enrich_pallet_info(validated_data, self.changed_product_keys, instance)
         return super().update(instance, validated_data)
+
+
+class PalletUpdateShipmentSerializer(PalletUpdateSerializer):
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        check_and_collect_orders(self.changed_product_keys)
+        return instance
+
+
+class PalletUpdateRepackingSerializer(PalletUpdateSerializer):
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if instance.not_fully_collected:
+                for pallet_row in instance.sources.all():
+                    pallet_row.pallet_source.status = PalletStatus.ARCHIVED
+                    pallet_row.pallet_source.save()
+            return instance
 
 
 class OperationProductsSerializer(serializers.Serializer):
@@ -533,3 +551,51 @@ class ChangeCellSerializer(serializers.Serializer):
             raise APIException('Не найдена ячейка назначения')
 
         return super().validate(attrs)
+
+
+class RepackingPalletWriteSerializer(serializers.Serializer):
+    pallet = serializers.CharField()
+    count = serializers.IntegerField()
+
+
+class RepackingOperationWriteSerializer(OperationBaseSerializer):
+    pallets = RepackingPalletWriteSerializer(many=True)
+
+    class Meta:
+        fields = ('external_source', 'pallets')
+
+
+class RepackingPalletReadSerializer(serializers.ModelSerializer):
+    count = serializers.IntegerField(source='content_count')
+    sources = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Pallet
+        fields = ('count', 'guid', 'id', 'sources')
+
+    @staticmethod
+    def get_sources(obj):
+        sources = PalletSource.objects.filter(pallet=obj)
+        serializer = PalletSourceReadSerializer(sources, many=True)
+        return serializer.data
+
+
+class RepackingOperationReadSerializer(serializers.ModelSerializer):
+    pallets = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RepackingOperation
+        fields = ('status', 'date', 'number', 'guid', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj):
+        pallets = OperationPallet.objects.filter(operation=obj.guid)
+        result = []
+        for pallet_data in pallets:
+            serializer_pallet = RepackingPalletReadSerializer(pallet_data.pallet)
+            serializer_pallet_depends = PalletReadSerializer(pallet_data.dependent_pallet)
+            result.append({'pallet_source': serializer_pallet_depends.data,
+                           'pallet_destination': serializer_pallet.data,
+                           'count': pallet_data.count})
+
+        return result

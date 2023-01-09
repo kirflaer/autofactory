@@ -17,7 +17,7 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
                                          InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
-                                         StorageCellContentState, StatusCellContent)
+                                         StorageCellContentState, StatusCellContent, RepackingOperation)
 
 User = get_user_model()
 
@@ -113,6 +113,29 @@ def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: 
 
         fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
+    return result
+
+
+@transaction.atomic
+def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию переупаковки"""
+    result = []
+    for row in serializer_data:
+        external_source = get_or_create_external_source(row)
+        task = RepackingOperation.objects.filter(external_source=external_source).first()
+        if task is not None:
+            result.append(task.guid)
+            continue
+        operation = RepackingOperation.objects.create(external_source=external_source)
+        result.append(operation.guid)
+        for pallet_data in row['pallets']:
+            dependent_pallet = Pallet.objects.filter(id=pallet_data['pallet']).first()
+            if not dependent_pallet:
+                raise APIException('Не найдена зависимая паллета')
+            pallet = Pallet.objects.create()
+            operation_pallets = OperationPallet.objects.create(pallet=pallet, dependent_pallet=dependent_pallet,
+                                                               count=pallet_data['count'])
+            operation_pallets.fill_properties(operation)
     return result
 
 

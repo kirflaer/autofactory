@@ -19,14 +19,12 @@ class Setting(models.Model):
                                           choices=TYPE_MARKING_CLOSE,
                                           default=ALL_IN_DAY_BY_BAT_NUMBER)
 
-    name = models.CharField(max_length=100, blank=True,
-                            default='base settings')
-    use_organization = models.BooleanField('Использовать организацию',
-                                           default=False)
-    pallet_passport_template = models.TextField('Шаблон паллетного паспорта',
-                                                blank=True)
-    collect_pallet_mode_is_active = models.BooleanField(
-        'Доступен режим сбора паллет', default=False)
+    name = models.CharField(max_length=100, blank=True, default='base settings')
+    use_organization = models.BooleanField('Использовать организацию', default=False)
+    pallet_passport_template = models.TextField('Шаблон паллетного паспорта', blank=True)
+    collect_pallet_mode_is_active = models.BooleanField('Доступен режим сбора паллет', default=False)
+    label_template = models.TextField('Шаблон этикетки', blank=True)
+    label_sizes = models.CharField('Размеры этикеток', max_length=255, blank=True)
 
     class Meta:
         verbose_name = 'Настройки пользователя'

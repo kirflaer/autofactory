@@ -13,7 +13,7 @@ from warehouse_management.models import (
     PalletProduct,
     OrderOperation,
     PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
-    StorageArea, StorageCellContentState
+    StorageArea, StorageCellContentState, RepackingOperation
 )
 
 
@@ -141,3 +141,9 @@ class StorageAreaAdmin(admin.ModelAdmin):
 @admin.register(StorageCellContentState)
 class StorageCellContentStateAdmin(admin.ModelAdmin):
     list_display = ('creating_date', 'cell', 'pallet', 'status')
+
+
+@admin.register(RepackingOperation)
+class RepackingOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')

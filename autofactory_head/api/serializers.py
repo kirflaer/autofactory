@@ -158,11 +158,25 @@ class LogSerializer(serializers.ModelSerializer):
 class SettingSerializer(serializers.ModelSerializer):
     pallet_passport_template_base64 = serializers.SerializerMethodField()
     reg_exp = serializers.SerializerMethodField()
+    label_template_base64 = serializers.SerializerMethodField()
+    label_sizes = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('use_organization', 'pallet_passport_template_base64',
-                  'reg_exp')
+                  'reg_exp', 'label_template_base64', 'label_sizes')
         model = Setting
+
+    @staticmethod
+    def get_label_template_base64(obj):
+        return get_base64_string(obj.label_template)
+
+    @staticmethod
+    def get_label_sizes(obj):
+        if len(obj.label_sizes):
+            sizes = obj.label_sizes.split(';')
+        else:
+            return []
+        return [{'width': int(i.split('x')[0]), 'height': int(i.split('x')[1])} for i in sizes]
 
     @staticmethod
     def get_pallet_passport_template_base64(obj):

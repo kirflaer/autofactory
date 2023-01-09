@@ -1,8 +1,8 @@
 from django.urls import path, include
 
 from api.v3.views import (ShiftListViewSet, ShiftUpdateView, MarkingOnLineViewSet, MarkingOffLineViewSet,
-                          MarkingViewSet,
-                          TasksViewSet, StorageAreaListCreateViewSet, PalletViewSet)
+                          MarkingViewSet, TasksViewSet, StorageAreaListCreateViewSet, PalletViewSet,
+                          PalletShipmentUpdate, PalletRepackingUpdate)
 
 urlpatterns = [
     path('tasks/<str:type_task>/<uuid:guid>/take/', TasksViewSet.as_view({'patch': 'take'})),
@@ -15,5 +15,7 @@ urlpatterns = [
     path('shifts/<uuid:pk>/', ShiftUpdateView.as_view()),
     path('area/', StorageAreaListCreateViewSet.as_view()),
     path('pallets/<str:pallet_id>/cell/change/', PalletViewSet.as_view({'patch': 'change_cell'})),
+    path('pallets/<str:id>/repacking/', PalletRepackingUpdate.as_view()),
+    path('pallets/<str:id>/shipment/', PalletShipmentUpdate.as_view()),
     path('', include('api.v2.urls')),
 ]

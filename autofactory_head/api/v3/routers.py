@@ -1,8 +1,9 @@
 from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
-from warehouse_management.models import SelectionOperation
-from warehouse_management.serializers import SelectionOperationWriteSerializer, SelectionOperationReadSerializer
-from warehouse_management.warehouse_services import create_selection_operation
+from warehouse_management.models import SelectionOperation, RepackingOperation
+from warehouse_management.serializers import SelectionOperationWriteSerializer, SelectionOperationReadSerializer, \
+    RepackingOperationReadSerializer, RepackingOperationWriteSerializer
+from warehouse_management.warehouse_services import create_selection_operation, create_repacking_operation
 
 
 def get_task_router() -> dict[str: RouterTask]:
@@ -13,6 +14,12 @@ def get_task_router() -> dict[str: RouterTask]:
                                     create_function=create_selection_operation,
                                     read_serializer=SelectionOperationReadSerializer,
                                     write_serializer=SelectionOperationWriteSerializer,
+                                    content_model=TaskBaseModel,
+                                    change_content_function=None),
+            'REPACKING': RouterTask(task=RepackingOperation,
+                                    create_function=create_repacking_operation,
+                                    read_serializer=RepackingOperationReadSerializer,
+                                    write_serializer=RepackingOperationWriteSerializer,
                                     content_model=TaskBaseModel,
                                     change_content_function=None)
             }

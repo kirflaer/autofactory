@@ -17,7 +17,8 @@ from factory_core.models import Shift
 from packing.models import MarkingOperation
 from tasks.task_services import RouterTask
 from warehouse_management.models import StorageArea, Pallet
-from warehouse_management.serializers import OperationCellsSerializer, ChangeCellSerializer
+from warehouse_management.serializers import OperationCellsSerializer, ChangeCellSerializer, \
+    PalletUpdateShipmentSerializer, PalletUpdateRepackingSerializer
 from warehouse_management.warehouse_services import change_cell_content_state
 
 
@@ -107,13 +108,11 @@ class StorageAreaListCreateViewSet(generics.ListCreateAPIView):
 class PalletViewSet(viewsets.ViewSet):
     @staticmethod
     def change_cell(request, pallet_id):
-
         try:
             guid = uuid.UUID(pallet_id)
             filter_kwargs = {'guid': guid}
         except ValueError:
             filter_kwargs = {'id': pallet_id}
-
         pallet = Pallet.objects.filter(**filter_kwargs).first()
 
         if not pallet:
@@ -126,3 +125,14 @@ class PalletViewSet(viewsets.ViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class PalletShipmentUpdate(generics.UpdateAPIView):
+    queryset = Pallet.objects.all()
+    lookup_field = 'id'
+    serializer_class = PalletUpdateShipmentSerializer
+
+
+class PalletRepackingUpdate(generics.UpdateAPIView):
+    queryset = Pallet.objects.all()
+    lookup_field = 'id'
+    serializer_class = PalletUpdateRepackingSerializer

@@ -128,11 +128,11 @@ class PalletViewSet(viewsets.ViewSet):
 
 class PalletShipmentUpdate(generics.UpdateAPIView):
     queryset = Pallet.objects.all()
-    lookup_field = 'id'
+    lookup_field = 'guid'
     serializer_class = PalletUpdateShipmentSerializer
 
 
 class PalletRepackingUpdate(generics.UpdateAPIView):
     queryset = Pallet.objects.all()
-    lookup_field = 'id'
+    lookup_field = 'guid'
     serializer_class = PalletUpdateRepackingSerializer

@@ -136,3 +136,7 @@ class PalletRepackingUpdate(generics.UpdateAPIView):
     queryset = Pallet.objects.all()
     lookup_field = 'guid'
     serializer_class = PalletUpdateRepackingSerializer
+
+    def perform_update(self, serializer):
+        serializer.request_user = self.request.user
+        serializer.save()

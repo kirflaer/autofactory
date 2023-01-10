@@ -79,10 +79,12 @@ class PalletSourceCreateSerializer(serializers.Serializer):
 class PalletSourceReadSerializer(serializers.ModelSerializer):
     pallet = serializers.SlugRelatedField(slug_field='id', source='pallet_source', read_only=True)
     is_weight = serializers.SerializerMethodField(read_only=True, required=False)
+    user = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         fields = (
-            'product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key', 'is_weight')
+            'product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key', 'is_weight',
+            'user')
         model = PalletSource
 
     @staticmethod
@@ -175,10 +177,18 @@ class PalletUpdateRepackingSerializer(PalletUpdateSerializer):
     def update(self, instance, validated_data):
         with transaction.atomic():
             instance = super().update(instance, validated_data)
-            if instance.not_fully_collected:
-                for pallet_row in instance.sources.all():
+            total_count = 0
+            for pallet_row in instance.sources.all():
+                if instance.not_fully_collected:
                     pallet_row.pallet_source.status = PalletStatus.ARCHIVED
                     pallet_row.pallet_source.save()
+                if not pallet_row.user:
+                    pallet_row.user = self.request_user
+                    pallet_row.save()
+
+                total_count += pallet_row.count
+            instance.content_count = total_count
+            instance.save()
             return instance
 
 
@@ -582,20 +592,11 @@ class RepackingPalletReadSerializer(serializers.ModelSerializer):
 
 class RepackingOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
-    date = serializers.SerializerMethodField()
+    date = serializers.DateTimeField(format='%d.%m.%Y %H:%M:%S')
 
     class Meta:
         model = RepackingOperation
         fields = ('status', 'date', 'number', 'guid', 'pallets')
-
-    @staticmethod
-    def get_date(obj):
-        try:
-            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
-            date = date.strftime('%d.%m.%Y %H:%M:%S')
-        except ValueError:
-            date = obj.external_source.date
-        return date
 
     @staticmethod
     def get_pallets(obj):

@@ -582,17 +582,27 @@ class RepackingPalletReadSerializer(serializers.ModelSerializer):
 
 class RepackingOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = RepackingOperation
         fields = ('status', 'date', 'number', 'guid', 'pallets')
 
     @staticmethod
+    def get_date(obj):
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y %H:%M:%S')
+        except ValueError:
+            date = obj.external_source.date
+        return date
+
+    @staticmethod
     def get_pallets(obj):
         pallets = OperationPallet.objects.filter(operation=obj.guid)
         result = []
         for pallet_data in pallets:
-            serializer_pallet = RepackingPalletReadSerializer(pallet_data.pallet)
+            serializer_pallet = PalletReadSerializer(pallet_data.pallet)
             serializer_pallet_depends = PalletReadSerializer(pallet_data.dependent_pallet)
             result.append({'pallet_source': serializer_pallet_depends.data,
                            'pallet_destination': serializer_pallet.data,

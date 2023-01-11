@@ -633,7 +633,7 @@ class InventoryWithPlacementOperationReadSerializer(serializers.ModelSerializer)
 
     class Meta:
         model = InventoryOperation
-        fields = ('pallet', 'cell')
+        fields = ('pallet', 'cell', 'guid')
 
     @staticmethod
     def get_pallet(obj):

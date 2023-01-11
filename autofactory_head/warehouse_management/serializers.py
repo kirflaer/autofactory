@@ -629,7 +629,7 @@ class InventoryWithPlacementOperationWriteSerializer(serializers.Serializer):
 
 class InventoryWithPlacementOperationReadSerializer(serializers.ModelSerializer):
     pallet = serializers.SerializerMethodField()
-    cell = serializers.SerializerMethodField
+    cell = serializers.SerializerMethodField()
 
     class Meta:
         model = InventoryOperation
@@ -637,8 +637,14 @@ class InventoryWithPlacementOperationReadSerializer(serializers.ModelSerializer)
 
     @staticmethod
     def get_pallet(obj):
-        pass
+        row = OperationCell.objects.filter(operation=obj.guid).first()
+        if not row:
+            return None
+        return row.pallet.id
 
     @staticmethod
     def get_cell(obj):
-        pass
+        row = OperationCell.objects.filter(operation=obj.guid).first()
+        if not row:
+            return None
+        return row.cell_source.external_key

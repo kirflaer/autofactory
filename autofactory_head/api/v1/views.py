@@ -51,7 +51,11 @@ class TasksViewSet(viewsets.ViewSet):
         if not task_router:
             raise APIException('Тип задачи не найден')
 
-        serializer = task_router.write_serializer(data=request.data, many=True)
+        if isinstance(request.data, list):
+            serializer = task_router.write_serializer(data=request.data, many=True)
+        else:
+            serializer = task_router.write_serializer(data=request.data)
+
         if serializer.is_valid():
             # TODO: обработать ошибку создания
             result = task_router.create_function(serializer.validated_data, request.user)

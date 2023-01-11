@@ -610,3 +610,35 @@ class RepackingOperationReadSerializer(serializers.ModelSerializer):
                            'count': pallet_data.count})
 
         return result
+
+
+class InventoryWithPlacementOperationWriteSerializer(serializers.Serializer):
+    pallet = serializers.CharField()
+    cell = serializers.CharField()
+    count = serializers.IntegerField()
+
+    def validate(self, attrs):
+        if not Pallet.objects.filter(guid=attrs.get('pallet')).first():
+            raise APIException('Не найдена паллета')
+
+        if not StorageCell.objects.filter(external_key=attrs.get('cell')).first():
+            raise APIException('Не найдена ячейка')
+
+        return super().validate(attrs)
+
+
+class InventoryWithPlacementOperationReadSerializer(serializers.ModelSerializer):
+    pallet = serializers.SerializerMethodField()
+    cell = serializers.SerializerMethodField
+
+    class Meta:
+        model = InventoryOperation
+        fields = ('pallet', 'cell')
+
+    @staticmethod
+    def get_pallet(obj):
+        pass
+
+    @staticmethod
+    def get_cell(obj):
+        pass

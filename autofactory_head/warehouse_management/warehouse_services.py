@@ -82,6 +82,23 @@ def check_and_collect_orders(product_keys: list[str]):
 
 
 @transaction.atomic
+def create_inventory_with_placement_operation(serializer_data: dict[str: str], user: User) -> Iterable[str]:
+    """ Создает операцию отгрузки со склада"""
+    instance = InventoryOperation.objects.create(user=user, status=TaskStatus.CLOSE)
+    pallet = Pallet.objects.get(guid=serializer_data['pallet'])
+    if pallet.content_count != serializer_data['count']:
+        pallet.content_count = serializer_data['count']
+        pallet.save()
+
+    cell = StorageCell.objects.get(external_key=serializer_data['cell'])
+    operation_pallets = OperationCell.objects.create(pallet=pallet, cell_source=cell)
+    operation_pallets.fill_properties(instance)
+    StorageCellContentState.objects.create(cell=cell, pallet=pallet)
+    instance.close()
+    return instance.guid
+
+
+@transaction.atomic
 def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию отгрузки со склада"""
     result = []

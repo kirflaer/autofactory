@@ -640,7 +640,8 @@ class InventoryWithPlacementOperationReadSerializer(serializers.ModelSerializer)
         row = OperationCell.objects.filter(operation=obj.guid).first()
         if not row:
             return None
-        return row.pallet.id
+        serializer = PalletShortSerializer(row.pallet)
+        return serializer.data
 
     @staticmethod
     def get_cell(obj):

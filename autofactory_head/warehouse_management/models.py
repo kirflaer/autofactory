@@ -56,6 +56,7 @@ class StorageCell(BaseExternalModel):
     barcode = models.CharField('Штрихкод', max_length=100, default='-')
     storage_area = models.ForeignKey(StorageArea, verbose_name='Область хранения', null=True, blank=True,
                                      on_delete=models.SET_NULL)
+    needed_scan = models.BooleanField('Необходимо сканировать при размещении', default=True)
 
     class Meta:
         verbose_name = 'Складская ячейка'

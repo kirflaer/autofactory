@@ -237,7 +237,7 @@ class StorageCellsSerializer(serializers.ModelSerializer):
     storage_area = serializers.CharField(required=False)
 
     class Meta:
-        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area')
+        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan')
         model = StorageCell
         read_only_fields = ('guid',)
 

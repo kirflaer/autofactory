@@ -88,8 +88,10 @@ class MovementBetweenCellsOperationAdmin(admin.ModelAdmin):
 
 @admin.register(ShipmentOperation)
 class ShipmentOperationAdmin(admin.ModelAdmin):
+    ordering = ('-date',)
     list_display = (
-        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+        'date', 'guid', 'user', 'number', 'external_source', 'has_selection', 'status', 'closed', 'ready_to_unload',
+        'unloaded')
 
 
 @admin.register(OrderOperation)

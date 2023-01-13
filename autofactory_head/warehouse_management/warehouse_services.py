@@ -110,7 +110,8 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
             result.append(task.guid)
             continue
         direction = Direction.objects.filter(external_key=element['direction']).first()
-        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source)
+        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source,
+                                                     has_selection=element['has_selection'])
 
         _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SHIPMENT)
         result.append(operation.guid)

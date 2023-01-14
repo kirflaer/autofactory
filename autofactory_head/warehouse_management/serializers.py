@@ -222,7 +222,6 @@ class PalletShortSerializer(serializers.ModelSerializer):
             'weight')
 
 
-
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
     pallets_semi = serializers.SerializerMethodField()
     pallets_complete = serializers.SerializerMethodField()

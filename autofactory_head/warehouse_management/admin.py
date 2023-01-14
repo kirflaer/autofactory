@@ -13,7 +13,8 @@ from warehouse_management.models import (
     ShipmentOperation,
     PalletProduct,
     OrderOperation,
-    PalletSource, ArrivalAtStockOperation, InventoryOperation
+    PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
+    StorageArea, StorageCellContentState, RepackingOperation
 )
 
 
@@ -54,9 +55,15 @@ class OperationPalletAdmin(admin.ModelAdmin):
 
 
 @admin.register(OperationProduct)
-class OperationPalletAdmin(admin.ModelAdmin):
+class OperationProductAdmin(admin.ModelAdmin):
     list_display = ('product', 'type_operation', 'external_source')
     list_filter = ('type_operation',)
+    search_fields = ('operation',)
+
+
+@admin.register(OperationCell)
+class OperationPalletAdmin(admin.ModelAdmin):
+    list_display = ('operation', 'cell_source', 'cell_destination', 'pallet')
     search_fields = ('operation',)
 
 
@@ -71,11 +78,11 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 
 @admin.register(PalletCollectOperation)
 class PalletCollectOperationAdmin(admin.ModelAdmin):
-    list_filter = (('date', DateRangeFilter), 'type_collect')
+    list_filter = (('date', DateRangeFilter), 'type_collect', 'ready_to_unload', 'unloaded')
     list_display = (
-        'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source', 'parent_task',
+        'date', 'guid', 'user', 'type_collect', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
-    search_fields = ('guid', 'parent_task__guid')
+    search_fields = ('guid', 'parent_task')
     ordering = ('-date',)
 
 
@@ -94,8 +101,10 @@ class MovementBetweenCellsOperationAdmin(admin.ModelAdmin):
 
 @admin.register(ShipmentOperation)
 class ShipmentOperationAdmin(admin.ModelAdmin):
+    ordering = ('-date',)
     list_display = (
-        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+        'date', 'guid', 'user', 'number', 'external_source', 'has_selection', 'status', 'closed', 'ready_to_unload',
+        'unloaded')
 
 
 @admin.register(OrderOperation)
@@ -112,7 +121,7 @@ class PalletProductAdmin(admin.ModelAdmin):
 
 
 @admin.register(ArrivalAtStockOperation)
-class AcceptanceOperationAdmin(admin.ModelAdmin):
+class ArrivalAtStockOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'storage', 'number', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
@@ -122,3 +131,34 @@ class AcceptanceOperationAdmin(admin.ModelAdmin):
 class InventoryOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(SelectionOperation)
+class SelectionOperationAdmin(admin.ModelAdmin):
+    ordering = ('-date',)
+    list_filter = (('date', DateRangeFilter), 'status')
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(StorageCell)
+class CellsAdmin(admin.ModelAdmin):
+    list_display = ('name', 'guid', 'external_key', 'storage_area')
+    list_filter = ('storage_area',)
+    search_fields = ('external_key', 'name')
+
+
+@admin.register(StorageArea)
+class StorageAreaAdmin(admin.ModelAdmin):
+    list_display = ('name', 'guid', 'external_key')
+
+
+@admin.register(StorageCellContentState)
+class StorageCellContentStateAdmin(admin.ModelAdmin):
+    list_display = ('creating_date', 'cell', 'pallet', 'status')
+
+
+@admin.register(RepackingOperation)
+class RepackingOperationAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')

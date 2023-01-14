@@ -1,11 +1,11 @@
 import uuid
-from typing import List
+from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db import models
 from pydantic.dataclasses import dataclass
 
-from catalogs.models import Product, Storage, StorageCell, Direction, Client
+from catalogs.models import Product, Storage, Direction, Client, BaseExternalModel
 from factory_core.models import OperationBaseModel, Shift
 from tasks.models import Task, TaskBaseModel, TaskStatus
 
@@ -20,12 +20,47 @@ class PalletStatus(models.TextChoices):
     ARCHIVED = 'ARCHIVED'
     WAITED = 'WAITED'
     FOR_SHIPMENT = 'FOR_SHIPMENT'
+    SELECTED = 'SELECTED'
+    PLACED = 'PLACED'
+    FOR_REPACKING = 'FOR_REPACKING'
 
 
 class PalletType(models.TextChoices):
     SHIPPED = 'SHIPPED'
     FULLED = 'FULLED'
     COMBINED = 'COMBINED'
+    REPACKING = 'REPACKING'
+
+
+class TypeCollect(models.TextChoices):
+    SHIPMENT = 'SHIPMENT'
+    ACCEPTANCE = 'ACCEPTANCE'
+    SELECTION = 'SELECTION'
+
+
+class StatusCellContent(models.TextChoices):
+    PLACED = 'PLACED'
+    REMOVED = 'REMOVED'
+
+
+class StorageArea(BaseExternalModel):
+    new_status_on_admission = models.CharField('Статус', max_length=20, choices=PalletStatus.choices,
+                                               default=PalletStatus.SELECTED)
+
+    class Meta:
+        verbose_name = 'Область хранения'
+        verbose_name_plural = 'Области хранения'
+
+
+class StorageCell(BaseExternalModel):
+    barcode = models.CharField('Штрихкод', max_length=100, default='-')
+    storage_area = models.ForeignKey(StorageArea, verbose_name='Область хранения', null=True, blank=True,
+                                     on_delete=models.SET_NULL)
+    needed_scan = models.BooleanField('Необходимо сканировать при размещении', default=True)
+
+    class Meta:
+        verbose_name = 'Складская ячейка'
+        verbose_name_plural = 'Складские ячейки'
 
 
 class Pallet(models.Model):
@@ -49,6 +84,7 @@ class Pallet(models.Model):
 
     # Для совместимости со второй версие везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
+    not_fully_collected = models.BooleanField('Собрана не полностью', default=False, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -101,7 +137,11 @@ class ManyToManyOperationMixin(models.Model):
 
 
 class OperationPallet(ManyToManyOperationMixin):
-    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета')
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета',
+                               related_name='operation_pallets')
+    dependent_pallet = models.ForeignKey(Pallet, on_delete=models.SET_NULL, blank=True, null=True,
+                                         verbose_name='Зависимая паллета', related_name='depended_pallets')
+    count = models.PositiveIntegerField('Количество', default=0, blank=True)
 
     class Meta:
         verbose_name = 'Паллета операции'
@@ -124,7 +164,7 @@ class OperationCell(ManyToManyOperationMixin):
     cell_source = models.ForeignKey(StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка',
                                     related_name='operation_cell')
     cell_destination = models.ForeignKey(StorageCell, on_delete=models.SET_NULL, null=True, blank=True,
-                                         verbose_name='Измененная ячейка')
+                                         verbose_name='Ячейка (назначение / измененная)')
 
     class Meta:
         verbose_name = 'Складские ячейки операции'
@@ -142,6 +182,18 @@ class AcceptanceOperation(OperationBaseOperation):
         verbose_name_plural = 'Приемка товаров (Заказ на перемещение)'
 
 
+class StorageCellContentState(models.Model):
+    creating_date = models.DateTimeField('Дата создания', auto_now_add=True)
+    cell = models.ForeignKey(StorageCell, verbose_name='Ячейка', on_delete=models.CASCADE)
+    pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)
+    status = models.CharField('Статус', max_length=20, choices=StatusCellContent.choices,
+                              default=StatusCellContent.PLACED)
+
+    class Meta:
+        verbose_name = 'Состояние складских ячеек'
+        verbose_name_plural = 'Состояние складских ячеек'
+
+
 class PlacementToCellsOperation(OperationBaseOperation):
     type_task = 'PLACEMENT_TO_CELLS'
     storage = models.ForeignKey(Storage, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Склад')
@@ -149,6 +201,13 @@ class PlacementToCellsOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Размещение в ячейки'
         verbose_name_plural = 'Размещения в ячейки'
+
+    def close(self):
+        cells = OperationCell.objects.filter(operation=self.guid)
+        for row in cells:
+            cell = row.cell_source if not row.cell_destination else row.cell_destination
+            StorageCellContentState.objects.create(pallet=row.pallet, cell=cell)
+        super().close()
 
 
 class MovementBetweenCellsOperation(OperationBaseOperation):
@@ -164,23 +223,33 @@ class ShipmentOperation(OperationBaseOperation):
     type_task = 'SHIPMENT'
     direction = models.ForeignKey(Direction, on_delete=models.SET_NULL, null=True, blank=True,
                                   verbose_name='Направление')
+    has_selection = models.BooleanField('Есть отбор', default=False, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
-        verbose_name_plural = 'Отгрузка со со склада (Заявка на завод)'
+        verbose_name_plural = 'Отгрузка со склада (Заявка на завод)'
 
 
-class PalletCollectOperation(OperationBaseOperation):
-    type_task = 'PALLET_COLLECT'
+class SelectionOperation(OperationBaseOperation):
+    type_task = 'SELECTION'
     parent_task = models.ForeignKey(ShipmentOperation, on_delete=models.CASCADE, verbose_name='Родительское задание',
                                     null=True,
                                     blank=True)
 
-    SHIPMENT = 'SHIPMENT'
-    ACCEPTANCE = 'ACCEPTANCE'
+    class Meta:
+        verbose_name = 'Отбор со склада'
+        verbose_name_plural = 'Отбор со склада (Заявка на завод)'
 
-    TYPE_COLLECT = ((SHIPMENT, SHIPMENT), (ACCEPTANCE, ACCEPTANCE),)
-    type_collect = models.CharField('Тип сбора', max_length=255, choices=TYPE_COLLECT, default=ACCEPTANCE)
+
+class PalletCollectOperation(OperationBaseOperation):
+    PARENT_TASK_TYPES = {'SHIPMENT': ShipmentOperation,
+                         'SELECTION': SelectionOperation}
+
+    type_task = 'PALLET_COLLECT'
+    parent_task = models.CharField('Родительское задание', null=True, blank=True, max_length=36)
+
+    type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
+                                    default=TypeCollect.ACCEPTANCE)
 
     class Meta:
         verbose_name = 'Сбор паллет'
@@ -188,11 +257,16 @@ class PalletCollectOperation(OperationBaseOperation):
 
     def close(self):
         super().close()
+        if self.parent_task is None:
+            return
+
         open_task_count = PalletCollectOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
             guid=self.guid).count()
+
         if not open_task_count:
-            self.parent_task.status = TaskStatus.CLOSE
-            self.parent_task.close()
+            instance = self.PARENT_TASK_TYPES[self.type_collect].objects.get(guid=self.parent_task)
+            instance.status = TaskStatus.CLOSE
+            instance.close()
 
 
 class OrderOperation(OperationBaseOperation):
@@ -238,6 +312,7 @@ class PalletSource(models.Model):
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
     order = models.ForeignKey(OrderOperation, verbose_name='Заказ клиента', blank=True, null=True,
                               on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Пользователь')
 
     class Meta:
         verbose_name = 'Паллета источник'
@@ -261,11 +336,18 @@ class InventoryOperation(OperationBaseOperation):
         verbose_name_plural = 'Инвентаризация'
 
 
+class RepackingOperation(OperationBaseOperation):
+    type_task = 'REPACKING'
+
+    class Meta:
+        verbose_name = 'Переупаковка'
+        verbose_name_plural = 'Переупаковка'
+
+
 @dataclass
 class CellContent:
-    cell: str
-    changed_cell: str
-    product: str
+    cell_source: str
+    cell_destination: str
 
 
 @dataclass
@@ -274,7 +356,7 @@ class PlacementToCellsContent:
 
 
 class PlacementToCellsTask(TaskBaseModel):
-    content: PlacementToCellsContent
+    content: Optional[PlacementToCellsContent] = None
 
 
 @dataclass

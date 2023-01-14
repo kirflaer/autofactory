@@ -4,6 +4,7 @@ from api.serializers import MarkingSerializer, AggregationsSerializer
 from catalogs.models import Product
 from factory_core.models import ShiftProduct, Shift
 from packing.models import MarkingOperation
+from warehouse_management.models import StorageArea
 
 
 class MarkingSerializerOnlineWrite(MarkingSerializer):
@@ -62,3 +63,10 @@ class ShiftRetrieveSerializer(ShiftSerializer):
     @staticmethod
     def get_products(obj):
         return ShiftProduct.objects.filter(shift=obj).values_list('product__guid', flat=True)
+
+
+class StorageAreaSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('guid', 'name', 'external_key', 'new_status_on_admission')
+        model = StorageArea
+        read_only_fields = ('guid', 'new_status_on_admission')

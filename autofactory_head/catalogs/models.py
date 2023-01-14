@@ -258,11 +258,3 @@ class ActivationKey(models.Model):
 
     def __str__(self):
         return self.number
-
-
-class StorageCell(BaseExternalModel):
-    barcode = models.CharField('Штрихкод', max_length=100, default='-')
-
-    class Meta:
-        verbose_name = 'Складская ячейка'
-        verbose_name_plural = 'Складские ячейки'

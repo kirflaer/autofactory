@@ -3,12 +3,12 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from catalogs.models import (Client, Department, Device, Direction, Line, Log, Organization, Product, RegularExpression,
-                             Storage, TypeFactoryOperation, Unit, StorageCell)
+                             Storage, TypeFactoryOperation, Unit)
 from factory_core.models import Shift, ShiftProduct
 from packing.marking_services import get_base64_string
 from packing.models import MarkingOperation
 from users.models import Setting
-from warehouse_management.models import PalletContent, Pallet
+from warehouse_management.models import PalletContent, Pallet, StorageCell, StorageArea
 
 User = get_user_model()
 
@@ -158,11 +158,25 @@ class LogSerializer(serializers.ModelSerializer):
 class SettingSerializer(serializers.ModelSerializer):
     pallet_passport_template_base64 = serializers.SerializerMethodField()
     reg_exp = serializers.SerializerMethodField()
+    label_template_base64 = serializers.SerializerMethodField()
+    label_sizes = serializers.SerializerMethodField()
 
     class Meta:
         fields = ('use_organization', 'pallet_passport_template_base64',
-                  'reg_exp')
+                  'reg_exp', 'label_template_base64', 'label_sizes')
         model = Setting
+
+    @staticmethod
+    def get_label_template_base64(obj):
+        return get_base64_string(obj.label_template)
+
+    @staticmethod
+    def get_label_sizes(obj):
+        if len(obj.label_sizes):
+            sizes = obj.label_sizes.split(';')
+        else:
+            return []
+        return [{'width': int(i.split('x')[0]), 'height': int(i.split('x')[1])} for i in sizes]
 
     @staticmethod
     def get_pallet_passport_template_base64(obj):
@@ -220,10 +234,19 @@ class RegularExpressionSerializer(serializers.ModelSerializer):
 
 
 class StorageCellsSerializer(serializers.ModelSerializer):
+    storage_area = serializers.CharField(required=False)
+
     class Meta:
-        fields = ('guid', 'name', 'external_key', 'barcode')
+        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan')
         model = StorageCell
         read_only_fields = ('guid',)
+
+    def create(self, validated_data):
+        storage_area_key = validated_data.pop('storage_area')
+        storage_area = StorageArea.objects.filter(external_key=storage_area_key).first()
+        validated_data['storage_area'] = storage_area
+        cell = StorageCell.objects.create(**validated_data)
+        return cell
 
 
 class AggregationsSerializer(serializers.Serializer):

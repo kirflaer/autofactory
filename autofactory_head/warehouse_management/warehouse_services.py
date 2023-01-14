@@ -7,7 +7,7 @@ from django.db.models import Q, Sum
 from dateutil import parser
 from rest_framework.exceptions import APIException
 
-from catalogs.models import ExternalSource, Product, Storage, StorageCell, Direction, Client
+from catalogs.models import ExternalSource, Product, Storage, Direction, Client
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
 from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
@@ -16,7 +16,8 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          OperationCell,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
-                                         InventoryOperation, PalletStatus)
+                                         InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
+                                         StorageCellContentState, StatusCellContent, RepackingOperation)
 
 User = get_user_model()
 
@@ -81,6 +82,24 @@ def check_and_collect_orders(product_keys: list[str]):
 
 
 @transaction.atomic
+def create_inventory_with_placement_operation(serializer_data: dict[str: str], user: User) -> Iterable[str]:
+    """ Создает операцию отгрузки со склада"""
+    instance = InventoryOperation.objects.create(user=user, status=TaskStatus.CLOSE)
+    pallet = Pallet.objects.get(guid=serializer_data['pallet'])
+    if pallet.content_count != serializer_data['count']:
+        pallet.content_count = serializer_data['count']
+    pallet.status = PalletStatus.PLACED
+    pallet.save()
+
+    cell = StorageCell.objects.get(external_key=serializer_data['cell'])
+    operation_pallets = OperationCell.objects.create(pallet=pallet, cell_source=cell)
+    operation_pallets.fill_properties(instance)
+    StorageCellContentState.objects.create(cell=cell, pallet=pallet)
+    instance.close()
+    return instance.guid
+
+
+@transaction.atomic
 def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию отгрузки со склада"""
     result = []
@@ -88,18 +107,67 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         external_source = get_or_create_external_source(element)
         task = ShipmentOperation.objects.filter(external_source=external_source).first()
         if task is not None:
+            result.append(task.guid)
             continue
         direction = Direction.objects.filter(external_key=element['direction']).first()
-        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source)
+        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source,
+                                                     has_selection=element['has_selection'])
 
-        pallets = create_pallets(element['pallets'], user, operation)
-        for pallet in pallets:
-            child_operation = PalletCollectOperation.objects.create(type_collect=PalletCollectOperation.SHIPMENT,
-                                                                    parent_task=operation)
-            fill_operation_pallets(child_operation, (pallet,))
-
+        _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SHIPMENT)
         result.append(operation.guid)
     return result
+
+
+@transaction.atomic
+def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию отбора со склада"""
+    result = []
+    for element in serializer_data:
+        external_source = get_or_create_external_source(element)
+        task = SelectionOperation.objects.filter(external_source=external_source).first()
+        if task is not None:
+            result.append(task.guid)
+            continue
+        operation = SelectionOperation.objects.create(external_source=external_source)
+
+        fill_operation_cells(operation, element['cells'])
+        result.append(operation.guid)
+    return result
+
+
+@transaction.atomic
+def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+    """ Создает операцию переупаковки"""
+    result = []
+    for row in serializer_data:
+        external_source = get_or_create_external_source(row)
+        task = RepackingOperation.objects.filter(external_source=external_source).first()
+        if task is not None:
+            result.append(task.guid)
+            continue
+        operation = RepackingOperation.objects.create(external_source=external_source)
+        result.append(operation.guid)
+        for pallet_data in row['pallets']:
+            dependent_pallet = Pallet.objects.filter(id=pallet_data['pallet']).first()
+            if not dependent_pallet:
+                raise APIException('Не найдена зависимая паллета')
+            pallet = Pallet.objects.create(product=dependent_pallet.product,
+                                           batch_number=dependent_pallet.batch_number,
+                                           production_date=dependent_pallet.production_date)
+            operation_pallets = OperationPallet.objects.create(pallet=pallet, dependent_pallet=dependent_pallet,
+                                                               count=pallet_data['count'])
+            operation_pallets.fill_properties(operation)
+    return result
+
+
+def _create_child_task_shipment(pallets_data: Iterable[dict[str: str]], user: User, operation: Task,
+                                type_collect: TypeCollect) -> None:
+    """ Создает операцию отгрузки либо отбора с дочерней операцией сбора паллет со склада"""
+    pallets = create_pallets(pallets_data, user, operation)
+    for pallet in pallets:
+        child_operation = PalletCollectOperation.objects.create(type_collect=type_collect,
+                                                                parent_task=operation.pk)
+        fill_operation_pallets(child_operation, (pallet,))
 
 
 @transaction.atomic
@@ -139,6 +207,7 @@ def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: 
         storage = Storage.objects.filter(external_key=element['storage']).first()
         operation = PlacementToCellsOperation.objects.create(storage=storage, external_source=external_source)
         fill_operation_cells(operation, element['cells'])
+
         result.append(operation.guid)
     return result
 
@@ -241,6 +310,12 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                 product = element['product']
             element['product'] = Product.objects.filter(guid=product).first()
 
+            if not element.get('cell'):
+                cell = None
+            else:
+                cell = element['cell']
+            element['cell'] = StorageCell.objects.filter(guid=cell).first()
+
             if not element.get('production_shop'):
                 production_shop = None
             else:
@@ -323,20 +398,19 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         if cell is None:
             continue
 
-        product = Pallet.objects.filter(Q(external_key=element['pallet']) | Q(guid=element['pallet'])).first()
-        if product is None:
-            continue
-
         if element.get('cell_destination') is not None:
             cell_destination = StorageCell.objects.filter(
                 Q(external_key=element['cell_destination']) | Q(guid=element['cell_destination'])).first()
         else:
             cell_destination = None
 
-        count = 0 if element.get('count') is None else element['count']
-        operation_products = OperationCell.objects.create(cell_source=cell, count=count, product=product,
-                                                          cell_destination=cell_destination)
-        operation_products.fill_properties(operation)
+        if element.get('pallet') is not None:
+            pallet = Pallet.objects.filter(id=element['pallet']).first()
+        else:
+            pallet = None
+        operation_cell = OperationCell.objects.create(cell_source=cell, cell_destination=cell_destination,
+                                                      pallet=pallet)
+        operation_cell.fill_properties(operation)
 
 
 def get_or_create_external_source(raw_data=dict[str: str], field_name='external_source') -> ExternalSource:
@@ -353,15 +427,13 @@ def get_or_create_external_source(raw_data=dict[str: str], field_name='external_
 def change_content_placement_operation(content: dict[str: str], instance: PlacementToCellsOperation) -> str:
     """ Изменяет содержимое операции размещение в ячейках"""
     for element in content['cells']:
-        pass
-        # cell_row = OperationCell.objects.filter(operation=instance.guid, product__guid=element.product,
-        #                                         cell__guid=element.changed_cell).first()
-        # if cell_row is None:
-        #     continue
-        #
-        # cell_row.changed_cell = cell_row.cell
-        # cell_row.cell = StorageCell.objects.filter(guid=element.cell).first()
-        # cell_row.save()
+        cell_row = OperationCell.objects.filter(operation=instance.guid,
+                                                cell_source__external_key=element.cell_source).first()
+        if cell_row is None:
+            continue
+
+        cell_row.cell_destination = StorageCell.objects.filter(external_key=element.cell_destination).first()
+        cell_row.save()
     return instance.guid
 
 
@@ -377,3 +449,18 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
         product_row.count_fact = element.fact
         product_row.save()
     return instance.guid
+
+
+@transaction.atomic
+def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
+    """ Меняет расположение паллеты в ячейке. Возвращает статус из области новой ячейки """
+    cell_source = StorageCell.objects.get(guid=content['cell_source'])
+    cell_destination = StorageCell.objects.get(guid=content['cell_destination'])
+    StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
+    StorageCellContentState.objects.create(cell=cell_destination, pallet=pallet)
+
+    new_status = cell_destination.storage_area.new_status_on_admission
+    pallet.status = new_status
+    pallet.save()
+
+    return new_status

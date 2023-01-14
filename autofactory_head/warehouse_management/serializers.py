@@ -222,6 +222,7 @@ class PalletShortSerializer(serializers.ModelSerializer):
             'weight')
 
 
+
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
     pallets_semi = serializers.SerializerMethodField()
     pallets_complete = serializers.SerializerMethodField()
@@ -249,9 +250,8 @@ class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_pallets_data(product_filter):
-        pallets_ids = OperationPallet.objects.filter(**product_filter).values_list(
-            'pallet', flat=True)
-        pallets = Pallet.objects.filter(guid__in=pallets_ids)
+        pallets_ids = OperationPallet.objects.filter(**product_filter).values_list('pallet', flat=True)
+        pallets = Pallet.objects.filter(guid__in=pallets_ids).exclude(status=PalletStatus.ARCHIVED)
         serializer = PalletShortSerializer(pallets, many=True)
         return serializer.data
 

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from rangefilter.filters import DateRangeFilter
 
+from tasks.models import TaskStatus
 from warehouse_management.models import (
     AcceptanceOperation,
     Pallet,
@@ -20,6 +21,16 @@ from warehouse_management.models import (
 @admin.action(description='Принять паллеты')
 def make_pallet_confirmed(model, request, queryset):
     queryset.update(status='CONFIRMED')
+
+
+@admin.action(description='Пометить задание как выгруженное')
+def make_task_unloaded(model, request, queryset):
+    queryset.update(unloaded=True)
+
+
+@admin.action(description='Пометить задание как закрытое')
+def make_task_closed(model, request, queryset):
+    queryset.update(closed=True, status=TaskStatus.CLOSE)
 
 
 @admin.register(Pallet)
@@ -58,9 +69,11 @@ class OperationPalletAdmin(admin.ModelAdmin):
 
 @admin.register(AcceptanceOperation)
 class AcceptanceOperationAdmin(admin.ModelAdmin):
+    list_filter = (('date', DateRangeFilter), 'unloaded', 'closed')
     list_display = (
         'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',
         'closed', 'ready_to_unload', 'unloaded')
+    actions = [make_task_unloaded, make_task_closed]
 
 
 @admin.register(PalletCollectOperation)

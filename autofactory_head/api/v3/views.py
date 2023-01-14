@@ -1,4 +1,5 @@
 import uuid
+from django.contrib.auth import get_user_model
 
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,6 +14,7 @@ from api.v3.routers import get_task_router
 
 from api.v3.services import load_manual_marks, load_offline_marking_data
 from factory_core.models import Shift
+from packing.marking_services import create_marking_marks, clear_raw_marks
 
 from packing.models import MarkingOperation
 from tasks.task_services import RouterTask
@@ -20,6 +22,8 @@ from warehouse_management.models import StorageArea, Pallet
 from warehouse_management.serializers import OperationCellsSerializer, ChangeCellSerializer, \
     PalletUpdateShipmentSerializer, PalletUpdateRepackingSerializer
 from warehouse_management.warehouse_services import change_cell_content_state
+
+User = get_user_model()
 
 
 class ShiftListViewSet(generics.ListAPIView):
@@ -83,8 +87,14 @@ class MarkingViewSet(api_views.MarkingViewSet):
             instance.closed = True
             instance.group = instance.shift.guid
             instance.save()
+            
+            if self.request.user.role == User.VISION_OPERATOR:
+                create_marking_marks(instance, validated_data)
+                clear_raw_marks(instance)
+            else:
+                load_manual_marks(instance, validated_data)
 
-            load_manual_marks(instance, validated_data)
+
 
 
 class TasksViewSet(TasksChangeViewSet):
@@ -140,3 +150,4 @@ class PalletRepackingUpdate(generics.UpdateAPIView):
     def perform_update(self, serializer):
         serializer.request_user = self.request.user
         serializer.save()
+

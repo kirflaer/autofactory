@@ -592,10 +592,11 @@ class RepackingPalletReadSerializer(serializers.ModelSerializer):
 class RepackingOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
     date = serializers.DateTimeField(format='%d.%m.%Y %H:%M:%S')
+    external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
 
     class Meta:
         model = RepackingOperation
-        fields = ('status', 'date', 'number', 'guid', 'pallets')
+        fields = ('status', 'date', 'number', 'guid', 'pallets', 'external_key')
 
     @staticmethod
     def get_pallets(obj):

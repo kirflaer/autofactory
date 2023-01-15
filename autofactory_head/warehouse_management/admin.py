@@ -137,6 +137,8 @@ class InventoryOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')
     actions = [make_task_loaded]
+    search_fields = ('number',)
+    ordering = ('-date',)
 
 
 @admin.register(SelectionOperation)

@@ -28,6 +28,10 @@ def make_task_unloaded(model, request, queryset):
     queryset.update(unloaded=True)
 
 
+@admin.action(description='Пометить задание как не выгруженное')
+def make_task_loaded(model, request, queryset):
+    queryset.update(unloaded=False)
+
 @admin.action(description='Пометить задание как закрытое')
 def make_task_closed(model, request, queryset):
     queryset.update(closed=True, status=TaskStatus.CLOSE)
@@ -129,8 +133,10 @@ class ArrivalAtStockOperationAdmin(admin.ModelAdmin):
 
 @admin.register(InventoryOperation)
 class InventoryOperationAdmin(admin.ModelAdmin):
+    list_filter = (('date', DateRangeFilter), 'ready_to_unload', 'unloaded')
     list_display = (
         'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')
+    actions = [make_task_loaded]
 
 
 @admin.register(SelectionOperation)

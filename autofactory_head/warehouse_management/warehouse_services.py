@@ -221,7 +221,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
                                                           ready_to_unload=True)
         pallets = create_pallets(element['pallets'])
         fill_operation_pallets(operation, pallets)
-        if len(pallets) == 1 and pallets[0].shift is not None:
+        if len(pallets) == 1 and pallets[0].shift is not None and not pallets[0].shift.closed:
             operation.ready_to_unload = False
             operation.save()
         result.append(operation.guid)

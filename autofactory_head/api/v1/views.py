@@ -10,10 +10,11 @@ from api.v1.routers import get_task_router, get_content_router
 from api.v1.services import get_marks_to_unload
 from tasks.models import TaskStatus
 from tasks.serializers import TaskPropertiesSerializer
-from tasks.task_services import change_task_properties, get_task_queryset, TaskException, get_content_queryset, \
-    RouterTask
-from warehouse_management.models import Pallet, PalletStatus
-from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer, PalletUpdateSerializer
+from tasks.task_services import (change_task_properties, get_task_queryset, TaskException, get_content_queryset,
+                                 RouterTask)
+from warehouse_management.models import Pallet, PalletStatus, StorageCell
+from warehouse_management.serializers import (PalletReadSerializer, PalletWriteSerializer, PalletUpdateSerializer,
+                                              StorageCellsSerializer)
 from warehouse_management.warehouse_services import create_pallets
 
 
@@ -171,3 +172,15 @@ class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
 
         filter_kwargs = {self.adv_lookup_field: self.kwargs[self.lookup_field]}
         return get_object_or_404(self.queryset, **filter_kwargs)
+
+
+class StorageCellsListCreateViewSet(generics.ListCreateAPIView):
+    """Список и создание складских ячеек"""
+    queryset = StorageCell.objects.all()
+    serializer_class = StorageCellsSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.META['REQUEST_METHOD'] == 'GET':
+            return super().get_serializer(*args, **kwargs)
+        else:
+            return StorageCellsSerializer(data=self.request.data, many=True)

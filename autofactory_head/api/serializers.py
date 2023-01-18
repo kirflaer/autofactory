@@ -233,22 +233,6 @@ class RegularExpressionSerializer(serializers.ModelSerializer):
         model = RegularExpression
 
 
-class StorageCellsSerializer(serializers.ModelSerializer):
-    storage_area = serializers.CharField(required=False)
-
-    class Meta:
-        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan')
-        model = StorageCell
-        read_only_fields = ('guid',)
-
-    def create(self, validated_data):
-        storage_area_key = validated_data.pop('storage_area')
-        storage_area = StorageArea.objects.filter(external_key=storage_area_key).first()
-        validated_data['storage_area'] = storage_area
-        cell = StorageCell.objects.create(**validated_data)
-        return cell
-
-
 class AggregationsSerializer(serializers.Serializer):
     aggregation_code = serializers.CharField(required=False)
     product = serializers.CharField(required=False)

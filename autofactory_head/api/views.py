@@ -22,7 +22,7 @@ from .serializers import (ConfirmUnloadingSerializer, DepartmentSerializer,
                           DeviceSerializer, DirectionSerializer, LineCreateSerializer, LogSerializer,
                           MarksSerializer, OrganizationSerializer, ProductSerializer,
                           RegularExpressionSerializer, StorageSerializer, TypeFactoryOperationSerializer,
-                          UnitSerializer, UserSerializer, LineSerializer, StorageCellsSerializer, MarkingSerializer,
+                          UnitSerializer, UserSerializer, LineSerializer, MarkingSerializer,
                           AggregationsSerializer)
 from .services import confirm_marks_unloading
 
@@ -286,18 +286,6 @@ class UnitsCreateListSet(generics.ListCreateAPIView):
 
     def get_serializer(self, *args, **kwargs):
         return UnitSerializer(data=self.request.data, many=True)
-
-
-class StorageCellsListCreateViewSet(generics.ListCreateAPIView):
-    """Список и создание складских ячеек"""
-    queryset = StorageCell.objects.all()
-    serializer_class = StorageCellsSerializer
-
-    def get_serializer(self, *args, **kwargs):
-        if self.request.META['REQUEST_METHOD'] == 'GET':
-            return super().get_serializer(*args, **kwargs)
-        else:
-            return StorageCellsSerializer(data=self.request.data, many=True)
 
 
 class MarkingViewSet(viewsets.ViewSet):

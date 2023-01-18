@@ -18,9 +18,9 @@ from packing.marking_services import create_marking_marks, clear_raw_marks
 
 from packing.models import MarkingOperation
 from tasks.task_services import RouterTask
-from warehouse_management.models import StorageArea, Pallet
+from warehouse_management.models import StorageArea, Pallet, StorageCell
 from warehouse_management.serializers import OperationCellsSerializer, ChangeCellSerializer, \
-    PalletUpdateShipmentSerializer, PalletUpdateRepackingSerializer
+    PalletUpdateShipmentSerializer, PalletUpdateRepackingSerializer, StorageCellsSerializer
 from warehouse_management.warehouse_services import change_cell_content_state
 
 User = get_user_model()
@@ -87,14 +87,12 @@ class MarkingViewSet(api_views.MarkingViewSet):
             instance.closed = True
             instance.group = instance.shift.guid
             instance.save()
-            
+
             if self.request.user.role == User.VISION_OPERATOR:
                 create_marking_marks(instance, validated_data)
                 clear_raw_marks(instance)
             else:
                 load_manual_marks(instance, validated_data)
-
-
 
 
 class TasksViewSet(TasksChangeViewSet):
@@ -151,3 +149,8 @@ class PalletRepackingUpdate(generics.UpdateAPIView):
         serializer.request_user = self.request.user
         serializer.save()
 
+
+class CellRetrieveView(generics.RetrieveAPIView):
+    queryset = StorageCell.objects.all()
+    lookup_field = 'external_key'
+    serializer_class = api_serializers.StorageCellsRetrieveSerializer

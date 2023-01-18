@@ -1,5 +1,5 @@
 import uuid
-from typing import Iterable
+from typing import Iterable, Optional
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -464,3 +464,19 @@ def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
     pallet.save()
 
     return new_status
+
+
+def get_cell_state(**kwargs) -> StorageCellContentState | None:
+    filter_kwargs = kwargs.copy()
+    filter_kwargs['status'] = StatusCellContent.PLACED
+
+    if not StorageCellContentState.objects.filter(**filter_kwargs).exists():
+        return None
+
+    change_state_row = StorageCellContentState.objects.filter(**filter_kwargs).latest('creating_date')
+    filter_kwargs.pop('status')
+    last_state_row = StorageCellContentState.objects.filter(**filter_kwargs).latest('creating_date')
+    if change_state_row.pk != last_state_row.pk:
+        return None
+
+    return last_state_row

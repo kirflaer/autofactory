@@ -3,7 +3,7 @@ from django.urls import path, re_path, include
 from .views import (DepartmentList, DeviceViewSet, DirectionListCreateView, LineListCreateView, LogCreateViewSet,
                     MarksViewSet, OrganizationList,
                     ProductViewSet, RegExpList, StorageList, TypeFactoryOperationViewSet,
-                    UnitsCreateListSet, UserRetrieve, StorageCellsListCreateViewSet)
+                    UnitsCreateListSet, UserRetrieve)
 
 urlpatterns = [
     re_path(r'v[1-9]/regexp/$', RegExpList.as_view()),
@@ -16,7 +16,6 @@ urlpatterns = [
     re_path(r'v[1-9]/departments/$', DepartmentList.as_view()),
     re_path(r'v[1-9]/lines/$', LineListCreateView.as_view()),
     re_path(r'v[1-9]/users/$', UserRetrieve.as_view()),
-    re_path(r'v[1-9]/cells/$', StorageCellsListCreateViewSet.as_view()),
     re_path(r'v[1-9]/direction/$', DirectionListCreateView.as_view()),
     re_path(r'v[1-9]/devices/$', DeviceViewSet.as_view(
         {'post': 'create', 'delete': 'remove'})),

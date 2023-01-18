@@ -2,16 +2,16 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
-from api.serializers import StorageSerializer, StorageCellsSerializer
-from catalogs.models import ExternalSource, Product
+from api.serializers import StorageSerializer
+from catalogs.models import ExternalSource
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
                                          SelectionOperation, StorageCellContentState, StatusCellContent, StorageCell,
-                                         RepackingOperation)
-from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info
+                                         RepackingOperation, StorageArea)
+from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info, get_cell_state
 from datetime import datetime as dt
 
 
@@ -136,12 +136,8 @@ class PalletReadSerializer(serializers.Serializer):
 
     @staticmethod
     def get_cell(obj):
-        if not StorageCellContentState.objects.filter(pallet=obj, status=StatusCellContent.PLACED).exists():
-            return None
-        change_state_row = StorageCellContentState.objects.filter(pallet=obj, status=StatusCellContent.PLACED).latest(
-            'creating_date')
-        last_state_row = StorageCellContentState.objects.filter(pallet=obj).latest('creating_date')
-        if change_state_row.pk != last_state_row.pk:
+        change_state_row = get_cell_state(pallet=obj)
+        if change_state_row is None:
             return None
 
         serializer = StorageCellsSerializer(change_state_row.cell)
@@ -305,6 +301,22 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
                  'count': element.count,
                  })
         return result
+
+
+class StorageCellsSerializer(serializers.ModelSerializer):
+    storage_area = serializers.CharField(required=False)
+
+    class Meta:
+        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan')
+        model = StorageCell
+        read_only_fields = ('guid',)
+
+    def create(self, validated_data):
+        storage_area_key = validated_data.pop('storage_area')
+        storage_area = StorageArea.objects.filter(external_key=storage_area_key).first()
+        validated_data['storage_area'] = storage_area
+        cell = StorageCell.objects.create(**validated_data)
+        return cell
 
 
 class OperationCellFullSerializer(serializers.ModelSerializer):

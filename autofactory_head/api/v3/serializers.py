@@ -4,7 +4,9 @@ from api.serializers import MarkingSerializer, AggregationsSerializer
 from catalogs.models import Product
 from factory_core.models import ShiftProduct, Shift
 from packing.models import MarkingOperation
-from warehouse_management.models import StorageArea
+from warehouse_management.models import StorageArea, StorageCell, StorageCellContentState, StatusCellContent
+from warehouse_management.serializers import PalletReadSerializer
+from warehouse_management.warehouse_services import get_cell_state
 
 
 class MarkingSerializerOnlineWrite(MarkingSerializer):
@@ -70,3 +72,20 @@ class StorageAreaSerializer(serializers.ModelSerializer):
         fields = ('guid', 'name', 'external_key', 'new_status_on_admission')
         model = StorageArea
         read_only_fields = ('guid', 'new_status_on_admission')
+
+
+class StorageCellsRetrieveSerializer(serializers.ModelSerializer):
+    pallet = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = ('guid', 'name', 'external_key', 'barcode', 'needed_scan', 'pallet')
+        model = StorageCell
+
+    @staticmethod
+    def get_pallet(obj):
+        change_state_row = get_cell_state(cell=obj)
+        if change_state_row is None:
+            return None
+
+        serializer = PalletReadSerializer(change_state_row.pallet)
+        return serializer.data

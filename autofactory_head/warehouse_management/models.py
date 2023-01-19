@@ -295,6 +295,7 @@ class PalletProduct(models.Model):
     external_key = models.CharField(max_length=36, blank=True, null=True, verbose_name='Внешний ключ')
     has_shipped_products = models.BooleanField('Содержит номенклатуру требующую обеспечения', default=False)
     is_collected = models.BooleanField('Собрано', default=False)
+    has_divergence = models.BooleanField('Имеет расхождение', default=False)
 
     class Meta:
         verbose_name = 'Номенклатура паллеты'

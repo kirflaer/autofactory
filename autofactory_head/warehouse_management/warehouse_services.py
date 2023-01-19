@@ -55,6 +55,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
             pallet_product_string = PalletProduct.objects.filter(external_key=string).first()
             if pallet_product_string is not None:
                 pallet_product_string.is_collected = True
+                pallet_product_string.has_divergence = True
                 pallet_product_string.save()
 
 

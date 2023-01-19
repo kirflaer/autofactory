@@ -53,6 +53,7 @@ class PalletProductSerializer(serializers.Serializer):
     is_weight = serializers.SerializerMethodField(read_only=True, required=False)
     has_shipped_products = serializers.BooleanField(required=False)
     is_collected = serializers.BooleanField(required=False)
+    has_divergence = serializers.BooleanField(required=False)
 
     @staticmethod
     def get_is_weight(obj):

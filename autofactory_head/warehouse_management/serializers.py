@@ -560,6 +560,13 @@ class SelectionOperationWriteSerializer(serializers.ModelSerializer):
         model = SelectionOperation
         fields = ('external_source', 'cells')
 
+    def validate(self, attrs):
+        for cell in attrs['cells']:
+            pallet = Pallet.objects.filter(id=cell['pallet']).first()
+            if not pallet:
+                raise APIException('Не найдена паллета')
+        return super().validate(attrs)
+
 
 class ChangeCellSerializer(serializers.Serializer):
     cell_source = serializers.CharField()

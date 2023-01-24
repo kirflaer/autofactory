@@ -636,6 +636,7 @@ class InventoryWithPlacementOperationWriteSerializer(serializers.Serializer):
     pallet = serializers.CharField()
     cell = serializers.CharField()
     count = serializers.IntegerField()
+    weight = serializers.IntegerField(required=False)
 
     def validate(self, attrs):
         if not Pallet.objects.filter(guid=attrs.get('pallet')).first():

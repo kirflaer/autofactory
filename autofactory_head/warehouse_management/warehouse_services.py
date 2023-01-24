@@ -89,6 +89,10 @@ def create_inventory_with_placement_operation(serializer_data: dict[str: str], u
     pallet = Pallet.objects.get(guid=serializer_data['pallet'])
     if pallet.content_count != serializer_data['count']:
         pallet.content_count = serializer_data['count']
+
+    if serializer_data.get('weight') is not None and pallet.weight != serializer_data.get('weight'):
+        pallet.weight = serializer_data.get('weight')
+
     pallet.status = PalletStatus.PLACED
     pallet.save()
 

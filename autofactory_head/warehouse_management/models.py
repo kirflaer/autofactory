@@ -142,6 +142,7 @@ class OperationPallet(ManyToManyOperationMixin):
     dependent_pallet = models.ForeignKey(Pallet, on_delete=models.SET_NULL, blank=True, null=True,
                                          verbose_name='Зависимая паллета', related_name='depended_pallets')
     count = models.PositiveIntegerField('Количество', default=0, blank=True)
+    weight = models.PositiveIntegerField('Вес', default=0, blank=True)
 
     class Meta:
         verbose_name = 'Паллета операции'

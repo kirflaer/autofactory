@@ -585,6 +585,7 @@ class ChangeCellSerializer(serializers.Serializer):
 class RepackingPalletWriteSerializer(serializers.Serializer):
     pallet = serializers.CharField()
     count = serializers.IntegerField()
+    weight = serializers.IntegerField(required=False)
 
 
 class RepackingOperationWriteSerializer(OperationBaseSerializer):
@@ -627,7 +628,8 @@ class RepackingOperationReadSerializer(serializers.ModelSerializer):
             serializer_pallet_depends = PalletReadSerializer(pallet_data.dependent_pallet)
             result.append({'pallet_source': serializer_pallet_depends.data,
                            'pallet_destination': serializer_pallet.data,
-                           'count': pallet_data.count})
+                           'count': pallet_data.count,
+                           'weight': pallet_data.weight})
 
         return result
 

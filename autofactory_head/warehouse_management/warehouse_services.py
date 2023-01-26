@@ -159,8 +159,10 @@ def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: 
             pallet = Pallet.objects.create(product=dependent_pallet.product,
                                            batch_number=dependent_pallet.batch_number,
                                            production_date=dependent_pallet.production_date)
+            weight = pallet_data['weight'] if pallet_data.get('weight') is not None else 0
             operation_pallets = OperationPallet.objects.create(pallet=pallet, dependent_pallet=dependent_pallet,
-                                                               count=pallet_data['count'])
+                                                               count=pallet_data['count'],
+                                                               weight=weight)
             operation_pallets.fill_properties(operation)
     return result
 

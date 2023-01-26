@@ -64,7 +64,7 @@ class PalletSourceCreateSerializer(serializers.Serializer):
     pallet = serializers.CharField(source='pallet_source')
     product = serializers.CharField()
     batch_number = serializers.CharField()
-    weight = serializers.IntegerField()
+    weight = serializers.IntegerField(required=False)
     count = serializers.IntegerField()
     production_date = serializers.DateField()
     external_key = serializers.CharField(required=False)
@@ -175,6 +175,7 @@ class PalletUpdateRepackingSerializer(PalletUpdateSerializer):
         with transaction.atomic():
             instance = super().update(instance, validated_data)
             total_count = 0
+            total_weight = 0
             for pallet_row in instance.sources.all():
                 if instance.not_fully_collected:
                     pallet_row.pallet_source.status = PalletStatus.ARCHIVED
@@ -184,7 +185,9 @@ class PalletUpdateRepackingSerializer(PalletUpdateSerializer):
                     pallet_row.save()
 
                 total_count += pallet_row.count
+                total_weight += pallet_row.weight
             instance.content_count = total_count
+            instance.weight = total_weight
             instance.save()
             return instance
 
@@ -585,7 +588,6 @@ class ChangeCellSerializer(serializers.Serializer):
 class RepackingPalletWriteSerializer(serializers.Serializer):
     pallet = serializers.CharField()
     count = serializers.IntegerField()
-    weight = serializers.IntegerField(required=False)
 
 
 class RepackingOperationWriteSerializer(OperationBaseSerializer):

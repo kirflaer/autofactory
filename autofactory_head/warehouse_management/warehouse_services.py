@@ -34,7 +34,10 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
                 raise APIException('Не хватает коробок в паллете источнике')
 
             pallet_source.content_count -= source['count']
-            pallet_source.weight -= source['weight']
+
+            if source.get('weight') is not None:
+                pallet_source.weight -= source['weight']
+
             if pallet_source.content_count == 0:
                 pallet_source.status = PalletStatus.ARCHIVED
             if pallet_source.weight < 0:
@@ -159,10 +162,8 @@ def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: 
             pallet = Pallet.objects.create(product=dependent_pallet.product,
                                            batch_number=dependent_pallet.batch_number,
                                            production_date=dependent_pallet.production_date)
-            weight = pallet_data['weight'] if pallet_data.get('weight') is not None else 0
             operation_pallets = OperationPallet.objects.create(pallet=pallet, dependent_pallet=dependent_pallet,
-                                                               count=pallet_data['count'],
-                                                               weight=weight)
+                                                               count=pallet_data['count'])
             operation_pallets.fill_properties(operation)
     return result
 

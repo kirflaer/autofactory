@@ -18,7 +18,6 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
                                          InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
                                          StorageCellContentState, StatusCellContent, RepackingOperation)
-
 User = get_user_model()
 
 
@@ -232,7 +231,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
         if len(pallets) == 1 and pallets[0].shift is not None and not pallets[0].shift.closed:
             operation.ready_to_unload = False
             operation.save()
-        result.append(operation.guid)
+        result += pallets
     return result
 
 

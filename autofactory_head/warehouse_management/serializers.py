@@ -630,8 +630,7 @@ class RepackingOperationReadSerializer(serializers.ModelSerializer):
             serializer_pallet_depends = PalletReadSerializer(pallet_data.dependent_pallet)
             result.append({'pallet_source': serializer_pallet_depends.data,
                            'pallet_destination': serializer_pallet.data,
-                           'count': pallet_data.count,
-                           'weight': pallet_data.weight})
+                           'count': pallet_data.count})
 
         return result
 

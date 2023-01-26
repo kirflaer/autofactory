@@ -17,7 +17,8 @@ class RouterTask(NamedTuple):
     read_serializer: type(serializers.Serializer)
     write_serializer: type(serializers.Serializer)
     content_model: type(TaskBaseModel) | None
-    change_content_function: Callable[[dict[str, str], type(Task)], [str]] | None
+    change_content_function: Callable[[dict[str, str], type(Task)], [str]] | None = None
+    answer_serializer: type(serializers.Serializer) | None = None
 
 
 class RouterContent(NamedTuple):

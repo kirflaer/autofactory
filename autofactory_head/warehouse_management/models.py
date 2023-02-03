@@ -57,6 +57,7 @@ class StorageCell(BaseExternalModel):
     storage_area = models.ForeignKey(StorageArea, verbose_name='Область хранения', null=True, blank=True,
                                      on_delete=models.SET_NULL)
     needed_scan = models.BooleanField('Необходимо сканировать при размещении', default=True)
+    needed_filter_by_task = models.BooleanField('Необходим фильтр по задания при размещении', default=False)
 
     class Meta:
         verbose_name = 'Складская ячейка'
@@ -85,6 +86,8 @@ class Pallet(models.Model):
     # Для совместимости со второй версие везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
     not_fully_collected = models.BooleanField('Собрана не полностью', default=False, blank=True, null=True)
+
+    external_task_key = models.CharField('Ключ внешнего задания', blank=True, null=True, max_length=36)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -239,6 +242,17 @@ class SelectionOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Отбор со склада'
         verbose_name_plural = 'Отбор со склада (Заявка на завод)'
+
+    def close(self):
+        super().close()
+        cells = OperationCell.objects.filter(operation=self.guid)
+        if not cells.count():
+            return
+        for row in cells:
+            if not row.cell_destination.needed_filter_by_task or not row.pallet:
+                continue
+            row.pallet.external_task_key = self.external_source.external_key
+            row.pallet.save()
 
 
 class PalletCollectOperation(OperationBaseOperation):

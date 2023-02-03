@@ -157,7 +157,7 @@ def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: 
         for pallet_data in row['pallets']:
             dependent_pallet = Pallet.objects.filter(id=pallet_data['pallet']).first()
             if not dependent_pallet:
-                raise APIException('Не найдена зависимая паллета')
+                raise APIException(f'Не найдена зависимая паллета {pallet_data["pallet"]}')
             pallet = Pallet.objects.create(product=dependent_pallet.product,
                                            batch_number=dependent_pallet.batch_number,
                                            production_date=dependent_pallet.production_date)

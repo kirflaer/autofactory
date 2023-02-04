@@ -536,8 +536,8 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
             date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
             date = date.strftime('%d.%m.%Y')
         except ValueError:
-            date = obj.date
-        return date.strftime('%d.%m.%Y')
+            date = obj.date.strftime('%d.%m.%Y')
+        return date
 
     @staticmethod
     def get_storage_areas(obj):

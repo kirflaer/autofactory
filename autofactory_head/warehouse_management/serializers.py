@@ -517,7 +517,7 @@ class InventoryOperationReadSerializer(serializers.ModelSerializer):
 
 class SelectionOperationReadSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
-    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    number = serializers.SerializerMethodField()
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     storage_areas = serializers.SerializerMethodField()
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
@@ -527,13 +527,17 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
         fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'storage_areas')
 
     @staticmethod
+    def get_number(obj):
+        return obj.external_source.number.lstrip('0')
+
+    @staticmethod
     def get_date(obj):
         try:
             date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
-            date = date.strftime('%d.%m.%Y %H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
         except ValueError:
-            date = obj.external_source.date
-        return date
+            date = obj.date
+        return date.strftime('%d.%m.%Y')
 
     @staticmethod
     def get_storage_areas(obj):
@@ -614,12 +618,26 @@ class RepackingPalletReadSerializer(serializers.ModelSerializer):
 
 class RepackingOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
-    date = serializers.DateTimeField(format='%d.%m.%Y %H:%M:%S')
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
+    number = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = RepackingOperation
         fields = ('status', 'date', 'number', 'guid', 'pallets', 'external_key')
+
+    @staticmethod
+    def get_number(obj):
+        return obj.external_source.number.lstrip('0')
+
+    @staticmethod
+    def get_date(obj):
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
+        except ValueError:
+            date = obj.date.strftime('%d.%m.%Y')
+        return date
 
     @staticmethod
     def get_pallets(obj):

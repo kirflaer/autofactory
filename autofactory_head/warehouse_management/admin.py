@@ -164,6 +164,7 @@ class StorageAreaAdmin(admin.ModelAdmin):
 @admin.register(StorageCellContentState)
 class StorageCellContentStateAdmin(admin.ModelAdmin):
     list_display = ('creating_date', 'cell', 'pallet', 'status')
+    search_fields = ('cell__name', 'pallet__id', 'pallet__guid')
 
 
 @admin.register(RepackingOperation)

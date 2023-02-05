@@ -571,7 +571,7 @@ class SelectionOperationWriteSerializer(serializers.ModelSerializer):
         for cell in attrs['cells']:
             pallet = Pallet.objects.filter(id=cell['pallet']).first()
             if not pallet:
-                raise APIException(f'Не найдена паллета {cell[pallet]}')
+                raise APIException(f'Не найдена паллета {cell["pallet"]}')
         return super().validate(attrs)
 
 

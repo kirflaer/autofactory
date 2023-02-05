@@ -48,7 +48,7 @@ def get_task_router() -> dict[str: RouterTask]:
                                          read_serializer=PalletCollectOperationReadSerializer,
                                          write_serializer=PalletCollectOperationWriteSerializer,
                                          content_model=TaskBaseModel,
-                                         change_content_function=None),
+                                         answer_serializer=PalletReadSerializer),
             'PLACEMENT_TO_CELLS': RouterTask(task=PlacementToCellsOperation,
                                              create_function=create_placement_operation,
                                              read_serializer=PlacementToCellsOperationReadSerializer,

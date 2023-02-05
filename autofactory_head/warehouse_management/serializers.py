@@ -53,6 +53,7 @@ class PalletProductSerializer(serializers.Serializer):
     is_weight = serializers.SerializerMethodField(read_only=True, required=False)
     has_shipped_products = serializers.BooleanField(required=False)
     is_collected = serializers.BooleanField(required=False)
+    has_divergence = serializers.BooleanField(required=False)
 
     @staticmethod
     def get_is_weight(obj):
@@ -63,7 +64,7 @@ class PalletSourceCreateSerializer(serializers.Serializer):
     pallet = serializers.CharField(source='pallet_source')
     product = serializers.CharField()
     batch_number = serializers.CharField()
-    weight = serializers.IntegerField()
+    weight = serializers.IntegerField(required=False)
     count = serializers.IntegerField()
     production_date = serializers.DateField()
     external_key = serializers.CharField(required=False)
@@ -174,6 +175,7 @@ class PalletUpdateRepackingSerializer(PalletUpdateSerializer):
         with transaction.atomic():
             instance = super().update(instance, validated_data)
             total_count = 0
+            total_weight = 0
             for pallet_row in instance.sources.all():
                 if instance.not_fully_collected:
                     pallet_row.pallet_source.status = PalletStatus.ARCHIVED
@@ -183,7 +185,9 @@ class PalletUpdateRepackingSerializer(PalletUpdateSerializer):
                     pallet_row.save()
 
                 total_count += pallet_row.count
+                total_weight += pallet_row.weight
             instance.content_count = total_count
+            instance.weight = total_weight
             instance.save()
             return instance
 
@@ -513,7 +517,7 @@ class InventoryOperationReadSerializer(serializers.ModelSerializer):
 
 class SelectionOperationReadSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
-    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    number = serializers.SerializerMethodField()
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     storage_areas = serializers.SerializerMethodField()
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
@@ -523,12 +527,16 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
         fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'storage_areas')
 
     @staticmethod
+    def get_number(obj):
+        return obj.external_source.number.lstrip('0')
+
+    @staticmethod
     def get_date(obj):
         try:
             date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
-            date = date.strftime('%d.%m.%Y %H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
         except ValueError:
-            date = obj.external_source.date
+            date = obj.date.strftime('%d.%m.%Y')
         return date
 
     @staticmethod
@@ -558,6 +566,13 @@ class SelectionOperationWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = SelectionOperation
         fields = ('external_source', 'cells')
+
+    def validate(self, attrs):
+        for cell in attrs['cells']:
+            pallet = Pallet.objects.filter(id=cell['pallet']).first()
+            if not pallet:
+                raise APIException(f'Не найдена паллета {cell[pallet]}')
+        return super().validate(attrs)
 
 
 class ChangeCellSerializer(serializers.Serializer):
@@ -603,12 +618,26 @@ class RepackingPalletReadSerializer(serializers.ModelSerializer):
 
 class RepackingOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
-    date = serializers.DateTimeField(format='%d.%m.%Y %H:%M:%S')
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
+    number = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = RepackingOperation
         fields = ('status', 'date', 'number', 'guid', 'pallets', 'external_key')
+
+    @staticmethod
+    def get_number(obj):
+        return obj.external_source.number.lstrip('0')
+
+    @staticmethod
+    def get_date(obj):
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
+        except ValueError:
+            date = obj.date.strftime('%d.%m.%Y')
+        return date
 
     @staticmethod
     def get_pallets(obj):
@@ -628,6 +657,7 @@ class InventoryWithPlacementOperationWriteSerializer(serializers.Serializer):
     pallet = serializers.CharField()
     cell = serializers.CharField()
     count = serializers.IntegerField()
+    weight = serializers.IntegerField(required=False)
 
     def validate(self, attrs):
         if not Pallet.objects.filter(guid=attrs.get('pallet')).first():

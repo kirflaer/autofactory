@@ -18,7 +18,6 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
                                          InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
                                          StorageCellContentState, StatusCellContent, RepackingOperation)
-
 User = get_user_model()
 
 
@@ -34,7 +33,10 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
                 raise APIException('Не хватает коробок в паллете источнике')
 
             pallet_source.content_count -= source['count']
-            pallet_source.weight -= source['weight']
+
+            if source.get('weight') is not None:
+                pallet_source.weight -= source['weight']
+
             if pallet_source.content_count == 0:
                 pallet_source.status = PalletStatus.ARCHIVED
             if pallet_source.weight < 0:
@@ -55,6 +57,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
             pallet_product_string = PalletProduct.objects.filter(external_key=string).first()
             if pallet_product_string is not None:
                 pallet_product_string.is_collected = True
+                pallet_product_string.has_divergence = True
                 pallet_product_string.save()
 
 
@@ -88,6 +91,10 @@ def create_inventory_with_placement_operation(serializer_data: dict[str: str], u
     pallet = Pallet.objects.get(guid=serializer_data['pallet'])
     if pallet.content_count != serializer_data['count']:
         pallet.content_count = serializer_data['count']
+
+    if serializer_data.get('weight') is not None and pallet.weight != serializer_data.get('weight'):
+        pallet.weight = serializer_data.get('weight')
+
     pallet.status = PalletStatus.PLACED
     pallet.save()
 
@@ -150,10 +157,11 @@ def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: 
         for pallet_data in row['pallets']:
             dependent_pallet = Pallet.objects.filter(id=pallet_data['pallet']).first()
             if not dependent_pallet:
-                raise APIException('Не найдена зависимая паллета')
+                raise APIException(f'Не найдена зависимая паллета {pallet_data["pallet"]}')
             pallet = Pallet.objects.create(product=dependent_pallet.product,
                                            batch_number=dependent_pallet.batch_number,
-                                           production_date=dependent_pallet.production_date)
+                                           production_date=dependent_pallet.production_date,
+                                           external_task_key=external_source.external_key)
             operation_pallets = OperationPallet.objects.create(pallet=pallet, dependent_pallet=dependent_pallet,
                                                                count=pallet_data['count'])
             operation_pallets.fill_properties(operation)
@@ -224,7 +232,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
         if len(pallets) == 1 and pallets[0].shift is not None and not pallets[0].shift.closed:
             operation.ready_to_unload = False
             operation.save()
-        result.append(operation.guid)
+        result += pallets
     return result
 
 

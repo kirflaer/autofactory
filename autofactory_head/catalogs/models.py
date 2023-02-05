@@ -175,6 +175,7 @@ class Unit(BaseExternalModel):
     is_default = models.BooleanField('Упаковка по умолчанию', default=False)
     gtin = models.CharField(default='', blank=True, max_length=50,
                             verbose_name='Штрихкод')
+    weight = models.PositiveIntegerField('Вес', default=0)
 
     class Meta:
         verbose_name = 'Единица измерения'

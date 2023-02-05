@@ -58,9 +58,15 @@ class TasksViewSet(viewsets.ViewSet):
             serializer = task_router.write_serializer(data=request.data)
 
         if serializer.is_valid():
-            # TODO: обработать ошибку создания
+            response = {'type_task': type_task}
             result = task_router.create_function(serializer.validated_data, request.user)
-            return Response({'type_task': type_task, 'guids': result})
+            answer_serializer = task_router.answer_serializer
+            if not answer_serializer:
+                response = response | {'guids': result}
+            else:
+                serializer = answer_serializer(result, many=True)
+                response = response | {'pallets': serializer.data}
+            return Response(response)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

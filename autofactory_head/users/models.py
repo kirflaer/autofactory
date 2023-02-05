@@ -112,6 +112,7 @@ class User(AbstractUser):
     data_send_interval = models.IntegerField('Интервал отправки данных', default=10,
                                              validators=[MinValueValidator(4), MaxValueValidator(1200)])
     default_page = models.CharField('Страница по умолчанию', default='', max_length=100, blank=True, null=True)
+    disable_production_date_filter = models.BooleanField('Отключить фильтр по дате выработки', default=False)
 
     class Meta:
         ordering = ('username',)

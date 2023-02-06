@@ -113,9 +113,11 @@ class ShipmentOperationAdmin(admin.ModelAdmin):
 
 @admin.register(OrderOperation)
 class OrderOperationAdmin(admin.ModelAdmin):
+    ordering = ('-date',)
     list_display = (
         'date', 'guid', 'user', 'number', 'parent_task', 'external_source', 'status', 'closed', 'ready_to_unload',
         'unloaded')
+    search_fields = ('parent_task',)
 
 
 @admin.register(PalletProduct)

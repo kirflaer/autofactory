@@ -18,7 +18,7 @@ from tasks.models import TaskStatus
 from tasks.task_services import change_task_properties
 from warehouse_management.models import Pallet, PalletStatus
 from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer
-from warehouse_management.warehouse_services import create_pallets
+from warehouse_management.warehouse_services import create_pallets, get_pallet_filter_from_shipment
 
 User = get_user_model()
 
@@ -32,10 +32,9 @@ class MarksViewSet(api.views.MarksViewSet):
 
 class PalletViewSet(generics.ListCreateAPIView):
     serializer_class = PalletReadSerializer
-    queryset = Pallet.objects.all().exclude(status=PalletStatus.ARCHIVED).order_by('-content_count')
+    queryset = Pallet.objects.all().exclude(status=PalletStatus.ARCHIVED).order_by('content_count')
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
-    filterset_fields = (
-    'id', 'batch_number', 'production_date', 'content_count', 'product', 'status', 'external_task_key')
+    filterset_fields = ('id', 'batch_number', 'production_date', 'content_count', 'product', 'status')
     search_fields = ('id',)
 
     def create(self, request, *args, **kwargs):
@@ -50,14 +49,20 @@ class PalletViewSet(generics.ListCreateAPIView):
         # реализация фильртров на вхождение в диапазон
         list_params = {
             'ids': 'id__in',
-            'keys': 'external_key__in'
+            'keys': 'external_key__in',
+            'external_task_key': get_pallet_filter_from_shipment
         }
+
         qs = super().get_queryset()
         for param, condition in list_params.items():
             value = self.request.query_params.get(param)
             if not value:
                 continue
-            qs_filter = {condition: value.split('_')}
+            if callable(condition):
+                qs_filter = condition(value)
+            else:
+                qs_filter = {condition: value.split('_')}
+
             qs = qs.filter(**qs_filter)
 
         return qs

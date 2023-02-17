@@ -164,8 +164,7 @@ def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: 
                 raise APIException(f'Не найдена зависимая паллета {pallet_data["pallet"]}')
             pallet = Pallet.objects.create(product=dependent_pallet.product,
                                            batch_number=dependent_pallet.batch_number,
-                                           production_date=dependent_pallet.production_date,
-                                           external_task_key=external_source.external_key)
+                                           production_date=dependent_pallet.production_date)
             operation_pallets = OperationPallet.objects.create(pallet=pallet, dependent_pallet=dependent_pallet,
                                                                count=pallet_data['count'])
             operation_pallets.fill_properties(operation)
@@ -492,3 +491,16 @@ def get_cell_state(**kwargs) -> StorageCellContentState | None:
         return None
 
     return last_state_row
+
+
+def get_pallet_filter_from_shipment(shipment_external_key: str) -> dict[str, list] | None:
+    external_source = ExternalSource.objects.filter(external_key=shipment_external_key).first()
+    if not external_source:
+        return None
+    operation = ShipmentOperation.objects.filter(external_source=external_source).first()
+    if not operation:
+        return None
+
+    cells = OperationCell.objects.filter(operation=operation.guid).values_list('pallet__guid', flat=True)
+
+    return {'guid__in': list(cells)}

@@ -249,17 +249,6 @@ class SelectionOperation(OperationBaseOperation):
         verbose_name = 'Отбор со склада'
         verbose_name_plural = 'Отбор со склада (Заявка на завод)'
 
-    def close(self):
-        super().close()
-        cells = OperationCell.objects.filter(operation=self.guid)
-        if not cells.count():
-            return
-        for row in cells:
-            if not row.cell_destination.needed_filter_by_task or not row.pallet:
-                continue
-            row.pallet.external_task_key = self.external_source.external_key
-            row.pallet.save()
-
 
 class PalletCollectOperation(OperationBaseOperation):
     PARENT_TASK_TYPES = {'SHIPMENT': ShipmentOperation,

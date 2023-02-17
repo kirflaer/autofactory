@@ -117,8 +117,7 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         if task is not None:
             result.append(task.guid)
             continue
-        operation = ShipmentOperation.objects.create(user=user,
-                                                     direction=element['direction'],
+        operation = ShipmentOperation.objects.create(direction=element['direction'],
                                                      manager=element['manager'],
                                                      external_source=external_source,
                                                      has_selection=element['has_selection'])

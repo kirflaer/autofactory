@@ -394,13 +394,26 @@ class ShipmentOperationWriteSerializer(serializers.ModelSerializer):
 
 
 class ShipmentOperationReadSerializer(serializers.ModelSerializer):
-    date = serializers.SlugRelatedField(slug_field='date', read_only=True, source='external_source')
-    number = serializers.SlugRelatedField(slug_field='number', read_only=True, source='external_source')
+    number = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
 
     class Meta:
         model = ShipmentOperation
         fields = ('direction', 'date', 'number', 'guid', 'external_key', 'has_selection', 'manager')
+
+    @staticmethod
+    def get_number(obj):
+        return obj.external_source.number.lstrip('0')
+
+    @staticmethod
+    def get_date(obj):
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
+        except ValueError:
+            date = obj.date.strftime('%d.%m.%Y')
+        return date
 
 
 class PalletShipmentSerializer(serializers.ModelSerializer):

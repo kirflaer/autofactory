@@ -18,6 +18,7 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
                                          InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
                                          StorageCellContentState, StatusCellContent, RepackingOperation)
+
 User = get_user_model()
 
 
@@ -116,11 +117,14 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         if task is not None:
             result.append(task.guid)
             continue
-        direction = Direction.objects.filter(external_key=element['direction']).first()
-        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source,
+        operation = ShipmentOperation.objects.create(user=user,
+                                                     direction=element['direction'],
+                                                     manager=element['manager'],
+                                                     external_source=external_source,
                                                      has_selection=element['has_selection'])
 
         _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SHIPMENT)
+        fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
     return result
 

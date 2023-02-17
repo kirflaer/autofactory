@@ -110,6 +110,8 @@ class PalletWriteSerializer(serializers.Serializer):
     shift = serializers.CharField(required=False)
     code_offline = serializers.CharField(required=False)
     cell = serializers.CharField(required=False)
+    name = serializers.CharField(required=False)
+    consignee = serializers.CharField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):
@@ -128,6 +130,8 @@ class PalletReadSerializer(serializers.Serializer):
     external_key = serializers.CharField(read_only=True)
     marking_group = serializers.CharField(required=False)
     cell = serializers.SerializerMethodField()
+    name = serializers.CharField(required=False)
+    consignee = serializers.CharField(required=False)
 
     @staticmethod
     def get_sources(obj):
@@ -379,14 +383,14 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
 
 
 class ShipmentOperationWriteSerializer(serializers.ModelSerializer):
-    direction = serializers.CharField()
     external_source = ExternalSerializer()
     pallets = PalletWriteSerializer(many=True)
     has_selection = serializers.BooleanField(required=False)
+    cells = OperationCellsSerializer(many=True)
 
     class Meta:
         model = ShipmentOperation
-        fields = ('direction', 'external_source', 'pallets', 'has_selection')
+        fields = ('direction', 'external_source', 'pallets', 'has_selection', 'manager', 'cells')
 
 
 class ShipmentOperationReadSerializer(serializers.ModelSerializer):

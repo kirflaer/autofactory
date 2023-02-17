@@ -89,12 +89,18 @@ class Pallet(models.Model):
 
     external_task_key = models.CharField('Ключ внешнего задания', blank=True, null=True, max_length=36)
 
+    name = models.CharField('Наименование', blank=True, null=True, max_length=155)
+    consignee = models.CharField('Грузополучатель', blank=True, null=True, max_length=155)
+
     class Meta:
         verbose_name = 'Паллета'
         verbose_name_plural = 'Паллеты'
 
     def __str__(self):
-        return f'{self.status} / {self.batch_number} / {self.id} / {self.guid}'
+        if not self.name:
+            return f'{self.status} / {self.batch_number} / {self.id} / {self.guid}'
+        else:
+            return f'{self.name} / {self.consignee}'
 
 
 class PalletContent(models.Model):
@@ -224,9 +230,9 @@ class MovementBetweenCellsOperation(OperationBaseOperation):
 
 class ShipmentOperation(OperationBaseOperation):
     type_task = 'SHIPMENT'
-    direction = models.ForeignKey(Direction, on_delete=models.SET_NULL, null=True, blank=True,
-                                  verbose_name='Направление')
     has_selection = models.BooleanField('Есть отбор', default=False, blank=True, null=True)
+    manager = models.CharField('Менеджер', blank=True, null=True, max_length=155)
+    direction = models.CharField('Направление', blank=True, null=True, max_length=155)
 
     class Meta:
         verbose_name = 'Отгрузка со склада'

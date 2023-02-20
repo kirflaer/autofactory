@@ -58,9 +58,10 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
         filter_task.pop('only_close')
     else:
         queryset = queryset.filter(Q(user=filter_task['user']) | Q(status=TaskStatus.NEW))
-        if filter_task.get('not_closed'):
-            queryset = queryset.exclude(status=TaskStatus.CLOSE).exclude(closed=True)
-            filter_task.pop('not_closed')
+
+    if filter_task.get('not_closed'):
+        queryset = queryset.exclude(status=TaskStatus.CLOSE).exclude(closed=True)
+        filter_task.pop('not_closed')
 
     if filter_task.get('user') is not None:
         filter_task.pop('user')

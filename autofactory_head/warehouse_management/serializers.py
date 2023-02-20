@@ -61,7 +61,7 @@ class PalletProductSerializer(serializers.Serializer):
 
 
 class PalletSourceCreateSerializer(serializers.Serializer):
-    pallet = serializers.CharField(source='pallet_source')
+    pallet_guid = serializers.CharField(source='pallet_source')
     product = serializers.CharField()
     batch_number = serializers.CharField()
     weight = serializers.IntegerField(required=False)

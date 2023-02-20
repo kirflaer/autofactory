@@ -50,7 +50,9 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
     if len(filter_keys.difference(class_keys)):
         raise TaskException
 
-    if filter_task.get('only_close'):
+    if filter_task.get('all_users'):
+        filter_task.pop('user')
+    elif filter_task.get('only_close'):
         queryset = queryset.filter(status=TaskStatus.CLOSE)
         filter_task.pop('only_close')
     else:

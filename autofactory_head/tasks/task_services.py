@@ -44,7 +44,7 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
     transform_incoming_data(filter_task)
     queryset = task.objects.all()
 
-    class_keys = set(dir(task)) | {'not_closed', 'only_close'}
+    class_keys = set(dir(task)) | {'not_closed', 'only_close', 'all_users'}
     filter_keys = set(filter_task.keys())
 
     if len(filter_keys.difference(class_keys)):
@@ -52,6 +52,7 @@ def get_task_queryset(task: Task, filter_task: dict[str: str]) -> QuerySet:
 
     if filter_task.get('all_users'):
         filter_task.pop('user')
+        filter_task.pop('all_users')
     elif filter_task.get('only_close'):
         queryset = queryset.filter(status=TaskStatus.CLOSE)
         filter_task.pop('only_close')

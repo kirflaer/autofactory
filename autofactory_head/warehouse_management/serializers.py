@@ -78,14 +78,15 @@ class PalletSourceCreateSerializer(serializers.Serializer):
 
 
 class PalletSourceReadSerializer(serializers.ModelSerializer):
-    pallet = serializers.SlugRelatedField(slug_field='id', source='pallet_source', read_only=True)
+    pallet_id = serializers.SlugRelatedField(slug_field='id', source='pallet_source', read_only=True)
+    pallet_guid = serializers.SlugRelatedField(slug_field='guid', source='pallet_source', read_only=True)
     is_weight = serializers.SerializerMethodField(read_only=True, required=False)
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         fields = (
-            'product', 'batch_number', 'weight', 'count', 'pallet', 'production_date', 'external_key', 'is_weight',
-            'user')
+            'product', 'batch_number', 'weight', 'count', 'pallet_id', 'pallet_guid', 'production_date', 'external_key',
+            'is_weight', 'user')
         model = PalletSource
 
     @staticmethod

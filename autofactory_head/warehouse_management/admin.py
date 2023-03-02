@@ -28,6 +28,14 @@ def make_pallet_placed(model, request, queryset):
     queryset.update(status='PLACED')
 
 
+@admin.action(description='Переразместить ячейки')
+def make_cells_placed(model, request, queryset):
+    ids = list(queryset.values_list('guid', flat=True))
+    cells = OperationCell.objects.filter(operation__in=ids)
+    for row in cells:
+        StorageCellContentState.objects.create(cell=row.cell_source, pallet=row.pallet)
+
+
 @admin.action(description='Пометить задание как выгруженное')
 def make_task_unloaded(model, request, queryset):
     queryset.update(unloaded=True)
@@ -144,7 +152,7 @@ class InventoryOperationAdmin(admin.ModelAdmin):
     list_filter = (('date', DateRangeFilter), 'ready_to_unload', 'unloaded')
     list_display = (
         'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')
-    actions = [make_task_loaded]
+    actions = [make_task_loaded, make_cells_placed]
     search_fields = ('number',)
     ordering = ('-date',)
 

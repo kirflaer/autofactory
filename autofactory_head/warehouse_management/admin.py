@@ -63,6 +63,7 @@ class PalletAdmin(admin.ModelAdmin):
 @admin.register(PalletSource)
 class PalletSourceAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'pallet_source', 'product', 'weight', 'count', 'batch_number', 'production_date')
+    search_fields = ('pallet_source__id', 'pallet_source__guid')
 
 
 @admin.register(OperationPallet)

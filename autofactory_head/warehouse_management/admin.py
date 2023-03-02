@@ -23,6 +23,11 @@ def make_pallet_confirmed(model, request, queryset):
     queryset.update(status='CONFIRMED')
 
 
+@admin.action(description='Разместить паллеты')
+def make_pallet_placed(model, request, queryset):
+    queryset.update(status='PLACED')
+
+
 @admin.action(description='Пометить задание как выгруженное')
 def make_task_unloaded(model, request, queryset):
     queryset.update(unloaded=True)
@@ -44,7 +49,7 @@ class PalletAdmin(admin.ModelAdmin):
     list_filter = (('creation_date', DateRangeFilter), 'status')
     ordering = ('-creation_date',)
     search_fields = ('id', 'marking_group', 'guid', 'external_task_key')
-    actions = [make_pallet_confirmed]
+    actions = [make_pallet_confirmed, make_pallet_placed]
 
 
 @admin.register(PalletSource)

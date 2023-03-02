@@ -32,6 +32,7 @@ def make_task_unloaded(model, request, queryset):
 def make_task_loaded(model, request, queryset):
     queryset.update(unloaded=False)
 
+
 @admin.action(description='Пометить задание как закрытое')
 def make_task_closed(model, request, queryset):
     queryset.update(closed=True, status=TaskStatus.CLOSE)
@@ -167,7 +168,7 @@ class StorageAreaAdmin(admin.ModelAdmin):
 class StorageCellContentStateAdmin(admin.ModelAdmin):
     list_display = ('creating_date', 'cell', 'pallet', 'status')
     search_fields = ('cell__name', 'pallet__id', 'pallet__guid')
-    list_filter = (('creating_date', DateRangeFilter),)
+    list_filter = ('status', ('creating_date', DateRangeFilter),)
 
 
 @admin.register(RepackingOperation)

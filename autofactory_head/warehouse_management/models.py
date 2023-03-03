@@ -58,6 +58,8 @@ class StorageCell(BaseExternalModel):
                                      on_delete=models.SET_NULL)
     needed_scan = models.BooleanField('Необходимо сканировать при размещении', default=True)
     needed_filter_by_task = models.BooleanField('Необходим фильтр по задания при размещении', default=False)
+    rack_number = models.PositiveIntegerField('Номер стеллажа', default=0, blank=True)
+    position = models.PositiveIntegerField('Позиция внутри стеллажа', default=0, blank=True)
 
     class Meta:
         verbose_name = 'Складская ячейка'
@@ -323,6 +325,7 @@ class PalletSource(models.Model):
     order = models.ForeignKey(OrderOperation, verbose_name='Заказ клиента', blank=True, null=True,
                               on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Пользователь')
+    additional_collect = models.BooleanField('Дополнение к заданию', blank=True, default=False)
 
     class Meta:
         verbose_name = 'Паллета источник'

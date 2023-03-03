@@ -86,7 +86,7 @@ class PalletSourceReadSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
             'product', 'batch_number', 'weight', 'count', 'pallet_id', 'pallet_guid', 'production_date', 'external_key',
-            'is_weight', 'user')
+            'is_weight', 'user', 'additional_collect')
         model = PalletSource
 
     @staticmethod
@@ -558,7 +558,8 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_storage_areas(obj):
-        operation_cells = OperationCell.objects.filter(operation=obj.guid)
+        operation_cells = OperationCell.objects.filter(operation=obj.guid).order_by('cell_source__rack_number',
+                                                                                    'cell_source__position')
         storage_areas = {key: [] for key in
                          list(
                              operation_cells.values_list('cell_destination__storage_area__name', flat=True).distinct())}

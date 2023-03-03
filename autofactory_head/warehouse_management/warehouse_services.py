@@ -92,9 +92,11 @@ def create_inventory_with_placement_operation(serializer_data: dict[str: str], u
     pallet = Pallet.objects.get(guid=serializer_data['pallet'])
     if pallet.content_count != serializer_data['count']:
         pallet.content_count = serializer_data['count']
+        pallet.save()
 
     if serializer_data.get('weight') is not None and pallet.weight != serializer_data.get('weight'):
         pallet.weight = serializer_data.get('weight')
+        pallet.save()
 
     cell = StorageCell.objects.get(external_key=serializer_data['cell'])
     operation_pallets = OperationCell.objects.create(pallet=pallet, cell_source=cell)

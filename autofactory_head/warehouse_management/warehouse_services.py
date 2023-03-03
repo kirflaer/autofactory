@@ -90,12 +90,16 @@ def create_inventory_with_placement_operation(serializer_data: dict[str: str], u
     """ Создает операцию отгрузки со склада"""
     instance = InventoryOperation.objects.create(user=user, ready_to_unload=True)
     pallet = Pallet.objects.get(guid=serializer_data['pallet'])
+    pallet_data_has_changed = False
     if pallet.content_count != serializer_data['count']:
         pallet.content_count = serializer_data['count']
-        pallet.save()
+        pallet_data_has_changed = True
 
     if serializer_data.get('weight') is not None and pallet.weight != serializer_data.get('weight'):
         pallet.weight = serializer_data.get('weight')
+        pallet_data_has_changed = True
+
+    if pallet_data_has_changed:
         pallet.save()
 
     cell = StorageCell.objects.get(external_key=serializer_data['cell'])

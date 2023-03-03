@@ -345,6 +345,16 @@ class InventoryOperation(OperationBaseOperation):
         verbose_name = 'Инвентаризация'
         verbose_name_plural = 'Инвентаризация'
 
+    def close(self):
+        super().close()
+
+        rows = OperationCell.objects.filter(operation=self.guid)
+        for row in rows:
+            row.pallet.status = PalletStatus.PLACED
+            row.pallet.save()
+
+            StorageCellContentState.objects.create(cell=row.cell_source, pallet=row.pallet)
+
 
 class RepackingOperation(OperationBaseOperation):
     type_task = 'REPACKING'

@@ -68,7 +68,7 @@ class PalletSourceCreateSerializer(serializers.Serializer):
     count = serializers.IntegerField()
     production_date = serializers.DateField()
     external_key = serializers.CharField(required=False)
-    additional_collect = serializers.CharField(required=False)
+    additional_collect = serializers.BooleanField(required=False)
 
     def validate(self, attrs):
         pallet_source = Pallet.objects.filter(guid=attrs.get('pallet_source')).first()

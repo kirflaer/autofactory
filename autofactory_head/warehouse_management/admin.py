@@ -70,7 +70,7 @@ class PalletSourceAdmin(admin.ModelAdmin):
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('operation', 'pallet', 'type_operation', 'number_operation', 'external_source')
     list_filter = ('type_operation',)
-    search_fields = ('pallet__id', 'operation')
+    search_fields = ('pallet__guid', 'pallet__id', 'operation')
 
 
 @admin.register(OperationProduct)

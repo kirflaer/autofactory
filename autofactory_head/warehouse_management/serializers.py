@@ -5,6 +5,7 @@ from rest_framework.exceptions import APIException
 from api.serializers import StorageSerializer
 from catalogs.models import ExternalSource
 from catalogs.serializers import ExternalSerializer
+from factory_core.models import Shift
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
@@ -216,9 +217,17 @@ class OperationCellsSerializer(serializers.Serializer):
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
     pallets = PalletWriteSerializer(many=True)
+    shift = serializers.UUIDField()
 
-    class Meta:
-        fields = 'pallets',
+    def validate(self, attrs):
+        shift = Shift.objects.filter(guid=attrs.get('shift')).first()
+        if not shift:
+            raise APIException('Не найдена смена')
+
+        if shift.closed:
+            raise APIException('Смена закрыта')
+
+        return super().validate(attrs)
 
 
 class PalletShortSerializer(serializers.ModelSerializer):

@@ -57,6 +57,9 @@ class PalletProductSerializer(serializers.Serializer):
 
     @staticmethod
     def get_is_weight(obj):
+        if obj.product is None:
+            return False
+
         return obj.product.is_weight
 
 
@@ -472,8 +475,16 @@ class OrderReadSerializer(serializers.ModelSerializer):
     def get_pallets(obj):
         pallet_guids = PalletProduct.objects.filter(order=obj.guid).values_list('pallet', flat=True)
         pallets = Pallet.objects.filter(guid__in=pallet_guids)
-        serializer = PalletShipmentSerializer(pallets, many=True)
-        return serializer.data
+        result = []
+        for pallet in pallets:
+            products = PalletProduct.objects.filter(pallet=pallet, order=obj.guid)
+            keys = list(products.values_list('external_key', flat=True))
+            sources = PalletSource.objects.filter(pallet=pallet, external_key__in=keys)
+            result.append({
+                'products': PalletProductSerializer(products, many=True).data,
+                'sources': PalletSourceReadSerializer(sources, many=True).data
+            })
+        return {'pallets': result}
 
 
 class ArrivalAtStockOperationWriteSerializer(OperationBaseSerializer):

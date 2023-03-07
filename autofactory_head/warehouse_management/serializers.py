@@ -484,7 +484,7 @@ class OrderReadSerializer(serializers.ModelSerializer):
                 'products': PalletProductSerializer(products, many=True).data,
                 'sources': PalletSourceReadSerializer(sources, many=True).data
             })
-        return {'pallets': result}
+        return result
 
 
 class ArrivalAtStockOperationWriteSerializer(OperationBaseSerializer):

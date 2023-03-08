@@ -23,6 +23,7 @@ class PalletStatus(models.TextChoices):
     SELECTED = 'SELECTED'
     PLACED = 'PLACED'
     FOR_REPACKING = 'FOR_REPACKING'
+    FOR_PLACED = 'FOR_PLACED'
 
 
 class PalletType(models.TextChoices):
@@ -46,6 +47,7 @@ class StatusCellContent(models.TextChoices):
 class StorageArea(BaseExternalModel):
     new_status_on_admission = models.CharField('Статус', max_length=20, choices=PalletStatus.choices,
                                                default=PalletStatus.SELECTED)
+    use_for_automatic_placement = models.BooleanField('Используется для автоматического размещения', default=False)
 
     class Meta:
         verbose_name = 'Область хранения'

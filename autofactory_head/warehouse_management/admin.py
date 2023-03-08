@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import transaction
 from rangefilter.filters import DateRangeFilter
 
 from tasks.models import TaskStatus
@@ -16,16 +17,33 @@ from warehouse_management.models import (
     PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
     StorageArea, StorageCellContentState, RepackingOperation
 )
+from warehouse_management.warehouse_services import get_unused_cells_for_placement, \
+    create_inventory_with_placement_operation
 
 
-@admin.action(description='Принять паллеты')
+@admin.action(description='Отметить паллеты как принятые')
 def make_pallet_confirmed(model, request, queryset):
     queryset.update(status='CONFIRMED')
 
 
-@admin.action(description='Разместить паллеты')
+@admin.action(description='Отметить паллеты как размещенные')
 def make_pallet_placed(model, request, queryset):
     queryset.update(status='PLACED')
+
+
+@admin.action(description='Сгенерировать документы инвентаризации')
+@transaction.atomic
+def create_inventory_operations(model, request, queryset):
+    unused_cells = get_unused_cells_for_placement('external_key')
+
+    for pallet in queryset:
+        if not len(unused_cells):
+            break
+        data = {'cell': unused_cells.pop(),
+                'pallet': pallet.guid,
+                'count': pallet.content_count,
+                'weight': pallet.weight}
+        create_inventory_with_placement_operation(serializer_data=data, user=request.user)
 
 
 @admin.action(description='Переразместить ячейки')
@@ -57,7 +75,7 @@ class PalletAdmin(admin.ModelAdmin):
     list_filter = (('creation_date', DateRangeFilter), 'status')
     ordering = ('-creation_date',)
     search_fields = ('id', 'marking_group', 'guid', 'external_task_key')
-    actions = [make_pallet_confirmed, make_pallet_placed]
+    actions = [make_pallet_confirmed, make_pallet_placed, create_inventory_operations]
 
 
 @admin.register(PalletSource)

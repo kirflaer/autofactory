@@ -90,17 +90,14 @@ def create_inventory_with_placement_operation(serializer_data: dict[str: str], u
     """ Создает операцию отгрузки со склада"""
     instance = InventoryOperation.objects.create(user=user, ready_to_unload=True)
     pallet = Pallet.objects.get(guid=serializer_data['pallet'])
-    pallet_data_has_changed = False
+    pallet.status = PalletStatus.FOR_PLACED
+
     if pallet.content_count != serializer_data['count']:
         pallet.content_count = serializer_data['count']
-        pallet_data_has_changed = True
 
     if serializer_data.get('weight') is not None and pallet.weight != serializer_data.get('weight'):
         pallet.weight = serializer_data.get('weight')
-        pallet_data_has_changed = True
-
-    if pallet_data_has_changed:
-        pallet.save()
+    pallet.save()
 
     cell = StorageCell.objects.get(external_key=serializer_data['cell'])
     operation_pallets = OperationCell.objects.create(pallet=pallet, cell_source=cell)
@@ -502,3 +499,16 @@ def get_pallet_filter_from_shipment(shipment_external_key: str) -> dict[str, lis
     cells = OperationCell.objects.filter(operation=operation.guid).values_list('pallet__guid', flat=True)
 
     return {'guid__in': list(cells)}
+
+
+def get_unused_cells_for_placement(name_returned_field: str | None = None) -> list[str | StorageCell]:
+    """ Возвращает список не занятых ячеек для автоматического размещения.
+    Может вернуть массив ячеек либо плоский список со значениями переданного поля"""
+    used_cells = list(StorageCellContentState.objects.all().values_list('cell__guid', flat=True))
+    cells = StorageCell.objects.filter(storage_area__use_for_automatic_placement=True).exclude(guid__in=used_cells)
+
+    if not name_returned_field:
+        return cells
+    else:
+        return list(cells.values_list(name_returned_field, flat=True))
+

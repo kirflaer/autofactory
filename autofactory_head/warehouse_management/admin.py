@@ -72,7 +72,7 @@ def make_task_closed(model, request, queryset):
 @admin.register(Pallet)
 class PalletAdmin(admin.ModelAdmin):
     list_display = ('creation_date', 'status', 'collector', 'product', 'id', 'external_key', 'guid')
-    list_filter = (('creation_date', DateRangeFilter), 'status')
+    list_filter = (('creation_date', DateRangeFilter), 'status', 'product__semi_product', 'product__not_marked')
     ordering = ('-creation_date',)
     search_fields = ('id', 'marking_group', 'guid', 'external_task_key')
     actions = [make_pallet_confirmed, make_pallet_placed, create_inventory_operations]

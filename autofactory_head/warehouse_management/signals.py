@@ -1,5 +1,6 @@
 from django.db.models.signals import pre_delete
-from .models import InventoryOperation, OperationCell, StorageCellContentState, StatusCellContent
+from .models import InventoryOperation, OperationCell, StorageCellContentState, StatusCellContent, ShipmentOperation, \
+    PalletCollectOperation, OperationPallet
 from django.dispatch import receiver
 
 
@@ -15,3 +16,19 @@ def pre_delete_inventory(sender, **kwargs):
         if states.exists():
             states.delete()
     cells.delete()
+
+
+@receiver(pre_delete, sender=ShipmentOperation)
+def pre_delete_shipment(sender, **kwargs):
+    instance = kwargs['instance']
+    cells = OperationCell.objects.filter(operation=instance.guid)
+
+    for cell in cells:
+        cell.delete()
+
+    pallet_collect = PalletCollectOperation.objects.filter(parent_task=instance.guid)
+    for operation in pallet_collect:
+        pallets = OperationPallet.objects.filter(operation=operation.guid)
+        for row in pallets:
+            row.pallet.delete()
+        operation.delete()

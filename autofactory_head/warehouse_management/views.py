@@ -4,7 +4,7 @@ from django.views.generic import ListView, DeleteView, UpdateView
 
 from warehouse_management.forms import PalletProductForm
 from warehouse_management.models import Pallet, ShipmentOperation, OrderOperation, PalletProduct, OperationPallet, \
-    PalletSource
+    PalletSource, OperationCell
 
 
 class ShipmentListView(LoginRequiredMixin, ListView):
@@ -66,3 +66,29 @@ class SourceRemoveView(LoginRequiredMixin, DeleteView):
     model = PalletSource
     template_name = 'confirm_base.html'
     success_url = reverse_lazy('shipment')
+
+
+class PalletListView(LoginRequiredMixin, ListView):
+    context_object_name = 'data'
+    model = Pallet
+    template_name = 'shipment_pallet.html'
+    extra_context = {
+        'title': 'Паллеты заявки',
+    }
+
+    def get_queryset(self):
+        pallet_ids = OperationCell.objects.filter(operation=self.kwargs['parent_task']).values_list('pallet__guid',
+                                                                                                    flat=True)
+        return Pallet.objects.filter(guid__in=list(pallet_ids))
+
+
+class PalletDetailView(LoginRequiredMixin, ListView):
+    context_object_name = 'data'
+    model = PalletSource
+    template_name = 'shipment_pallet_sources.html'
+    extra_context = {
+        'title': 'Паллеты назначения',
+    }
+
+    def get_queryset(self):
+        return PalletSource.objects.filter(pallet_source=self.kwargs['pallet'])

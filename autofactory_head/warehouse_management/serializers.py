@@ -175,8 +175,9 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 
 class PalletUpdateShipmentSerializer(PalletUpdateSerializer):
     def update(self, instance, validated_data):
-        instance = super().update(instance, validated_data)
-        check_and_collect_orders(self.changed_product_keys)
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            check_and_collect_orders(self.changed_product_keys)
         return instance
 
 

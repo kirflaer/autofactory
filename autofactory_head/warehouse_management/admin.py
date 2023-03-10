@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.db import transaction
 from rangefilter.filters import DateRangeFilter
+from rest_framework.exceptions import APIException
+from django.contrib import messages
 
 from tasks.models import TaskStatus
 from warehouse_management.models import (
@@ -17,8 +19,8 @@ from warehouse_management.models import (
     PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
     StorageArea, StorageCellContentState, RepackingOperation
 )
-from warehouse_management.warehouse_services import get_unused_cells_for_placement, \
-    create_inventory_with_placement_operation
+from warehouse_management.warehouse_services import (get_unused_cells_for_placement,
+                                                     create_inventory_with_placement_operation)
 
 
 @admin.action(description='Отметить паллеты как принятые')
@@ -34,16 +36,22 @@ def make_pallet_placed(model, request, queryset):
 @admin.action(description='Сгенерировать документы инвентаризации')
 @transaction.atomic
 def create_inventory_operations(model, request, queryset):
-    unused_cells = get_unused_cells_for_placement('external_key')
+    unused_cells = get_unused_cells_for_placement()
+
+    if len(unused_cells) < queryset.count():
+        messages.add_message(request, messages.ERROR, 'Свободных ячеек не хватит на выбранные паллеты')
+        return
 
     for pallet in queryset:
         if not len(unused_cells):
             break
-        data = {'cell': unused_cells.pop(),
+        cell = unused_cells.pop()
+        data = {'cell': cell.external_key,
                 'pallet': pallet.guid,
                 'count': pallet.content_count,
                 'weight': pallet.weight}
         create_inventory_with_placement_operation(serializer_data=data, user=request.user)
+    messages.add_message(request, messages.INFO, 'Документы созданы успешно')
 
 
 @admin.action(description='Переразместить ячейки')

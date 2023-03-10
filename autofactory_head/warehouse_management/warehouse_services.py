@@ -81,7 +81,9 @@ def check_and_collect_orders(product_keys: list[str]):
     for order_guid in orders:
         if order_guid in not_collected_orders:
             continue
-        order = OrderOperation.objects.get(guid=order_guid)
+        order = OrderOperation.objects.filter(guid=order_guid).first()
+        if not order:
+            raise APIException(f'Не найден заказ {order_guid} операция отменена')
         order.close()
 
 
@@ -501,14 +503,17 @@ def get_pallet_filter_from_shipment(shipment_external_key: str) -> dict[str, lis
     return {'guid__in': list(cells)}
 
 
-def get_unused_cells_for_placement(name_returned_field: str | None = None) -> list[str | StorageCell]:
-    """ Возвращает список не занятых ячеек для автоматического размещения.
-    Может вернуть массив ячеек либо плоский список со значениями переданного поля"""
-    used_cells = list(StorageCellContentState.objects.all().values_list('cell__guid', flat=True))
+def get_unused_cells_for_placement() -> list[StorageCell]:
+    """ Возвращает список не занятых ячеек для автоматического размещения """
+
+    inventory_ids = list(InventoryOperation.objects.all().values_list('guid', flat=True))
+    used_cells = OperationCell.objects.filter(operation__in=inventory_ids).values_list('cell_source__guid', flat=True)
     cells = StorageCell.objects.filter(storage_area__use_for_automatic_placement=True).exclude(guid__in=used_cells)
 
-    if not name_returned_field:
-        return cells
-    else:
-        return list(cells.values_list(name_returned_field, flat=True))
+    result = []
+    for cell in cells:
+        state = get_cell_state(cell=cell)
+        if not state or state.status == StatusCellContent.REMOVED:
+            result.append(cell)
 
+    return result

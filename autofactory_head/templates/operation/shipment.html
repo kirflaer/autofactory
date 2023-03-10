@@ -22,6 +22,10 @@
                 <a href="{% url  'orders' element.guid %}"><i
                         class="align-middle"
                         data-feather="grid"></i></a>
+                <a href="{% url  'shipment_pallets' element.guid %}"><i
+                        class="align-middle"
+                        data-feather="shopping-cart"></i></a>
+
             </td>
         </tr>
     {% endfor %}

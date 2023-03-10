@@ -1,0 +1,35 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:10%;">Идентификатор</th>
+        <th style="width:10%;">Статус</th>
+        <th style="width:5%;">Количество коробок</th>
+        <th style="width:5%;">Вес</th>
+        <th style="width:40%;">Номенклатура</th>
+        <th style="width:5%;">Номер партии</th>
+        <th style="width:10%;">Дата выработки</th>
+        <th style="width:5%;">Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.id }} </td>
+            <td> {{ element.status }} </td>
+            <td> {{ element.content_count }} </td>
+            <td> {{ element.weight }} </td>
+            <td> {{ element.product.name }} </td>
+            <td> {{ element.batch_number }} </td>
+            <td> {{ element.production_date }} </td>
+            <td class="table-action">
+                <a href="{% url  'shipment_pallets_detail' element.guid %}"><i
+                        class="align-middle"
+                        data-feather="grid"></i></a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

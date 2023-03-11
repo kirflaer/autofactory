@@ -78,7 +78,8 @@ class StorageCellsRetrieveSerializer(serializers.ModelSerializer):
     pallet = serializers.SerializerMethodField()
 
     class Meta:
-        fields = ('guid', 'name', 'external_key', 'barcode', 'needed_scan', 'pallet')
+        fields = ('guid', 'name', 'external_key', 'barcode', 'needed_scan', 'pallet', 'rack_number', 'position')
+        read_only_fields = ('guid', 'name', 'external_key', 'barcode', 'needed_scan', 'pallet')
         model = StorageCell
 
     @staticmethod

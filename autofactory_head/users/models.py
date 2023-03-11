@@ -53,6 +53,7 @@ class User(AbstractUser):
     SERVICE = 'SERVICE'
     LOADER = 'LOADER'
     STOREKEEPER = 'STOREKEEPER'
+    WAREHOUSE_MASTER = 'WAREHOUSE_MASTER'
 
     ROLE = (
         (VISION_OPERATOR, VISION_OPERATOR),
@@ -61,7 +62,8 @@ class User(AbstractUser):
         (REJECTER, REJECTER),
         (SERVICE, SERVICE),
         (LOADER, LOADER),
-        (STOREKEEPER, STOREKEEPER)
+        (STOREKEEPER, STOREKEEPER),
+        (WAREHOUSE_MASTER, WAREHOUSE_MASTER)
     )
 
     role = models.CharField(max_length=255, choices=ROLE, default=PACKER,
@@ -113,6 +115,8 @@ class User(AbstractUser):
                                              validators=[MinValueValidator(4), MaxValueValidator(1200)])
     default_page = models.CharField('Страница по умолчанию', default='', max_length=100, blank=True, null=True)
     disable_production_date_filter = models.BooleanField('Отключить фильтр по дате выработки', default=False)
+
+    privileged_user = models.BooleanField('Привилегированный пользователь', default=False)
 
     class Meta:
         ordering = ('username',)

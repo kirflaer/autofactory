@@ -201,10 +201,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = (
-            'pk', 'line', 'role', 'device', 'scanner', 'vision_controller',
-            'settings', 'log_level', 'inactive_sound_enabled',
-            'inactive_period_in_sec', 'use_aggregations', 'stock', 'refresh_timeout', 'data_send_interval',
-            'disable_production_date_filter')
+            'pk', 'line', 'role', 'device', 'scanner', 'vision_controller', 'settings', 'log_level',
+            'inactive_sound_enabled', 'inactive_period_in_sec', 'use_aggregations', 'stock', 'refresh_timeout',
+            'data_send_interval', 'disable_production_date_filter', 'privileged_user')
 
         model = User
 

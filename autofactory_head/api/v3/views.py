@@ -150,7 +150,7 @@ class PalletRepackingUpdate(generics.UpdateAPIView):
         serializer.save()
 
 
-class CellRetrieveView(generics.RetrieveAPIView):
+class CellRetrieveView(generics.RetrieveUpdateAPIView):
     queryset = StorageCell.objects.all()
     lookup_field = 'external_key'
     serializer_class = api_serializers.StorageCellsRetrieveSerializer

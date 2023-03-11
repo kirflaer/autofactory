@@ -18,6 +18,7 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
                                          InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
                                          StorageCellContentState, StatusCellContent, RepackingOperation)
+
 User = get_user_model()
 
 
@@ -80,29 +81,30 @@ def check_and_collect_orders(product_keys: list[str]):
     for order_guid in orders:
         if order_guid in not_collected_orders:
             continue
-        order = OrderOperation.objects.get(guid=order_guid)
+        order = OrderOperation.objects.filter(guid=order_guid).first()
+        if not order:
+            raise APIException(f'Не найден заказ {order_guid} операция отменена')
         order.close()
 
 
 @transaction.atomic
 def create_inventory_with_placement_operation(serializer_data: dict[str: str], user: User) -> Iterable[str]:
     """ Создает операцию отгрузки со склада"""
-    instance = InventoryOperation.objects.create(user=user, status=TaskStatus.CLOSE)
+    instance = InventoryOperation.objects.create(user=user, ready_to_unload=True)
     pallet = Pallet.objects.get(guid=serializer_data['pallet'])
+    pallet.status = PalletStatus.FOR_PLACED
+
     if pallet.content_count != serializer_data['count']:
         pallet.content_count = serializer_data['count']
 
     if serializer_data.get('weight') is not None and pallet.weight != serializer_data.get('weight'):
         pallet.weight = serializer_data.get('weight')
-
-    pallet.status = PalletStatus.PLACED
     pallet.save()
 
     cell = StorageCell.objects.get(external_key=serializer_data['cell'])
     operation_pallets = OperationCell.objects.create(pallet=pallet, cell_source=cell)
     operation_pallets.fill_properties(instance)
-    StorageCellContentState.objects.create(cell=cell, pallet=pallet)
-    instance.close()
+
     return instance.guid
 
 
@@ -116,11 +118,13 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         if task is not None:
             result.append(task.guid)
             continue
-        direction = Direction.objects.filter(external_key=element['direction']).first()
-        operation = ShipmentOperation.objects.create(user=user, direction=direction, external_source=external_source,
+        operation = ShipmentOperation.objects.create(direction=element['direction'],
+                                                     manager=element['manager'],
+                                                     external_source=external_source,
                                                      has_selection=element['has_selection'])
 
         _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SHIPMENT)
+        fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
     return result
 
@@ -160,8 +164,7 @@ def create_repacking_operation(serializer_data: Iterable[dict[str: str]], user: 
                 raise APIException(f'Не найдена зависимая паллета {pallet_data["pallet"]}')
             pallet = Pallet.objects.create(product=dependent_pallet.product,
                                            batch_number=dependent_pallet.batch_number,
-                                           production_date=dependent_pallet.production_date,
-                                           external_task_key=external_source.external_key)
+                                           production_date=dependent_pallet.production_date)
             operation_pallets = OperationPallet.objects.create(pallet=pallet, dependent_pallet=dependent_pallet,
                                                                count=pallet_data['count'])
             operation_pallets.fill_properties(operation)
@@ -224,6 +227,11 @@ def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: 
 def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения"""
     result = []
+    # operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
+    #                                                   ready_to_unload=True)
+    # pallets = create_pallets(serializer_data['pallets'])
+    # fill_operation_pallets(operation, pallets)
+    # result += pallets
     for element in serializer_data:
         operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
                                                           ready_to_unload=True)
@@ -488,3 +496,32 @@ def get_cell_state(**kwargs) -> StorageCellContentState | None:
         return None
 
     return last_state_row
+
+
+def get_pallet_filter_from_shipment(shipment_external_key: str) -> dict[str, list] | None:
+    external_source = ExternalSource.objects.filter(external_key=shipment_external_key).first()
+    if not external_source:
+        return None
+    operation = ShipmentOperation.objects.filter(external_source=external_source).first()
+    if not operation:
+        return None
+
+    cells = OperationCell.objects.filter(operation=operation.guid).values_list('pallet__guid', flat=True)
+
+    return {'guid__in': list(cells)}
+
+
+def get_unused_cells_for_placement() -> list[StorageCell]:
+    """ Возвращает список не занятых ячеек для автоматического размещения """
+
+    inventory_ids = list(InventoryOperation.objects.all().values_list('guid', flat=True))
+    used_cells = OperationCell.objects.filter(operation__in=inventory_ids).values_list('cell_source__guid', flat=True)
+    cells = StorageCell.objects.filter(storage_area__use_for_automatic_placement=True).exclude(guid__in=used_cells)
+
+    result = []
+    for cell in cells:
+        state = get_cell_state(cell=cell)
+        if not state or state.status == StatusCellContent.REMOVED:
+            result.append(cell)
+
+    return result

@@ -23,6 +23,7 @@ class PalletStatus(models.TextChoices):
     SELECTED = 'SELECTED'
     PLACED = 'PLACED'
     FOR_REPACKING = 'FOR_REPACKING'
+    FOR_PLACED = 'FOR_PLACED'
 
 
 class PalletType(models.TextChoices):
@@ -46,6 +47,7 @@ class StatusCellContent(models.TextChoices):
 class StorageArea(BaseExternalModel):
     new_status_on_admission = models.CharField('Статус', max_length=20, choices=PalletStatus.choices,
                                                default=PalletStatus.SELECTED)
+    use_for_automatic_placement = models.BooleanField('Используется для автоматического размещения', default=False)
 
     class Meta:
         verbose_name = 'Область хранения'
@@ -58,6 +60,8 @@ class StorageCell(BaseExternalModel):
                                      on_delete=models.SET_NULL)
     needed_scan = models.BooleanField('Необходимо сканировать при размещении', default=True)
     needed_filter_by_task = models.BooleanField('Необходим фильтр по задания при размещении', default=False)
+    rack_number = models.PositiveIntegerField('Номер стеллажа', default=0, blank=True)
+    position = models.PositiveIntegerField('Позиция внутри стеллажа', default=0, blank=True)
 
     class Meta:
         verbose_name = 'Складская ячейка'
@@ -89,12 +93,18 @@ class Pallet(models.Model):
 
     external_task_key = models.CharField('Ключ внешнего задания', blank=True, null=True, max_length=36)
 
+    name = models.CharField('Наименование', blank=True, null=True, max_length=155)
+    consignee = models.CharField('Грузополучатель', blank=True, null=True, max_length=155)
+
     class Meta:
         verbose_name = 'Паллета'
         verbose_name_plural = 'Паллеты'
 
     def __str__(self):
-        return f'{self.status} / {self.batch_number} / {self.id} / {self.guid}'
+        if not self.name:
+            return f'{self.status} / {self.batch_number} / {self.id} / {self.guid}'
+        else:
+            return f'{self.name} / {self.consignee}'
 
 
 class PalletContent(models.Model):
@@ -224,9 +234,9 @@ class MovementBetweenCellsOperation(OperationBaseOperation):
 
 class ShipmentOperation(OperationBaseOperation):
     type_task = 'SHIPMENT'
-    direction = models.ForeignKey(Direction, on_delete=models.SET_NULL, null=True, blank=True,
-                                  verbose_name='Направление')
     has_selection = models.BooleanField('Есть отбор', default=False, blank=True, null=True)
+    manager = models.CharField('Менеджер', blank=True, null=True, max_length=155)
+    direction = models.CharField('Направление', blank=True, null=True, max_length=155)
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
@@ -242,17 +252,6 @@ class SelectionOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Отбор со склада'
         verbose_name_plural = 'Отбор со склада (Заявка на завод)'
-
-    def close(self):
-        super().close()
-        cells = OperationCell.objects.filter(operation=self.guid)
-        if not cells.count():
-            return
-        for row in cells:
-            if not row.cell_destination.needed_filter_by_task or not row.pallet:
-                continue
-            row.pallet.external_task_key = self.external_source.external_key
-            row.pallet.save()
 
 
 class PalletCollectOperation(OperationBaseOperation):
@@ -328,6 +327,7 @@ class PalletSource(models.Model):
     order = models.ForeignKey(OrderOperation, verbose_name='Заказ клиента', blank=True, null=True,
                               on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Пользователь')
+    additional_collect = models.BooleanField('Дополнение к заданию', blank=True, default=False)
 
     class Meta:
         verbose_name = 'Паллета источник'
@@ -349,6 +349,16 @@ class InventoryOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Инвентаризация'
         verbose_name_plural = 'Инвентаризация'
+
+    def close(self):
+        super().close()
+
+        rows = OperationCell.objects.filter(operation=self.guid)
+        for row in rows:
+            row.pallet.status = PalletStatus.PLACED
+            row.pallet.save()
+
+            StorageCellContentState.objects.create(cell=row.cell_source, pallet=row.pallet)
 
 
 class RepackingOperation(OperationBaseOperation):

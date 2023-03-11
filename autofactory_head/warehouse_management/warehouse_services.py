@@ -422,6 +422,10 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
 
         if element.get('pallet') is not None:
             pallet = Pallet.objects.filter(id=element['pallet']).first()
+
+            if pallet is not None and not pallet.series and element.get('series') is not None:
+                pallet.series = element.get('series')
+                pallet.save()
         else:
             pallet = None
         operation_cell = OperationCell.objects.create(cell_source=cell, cell_destination=cell_destination,

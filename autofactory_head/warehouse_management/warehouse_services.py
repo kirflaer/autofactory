@@ -227,11 +227,20 @@ def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: 
 def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения"""
     result = []
-    operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
-                                                      ready_to_unload=True)
-    pallets = create_pallets(serializer_data['pallets'])
-    fill_operation_pallets(operation, pallets)
-    result += pallets
+    # operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
+    #                                                   ready_to_unload=True)
+    # pallets = create_pallets(serializer_data['pallets'])
+    # fill_operation_pallets(operation, pallets)
+    # result += pallets
+    for element in serializer_data:
+        operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
+                                                          ready_to_unload=True)
+        pallets = create_pallets(element['pallets'])
+        fill_operation_pallets(operation, pallets)
+        if len(pallets) == 1 and pallets[0].shift is not None and not pallets[0].shift.closed:
+            operation.ready_to_unload = False
+            operation.save()
+        result += pallets
     return result
 
 

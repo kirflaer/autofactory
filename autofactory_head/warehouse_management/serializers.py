@@ -218,17 +218,17 @@ class OperationCellsSerializer(serializers.Serializer):
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
     pallets = PalletWriteSerializer(many=True)
-    shift = serializers.UUIDField()
+    #shift = serializers.UUIDField()
 
-    def validate(self, attrs):
-        shift = Shift.objects.filter(guid=attrs.get('shift')).first()
-        if not shift:
-            raise APIException('Не найдена смена')
-
-        if shift.closed:
-            raise APIException('Смена закрыта')
-
-        return super().validate(attrs)
+    # def validate(self, attrs):
+    #     shift = Shift.objects.filter(guid=attrs.get('shift')).first()
+    #     if not shift:
+    #         raise APIException('Не найдена смена')
+    #
+    #     if shift.closed:
+    #         raise APIException('Смена закрыта')
+    #
+    #     return super().validate(attrs)
 
 
 class PalletShortSerializer(serializers.ModelSerializer):

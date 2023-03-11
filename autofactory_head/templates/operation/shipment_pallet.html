@@ -11,6 +11,7 @@
         <th style="width:40%;">Номенклатура</th>
         <th style="width:5%;">Номер партии</th>
         <th style="width:10%;">Дата выработки</th>
+        <th style="width:10%;">Серия</th>
         <th style="width:5%;">Действия</th>
     </tr>
     </thead>
@@ -24,6 +25,7 @@
             <td> {{ element.product.name }} </td>
             <td> {{ element.batch_number }} </td>
             <td> {{ element.production_date }} </td>
+            <td> {{ element.series }} </td>
             <td class="table-action">
                 <a href="{% url  'shipment_pallets_detail' element.guid %}"><i
                         class="align-middle"

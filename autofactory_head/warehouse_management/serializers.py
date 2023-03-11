@@ -55,6 +55,7 @@ class PalletProductSerializer(serializers.Serializer):
     has_shipped_products = serializers.BooleanField(required=False)
     is_collected = serializers.BooleanField(required=False)
     has_divergence = serializers.BooleanField(required=False)
+    series = serializers.CharField(required=False)
 
     @staticmethod
     def get_is_weight(obj):
@@ -214,6 +215,7 @@ class OperationCellsSerializer(serializers.Serializer):
     cell = serializers.CharField()
     count = serializers.FloatField(required=False)
     cell_destination = serializers.CharField(required=False)
+    series = serializers.CharField(required=False)
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):

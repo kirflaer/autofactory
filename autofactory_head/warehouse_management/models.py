@@ -95,6 +95,7 @@ class Pallet(models.Model):
 
     name = models.CharField('Наименование', blank=True, null=True, max_length=155)
     consignee = models.CharField('Грузополучатель', blank=True, null=True, max_length=155)
+    series = models.CharField('Серия', blank=True, null=True, max_length=155)
 
     class Meta:
         verbose_name = 'Паллета'
@@ -309,6 +310,7 @@ class PalletProduct(models.Model):
     has_shipped_products = models.BooleanField('Содержит номенклатуру требующую обеспечения', default=False)
     is_collected = models.BooleanField('Собрано', default=False)
     has_divergence = models.BooleanField('Имеет расхождение', default=False)
+    series = models.CharField('Серия', blank=True, null=True, max_length=155)
 
     class Meta:
         verbose_name = 'Номенклатура паллеты'
@@ -355,9 +357,7 @@ class InventoryOperation(OperationBaseOperation):
 
         rows = OperationCell.objects.filter(operation=self.guid)
         for row in rows:
-            row.pallet.status = PalletStatus.PLACED
-            row.pallet.save()
-
+            Pallet.objects.filter(guid=row.pallet.guid).update(status=PalletStatus.PLACED)
             StorageCellContentState.objects.create(cell=row.cell_source, pallet=row.pallet)
 
 

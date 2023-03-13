@@ -15,7 +15,7 @@ from packing.models import (
     MarkingOperationMark,
 )
 
-from warehouse_management.models import PalletContent
+from warehouse_management.models import PalletContent, Pallet
 
 from catalogs.models import Line
 
@@ -155,7 +155,8 @@ class ShiftListView(OperationBasicListView):
 @require_http_methods(['POST', 'GET'])
 def shift_close(request):
     if len(request.GET):
-        return render(request, 'confirm_shift.html', {'shift': request.GET['shift']})
+        pallet_count = Pallet.objects.filter(shift__guid=request.GET['shift']).count()
+        return render(request, 'confirm_shift.html', {'shift': request.GET['shift'], 'pallet_count': pallet_count})
 
     shift_guid = request.POST.get('shift')
     if shift_guid is None:
@@ -164,7 +165,7 @@ def shift_close(request):
     shift_marking = MarkingOperation.objects.filter(shift=shift)
     if shift_marking.filter(closed=False).exists():
         return redirect(
-            f'{reverse_lazy("shifts")}?message={"Существуют незакрытые маркировкм. Закрытие смены невозможно"}')
+            f'{reverse_lazy("shifts")}?message={"Существуют незакрытые маркировки. Закрытие смены невозможно"}')
 
     with transaction.atomic():
         shift.closed = True

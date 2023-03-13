@@ -33,14 +33,13 @@ class OrderListView(LoginRequiredMixin, ListView):
 class OrderDetailListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
     model = PalletProduct
-    ordering = '-count'
     template_name = 'orders_detail.html'
     extra_context = {
         'title': 'Номенклатура заказа',
     }
 
     def get_queryset(self):
-        return PalletProduct.objects.filter(order=self.kwargs['order'])
+        return PalletProduct.objects.filter(order=self.kwargs['order']).order_by('pallet__name')
 
 
 class PalletProductUpdateView(LoginRequiredMixin, UpdateView):

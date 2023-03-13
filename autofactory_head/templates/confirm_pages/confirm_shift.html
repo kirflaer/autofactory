@@ -20,6 +20,7 @@
                                 <div class="alert-message">
                                     <h4 class="alert-heading">Внимание!</h4>
                                     <p>Данное действие необратимо, вы действительно хотите закрыть смену?</p>
+                                    <p>Количество собранных паллет в смене: <b>{{ pallet_count }}</b></p>
                                     <hr>
                                     <div class="btn-list">
                                         <form method="post" action="{% url  'shift_close' %}">

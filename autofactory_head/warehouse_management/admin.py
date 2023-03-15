@@ -108,8 +108,8 @@ class OperationProductAdmin(admin.ModelAdmin):
 
 @admin.register(OperationCell)
 class OperationPalletAdmin(admin.ModelAdmin):
-    list_display = ('operation', 'cell_source', 'cell_destination', 'pallet')
-    search_fields = ('operation',)
+    list_display = ('operation', 'type_operation', 'cell_source', 'cell_destination', 'pallet')
+    search_fields = ('operation', 'pallet__id', 'pallet__guid')
 
 
 @admin.register(AcceptanceOperation)
@@ -180,7 +180,7 @@ class InventoryOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'number', 'status', 'external_source', 'closed', 'ready_to_unload', 'unloaded')
     actions = [make_task_loaded, make_cells_placed]
-    search_fields = ('number',)
+    search_fields = ('number', 'guid')
     ordering = ('-date',)
 
 

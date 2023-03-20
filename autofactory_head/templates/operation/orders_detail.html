@@ -5,6 +5,7 @@
     <thead>
     <tr>
         <th style="width:15%;">Паллета</th>
+        <th style="width:15%;">Паллета (guid) </th>
         <th style="width:15%;">Номенклатура</th>
         <th style="width:5%;">Вес</th>
         <th style="width:5%;">Количество</th>
@@ -18,8 +19,9 @@
     <tbody>
     {% for element in data %}
         <tr>
+            <td> {{ element.pallet.name }} </td>
             <td> {{ element.pallet.guid }} </td>
-            <td> {{ element.product.gtin }} </td>
+            <td> {{ element.product.name }} </td>
             <td> {{ element.weight }} </td>
             <td> {{ element.count }} </td>
             <td> {{ element.batch_number }} </td>

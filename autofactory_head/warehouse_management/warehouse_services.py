@@ -40,6 +40,11 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
 
             if pallet_source.content_count == 0:
                 pallet_source.status = PalletStatus.ARCHIVED
+                cell_state = get_cell_state(pallet=pallet_source)
+                if cell_state is not None and cell_state.status == StatusCellContent.PLACED:
+                    StorageCellContentState.objects.create(cell=cell_state.cell, pallet=pallet_source,
+                                                           status=StatusCellContent.REMOVED)
+
             if pallet_source.weight < 0:
                 pallet_source.weight = 0
             pallet_source.save()
@@ -227,11 +232,6 @@ def create_placement_operation(serializer_data: Iterable[dict[str: str]], user: 
 def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения"""
     result = []
-    # operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
-    #                                                   ready_to_unload=True)
-    # pallets = create_pallets(serializer_data['pallets'])
-    # fill_operation_pallets(operation, pallets)
-    # result += pallets
     for element in serializer_data:
         operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
                                                           ready_to_unload=True)

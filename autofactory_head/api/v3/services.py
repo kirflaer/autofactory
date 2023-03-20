@@ -5,7 +5,7 @@ from rest_framework.exceptions import APIException
 from catalogs.models import Product
 from factory_core.models import Shift
 from pydantic.error_wrappers import ValidationError
-from packing.marking_services import get_base64_string
+from packing.marking_services import get_base64_string, get_marks_in_shifts
 from packing.models import MarkingOperation, MarkingOperationMark
 from warehouse_management.models import Pallet
 
@@ -23,6 +23,8 @@ def load_manual_marks(operation: MarkingOperation, data: list) -> None:
     products = {}
     marking_marks_instances = []
 
+    marks_in_shift = get_marks_in_shifts(operation.shift)
+    valid_marks = set()
     for value in marking_data:
         product = products.get(value.product)
         if product is None:
@@ -30,6 +32,14 @@ def load_manual_marks(operation: MarkingOperation, data: list) -> None:
             products[value.product] = product
 
         for mark in value.marks:
+            if mark.mark in marks_in_shift:
+                continue
+
+            if mark.mark in valid_marks:
+                continue
+
+            valid_marks.add(mark.mark)
+
             values = {
                 'operation': operation,
                 'mark': mark.mark,

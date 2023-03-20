@@ -324,3 +324,10 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
     for task in PalletCollectOperation.objects.filter(guid__in=tasks_ids):
         task.ready_to_unload = True
         task.save()
+
+
+def get_marks_in_shifts(shift: Shift) -> set:
+    """ Возвращает все марки отсканированные в пределах смены """
+    operations = list(MarkingOperation.objects.filter(shift=shift).values_list('guid', flat=True))
+    marks = MarkingOperationMark.objects.filter(operation__in=operations).values_list('mark', flat=True)
+    return set(marks)

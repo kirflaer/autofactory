@@ -373,13 +373,13 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
 
                     pallet_product = PalletProduct.objects.create(**product)
                     if suitable_pallets is not None:
-                        for suitable_pallet in suitable_pallets:
-                            pallet_id = suitable_pallet.pop('id')
-                            pallet = Pallet.objects.filter(id=pallet_id).first()
-                            if pallet is None:
+                        for suitable_pallet_row in suitable_pallets:
+                            pallet_id = suitable_pallet_row.pop('id')
+                            suitable_pallet = Pallet.objects.filter(id=pallet_id).first()
+                            if suitable_pallet is None:
                                 raise APIException(f'Не найдена паллета {pallet_id} в блоке построчной выгрузке')
-                            SuitablePallets.objects.create(pallet_product=pallet_product, pallet=pallet,
-                                                           **suitable_pallet)
+                            SuitablePallets.objects.create(pallet_product=pallet_product, pallet=suitable_pallet,
+                                                           **suitable_pallet_row)
 
         if element.get('codes') is not None:
             for code in element['codes']:

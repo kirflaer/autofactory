@@ -71,5 +71,5 @@ class PalletCollectShipmentSerializerV4(PalletCollectShipmentSerializer):
     def get_pallets(obj):
         pallet_guids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
         pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED)
-        serializer = PalletShipmentSerializer(pallets, many=True)
+        serializer = PalletShipmentSerializerV4(pallets, many=True)
         return serializer.data

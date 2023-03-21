@@ -318,7 +318,7 @@ class PalletProduct(models.Model):
         verbose_name_plural = 'Номенклатура паллет'
 
     def __str__(self):
-        return f'{self.order.external_source} / {self.product} / {self.count}'
+        return f'{self.order} / {self.product} / {self.count}'
 
 
 class PalletSource(models.Model):

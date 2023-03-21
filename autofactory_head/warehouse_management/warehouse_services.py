@@ -123,13 +123,15 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         if task is not None:
             result.append(task.guid)
             continue
-        operation = ShipmentOperation.objects.create(direction=element['direction'],
-                                                     manager=element['manager'],
-                                                     external_source=external_source,
-                                                     has_selection=element['has_selection'])
 
-        _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SHIPMENT)
-        fill_operation_cells(operation, element['cells'])
+        pallets = element.pop('pallets')
+        cells = element.pop('pallets')
+        element.pop('external_key')
+
+        operation = ShipmentOperation.objects.create(external_source=external_source, **element)
+
+        _create_child_task_shipment(pallets, user, operation, TypeCollect.SHIPMENT)
+        fill_operation_cells(operation, cells)
         result.append(operation.guid)
     return result
 

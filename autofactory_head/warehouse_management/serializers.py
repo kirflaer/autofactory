@@ -41,6 +41,18 @@ class OrderOperationWriteSerializer(serializers.ModelSerializer):
         model = ExternalSource
 
 
+class SuitablePalletWriteSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    count = serializers.IntegerField()
+    priority = serializers.IntegerField()
+    guid = serializers.SerializerMethodField(read_only=True, required=False)
+
+    @staticmethod
+    def get_guid(obj):
+        pass
+
+
+
 class PalletProductSerializer(serializers.Serializer):
     product = serializers.UUIDField(write_only=True)
     guid = serializers.SlugRelatedField(read_only=True, source='product', slug_field='pk')
@@ -56,6 +68,7 @@ class PalletProductSerializer(serializers.Serializer):
     is_collected = serializers.BooleanField(required=False)
     has_divergence = serializers.BooleanField(required=False)
     series = serializers.CharField(required=False)
+    suitable_pallets = SuitablePalletWriteSerializer(many=True)
 
     @staticmethod
     def get_is_weight(obj):
@@ -393,10 +406,11 @@ class ShipmentOperationWriteSerializer(serializers.ModelSerializer):
     pallets = PalletWriteSerializer(many=True)
     has_selection = serializers.BooleanField(required=False)
     cells = OperationCellsSerializer(many=True)
+    car_carrier = serializers.CharField(required=False)
 
     class Meta:
         model = ShipmentOperation
-        fields = ('direction', 'external_source', 'pallets', 'has_selection', 'manager', 'cells')
+        fields = ('direction', 'external_source', 'pallets', 'has_selection', 'manager', 'cells', 'car_carrier')
 
 
 class ShipmentOperationReadSerializer(serializers.ModelSerializer):

@@ -238,6 +238,7 @@ class ShipmentOperation(OperationBaseOperation):
     has_selection = models.BooleanField('Есть отбор', default=False, blank=True, null=True)
     manager = models.CharField('Менеджер', blank=True, null=True, max_length=155)
     direction = models.CharField('Направление', blank=True, null=True, max_length=155)
+    car_carrier = models.CharField('Машина перевозчик', blank=True, null=True, max_length=155)
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
@@ -367,6 +368,13 @@ class RepackingOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Переупаковка'
         verbose_name_plural = 'Переупаковка'
+
+
+class SuitablePallets(models.Model):
+    pallet_product = models.ForeignKey(PalletProduct, verbose_name='Строка товаров', on_delete=models.CASCADE)
+    pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)
+    count = models.PositiveIntegerField('Количество')
+    priority = models.PositiveIntegerField('Приоритет')
 
 
 @dataclass

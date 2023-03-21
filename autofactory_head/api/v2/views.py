@@ -49,6 +49,7 @@ class PalletViewSet(generics.ListCreateAPIView):
         # реализация фильртров на вхождение в диапазон
         list_params = {
             'ids': 'id__in',
+            'guids': 'guid__in',
             'keys': 'external_key__in',
             'external_task_key': get_pallet_filter_from_shipment
         }

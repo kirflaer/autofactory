@@ -317,6 +317,9 @@ class PalletProduct(models.Model):
         verbose_name = 'Номенклатура паллеты'
         verbose_name_plural = 'Номенклатура паллет'
 
+    def __str__(self):
+        return f'{self.order.external_source} / {self.product} / {self.count}'
+
 
 class PalletSource(models.Model):
     pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources')
@@ -375,6 +378,10 @@ class SuitablePallets(models.Model):
     pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)
     count = models.PositiveIntegerField('Количество')
     priority = models.PositiveIntegerField('Приоритет')
+
+    class Meta:
+        verbose_name = 'Подходящие паллеты'
+        verbose_name_plural = 'Подходящие паллеты (посторчная выгрузка)'
 
 
 @dataclass

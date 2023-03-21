@@ -1,3 +1,4 @@
+from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperationReadSerializer
 from tasks.task_services import RouterTask, RouterContent
 from tasks.models import TaskBaseModel
 
@@ -9,10 +10,9 @@ from warehouse_management.serializers import (AcceptanceOperationReadSerializer,
                                               PlacementToCellsOperationReadSerializer,
                                               MovementBetweenCellsOperationWriteSerializer,
                                               MovementBetweenCellsOperationReadSerializer,
-                                              ShipmentOperationReadSerializer,
                                               ShipmentOperationWriteSerializer,
                                               PalletReadSerializer,
-                                              PalletCollectShipmentSerializer, OrderReadSerializer,
+                                              OrderReadSerializer,
                                               ArrivalAtStockOperationWriteSerializer,
                                               ArrivalAtStockOperationReadSerializer, InventoryOperationReadSerializer,
                                               InventoryOperationWriteSerializer)

@@ -17,7 +17,8 @@ from warehouse_management.models import (AcceptanceOperation, Pallet, OperationB
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
                                          InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
-                                         StorageCellContentState, StatusCellContent, RepackingOperation)
+                                         StorageCellContentState, StatusCellContent, RepackingOperation,
+                                         SuitablePallets)
 
 User = get_user_model()
 
@@ -123,13 +124,15 @@ def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: U
         if task is not None:
             result.append(task.guid)
             continue
-        operation = ShipmentOperation.objects.create(direction=element['direction'],
-                                                     manager=element['manager'],
-                                                     external_source=external_source,
-                                                     has_selection=element['has_selection'])
 
-        _create_child_task_shipment(element['pallets'], user, operation, TypeCollect.SHIPMENT)
-        fill_operation_cells(operation, element['cells'])
+        pallets = element.pop('pallets')
+        cells = element.pop('cells')
+        element.pop('external_source')
+
+        operation = ShipmentOperation.objects.create(external_source=external_source, **element)
+
+        _create_child_task_shipment(pallets, user, operation, TypeCollect.SHIPMENT)
+        fill_operation_cells(operation, cells)
         result.append(operation.guid)
     return result
 
@@ -355,6 +358,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
         if element.get('products') is not None:
             products_count = PalletProduct.objects.filter(pallet=pallet).count()
             if not products_count:
+                suitable_pallets = None
                 for product in element['products']:
                     product['pallet'] = pallet
                     product['product'] = Product.objects.filter(external_key=product['product']).first()
@@ -364,7 +368,18 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                         product.pop('order_external_source')
                         product['order'] = order
 
-                    PalletProduct.objects.create(**product)
+                    if product.get('suitable_pallets') is not None:
+                        suitable_pallets = product.pop('suitable_pallets')
+
+                    pallet_product = PalletProduct.objects.create(**product)
+                    if suitable_pallets is not None:
+                        for suitable_pallet in suitable_pallets:
+                            pallet_id = suitable_pallet.pop('id')
+                            pallet = Pallet.objects.filter(id=pallet_id).first()
+                            if pallet is None:
+                                raise APIException(f'Не найдена паллета {pallet_id} в блоке построчной выгрузке')
+                            SuitablePallets.objects.create(pallet_product=pallet_product, pallet=pallet,
+                                                           **suitable_pallet)
 
         if element.get('codes') is not None:
             for code in element['codes']:

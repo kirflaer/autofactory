@@ -238,6 +238,7 @@ class ShipmentOperation(OperationBaseOperation):
     has_selection = models.BooleanField('Есть отбор', default=False, blank=True, null=True)
     manager = models.CharField('Менеджер', blank=True, null=True, max_length=155)
     direction = models.CharField('Направление', blank=True, null=True, max_length=155)
+    car_carrier = models.CharField('Машина перевозчик', blank=True, null=True, max_length=155)
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
@@ -316,6 +317,9 @@ class PalletProduct(models.Model):
         verbose_name = 'Номенклатура паллеты'
         verbose_name_plural = 'Номенклатура паллет'
 
+    def __str__(self):
+        return f'{self.order} / {self.product} / {self.count}'
+
 
 class PalletSource(models.Model):
     pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources')
@@ -367,6 +371,17 @@ class RepackingOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Переупаковка'
         verbose_name_plural = 'Переупаковка'
+
+
+class SuitablePallets(models.Model):
+    pallet_product = models.ForeignKey(PalletProduct, verbose_name='Строка товаров', on_delete=models.CASCADE)
+    pallet = models.ForeignKey(Pallet, verbose_name='Паллета', on_delete=models.CASCADE)
+    count = models.PositiveIntegerField('Количество')
+    priority = models.PositiveIntegerField('Приоритет')
+
+    class Meta:
+        verbose_name = 'Подходящие паллеты'
+        verbose_name_plural = 'Подходящие паллеты (посторчная выгрузка)'
 
 
 @dataclass

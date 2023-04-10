@@ -1,7 +1,46 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models import UniqueConstraint
+
 from catalogs.models import Line, Device, RegularExpression, Storage
+
+
+class UIElement(models.Model):
+    name = models.CharField('Имя', max_length=155)
+    identifier = models.CharField('Идентификатор', max_length=155)
+
+    class Meta:
+        verbose_name = 'UI элемент'
+        verbose_name_plural = 'UI элементы'
+
+    def __str__(self):
+        return self.name
+
+
+class UserMode(models.Model):
+    name = models.CharField('Имя', max_length=155)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Режим интерфейса'
+        verbose_name_plural = 'Режимы интерфейса'
+
+
+class UserElement(models.Model):
+    mode = models.ForeignKey('UserMode', on_delete=models.CASCADE, null=True,
+                             blank=True, verbose_name='Режим')
+    element = models.ForeignKey('UIElement', on_delete=models.CASCADE, null=True,
+                                blank=True,
+                                verbose_name='UI элемент')
+
+    class Meta:
+        verbose_name = 'UI элементы пользовательского режма'
+        verbose_name_plural = 'UI элементы пользовательского режма'
+        constraints = [UniqueConstraint(fields=['mode', 'element'],
+                                        name='unique_uni_elements')]
 
 
 class Setting(models.Model):
@@ -117,6 +156,7 @@ class User(AbstractUser):
     disable_production_date_filter = models.BooleanField('Отключить фильтр по дате выработки', default=False)
 
     privileged_user = models.BooleanField('Привилегированный пользователь', default=False)
+    mode = models.ForeignKey('UserMode', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Режим')
 
     class Meta:
         ordering = ('username',)

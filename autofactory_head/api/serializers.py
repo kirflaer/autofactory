@@ -7,7 +7,7 @@ from catalogs.models import (Client, Department, Device, Direction, Line, Log, O
 from factory_core.models import Shift, ShiftProduct
 from packing.marking_services import get_base64_string
 from packing.models import MarkingOperation
-from users.models import Setting
+from users.models import Setting, UserElement
 from warehouse_management.models import PalletContent, Pallet, StorageCell, StorageArea
 
 User = get_user_model()
@@ -198,14 +198,19 @@ class UserSerializer(serializers.ModelSerializer):
                                           slug_field='identifier')
     settings = SettingSerializer(read_only=True)
     stock = serializers.SlugRelatedField(source='shop', slug_field='pk', read_only=True)
+    mode = serializers.SerializerMethodField()
 
     class Meta:
         fields = (
             'pk', 'line', 'role', 'device', 'scanner', 'vision_controller', 'settings', 'log_level',
             'inactive_sound_enabled', 'inactive_period_in_sec', 'use_aggregations', 'stock', 'refresh_timeout',
-            'data_send_interval', 'disable_production_date_filter', 'privileged_user')
+            'data_send_interval', 'disable_production_date_filter', 'privileged_user', 'mode')
 
         model = User
+
+    @staticmethod
+    def get_mode(obj):
+        return list(UserElement.objects.filter(mode=obj.mode).values_list('element__identifier', flat=True))
 
 
 class ProductShortSerializer(serializers.ModelSerializer):

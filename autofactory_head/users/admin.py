@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import User, Setting, ConfigEvent
+from .models import User, Setting, ConfigEvent, UserMode, UIElement, UserElement
 
 
 @admin.action(description='Установить уровень логирования INFO')
@@ -11,6 +11,18 @@ def make_log_level_info(model, request, queryset):
 @admin.action(description='Установить уровень логирования ERROR')
 def make_log_level_error(model, request, queryset):
     queryset.update(log_level='ERROR')
+
+
+class UserModeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+
+
+class ModeUIAdmin(admin.ModelAdmin):
+    list_display = ('mode', 'element')
+
+
+class UIElementAdmin(admin.ModelAdmin):
+    list_display = ('name', 'identifier')
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -29,5 +41,8 @@ class SettingsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Setting, SettingsAdmin)
+admin.site.register(UserElement, ModeUIAdmin)
+admin.site.register(UIElement, UIElementAdmin)
+admin.site.register(UserMode, UserModeAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(ConfigEvent, ConfigEventAdmin)

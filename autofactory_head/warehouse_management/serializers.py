@@ -670,3 +670,18 @@ class InventoryWithPlacementOperationReadSerializer(serializers.ModelSerializer)
         if not row:
             return None
         return row.cell_source.external_key
+
+
+class OperationPalletSerializer(serializers.Serializer):
+    pallet = serializers.CharField()
+    count = serializers.IntegerField()
+
+    def validate(self, attrs):
+        pallet = Pallet.objects.filter(id=attrs.get('pallet')).first()
+        if not pallet:
+            raise APIException(f'Не найдена паллета {attrs.get("pallet")}')
+
+        if pallet.status == PalletStatus.ARCHIVED:
+            raise APIException(f'Паллета {attrs.get("pallet")} является архивной')
+
+        return super().validate(attrs)

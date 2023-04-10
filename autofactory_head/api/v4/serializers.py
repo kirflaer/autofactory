@@ -3,10 +3,12 @@ from rest_framework.exceptions import APIException
 
 from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperationReadSerializer, \
     PalletShipmentSerializer
+from catalogs.serializers import ExternalSerializer
 from factory_core.models import Shift
 from warehouse_management.models import ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, \
-    PalletStatus, PalletProduct, SuitablePallets
-from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer
+    PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation
+from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
+    OperationPalletSerializer
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -73,3 +75,26 @@ class PalletCollectShipmentSerializerV4(PalletCollectShipmentSerializer):
         pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED)
         serializer = PalletShipmentSerializerV4(pallets, many=True)
         return serializer.data
+
+
+class WriteOffOperationWriteSerializer(serializers.Serializer):
+    external_source = ExternalSerializer()
+    pallets = OperationPalletSerializer(many=True)
+
+
+class WriteOffOperationReadSerializer(serializers.ModelSerializer):
+    pallets = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WriteOffOperation
+        fields = ('guid', 'date', 'number', 'status', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj):
+        pallets = OperationPallet.objects.filter(operation=obj.guid)
+        result = []
+        for row in pallets:
+            serializer = PalletShipmentSerializerV4(row.pallet)
+            result.append({'count': row.count,
+                           'pallet': serializer.data})
+        return result

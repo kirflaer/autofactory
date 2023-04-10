@@ -44,6 +44,37 @@ class StatusCellContent(models.TextChoices):
     REMOVED = 'REMOVED'
 
 
+@dataclass
+class CellContent:
+    cell_source: str
+    cell_destination: str
+
+
+@dataclass
+class PlacementToCellsContent:
+    cells: List[CellContent]
+
+
+class PlacementToCellsTask(TaskBaseModel):
+    content: Optional[PlacementToCellsContent] = None
+
+
+@dataclass
+class ProductContent:
+    plan: int
+    fact: int
+    product: str
+
+
+@dataclass
+class InventoryTaskContent:
+    products: List[ProductContent]
+
+
+class InventoryTask(TaskBaseModel):
+    content: InventoryTaskContent
+
+
 class StorageArea(BaseExternalModel):
     new_status_on_admission = models.CharField('Статус', max_length=20, choices=PalletStatus.choices,
                                                default=PalletStatus.SELECTED)
@@ -384,32 +415,9 @@ class SuitablePallets(models.Model):
         verbose_name_plural = 'Подходящие паллеты (посторчная выгрузка)'
 
 
-@dataclass
-class CellContent:
-    cell_source: str
-    cell_destination: str
+class WriteOffOperation(OperationBaseOperation):
+    type_task = 'WRITE_OFF'
 
-
-@dataclass
-class PlacementToCellsContent:
-    cells: List[CellContent]
-
-
-class PlacementToCellsTask(TaskBaseModel):
-    content: Optional[PlacementToCellsContent] = None
-
-
-@dataclass
-class ProductContent:
-    plan: int
-    fact: int
-    product: str
-
-
-@dataclass
-class InventoryTaskContent:
-    products: List[ProductContent]
-
-
-class InventoryTask(TaskBaseModel):
-    content: InventoryTaskContent
+    class Meta:
+        verbose_name = 'Списание продукции'
+        verbose_name_plural = 'Списание продукции'

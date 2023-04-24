@@ -84,10 +84,15 @@ class WriteOffOperationWriteSerializer(serializers.Serializer):
 
 class WriteOffOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
+    sources = serializers.SerializerMethodField()
 
     class Meta:
         model = WriteOffOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources')
+
+    @staticmethod
+    def get_sources(obj):
+        pass
 
     @staticmethod
     def get_pallets(obj):
@@ -96,5 +101,6 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
         for row in pallets:
             serializer = PalletShipmentSerializerV4(row.pallet)
             result.append({'count': row.count,
-                           'pallet': serializer.data})
+                           'pallet': serializer.data,
+                           'key': ''})
         return result

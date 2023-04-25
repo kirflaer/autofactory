@@ -1,8 +1,9 @@
 from django.urls import path, include
 
-from api.v4.views import TasksViewSet
+from api.v4.views import TasksViewSetV4, PalletCollectUpdate
 
 urlpatterns = [
-    path('tasks/<str:type_task>/', TasksViewSet.as_view({'get': 'list', 'post': 'create'})),
+    path('tasks/<str:type_task>/', TasksViewSetV4.as_view({'get': 'list', 'post': 'create'})),
+    path('pallets/<str:id>/collect/', PalletCollectUpdate.as_view()),
     path('', include('api.v3.urls')),
 ]

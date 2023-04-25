@@ -13,6 +13,7 @@ User = get_user_model()
 
 
 class PalletStatus(models.TextChoices):
+    NEW = 'NEW'
     COLLECTED = 'COLLECTED'
     CONFIRMED = 'CONFIRMED'
     POSTED = 'POSTED'
@@ -107,7 +108,7 @@ class Pallet(models.Model):
                                 null=True)
     creation_date = models.DateTimeField('Дата создания', auto_now_add=True)
     collector = models.ForeignKey(User, verbose_name='Сборщик', on_delete=models.CASCADE, blank=True, null=True)
-    status = models.CharField('Статус', max_length=20, choices=PalletStatus.choices, default=PalletStatus.COLLECTED)
+    status = models.CharField('Статус', max_length=20, choices=PalletStatus.choices, default=PalletStatus.NEW)
     weight = models.IntegerField('Вес', default=0)
     content_count = models.PositiveIntegerField('Количество позиций внутри паллеты', default=0)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)

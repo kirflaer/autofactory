@@ -2,6 +2,7 @@ from typing import Iterable
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from rest_framework.exceptions import APIException
 
 from catalogs.models import ExternalSource
 from tasks.models import TaskStatus
@@ -16,8 +17,7 @@ User = get_user_model()
 def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения"""
     result = []
-    operation = PalletCollectOperation.objects.create(closed=True, status=TaskStatus.CLOSE, user=user,
-                                                      ready_to_unload=True)
+    operation = PalletCollectOperation.objects.create(status=TaskStatus.WORK, user=user)
     pallets = create_pallets(serializer_data['pallets'])
     fill_operation_pallets(operation, pallets)
     result += pallets
@@ -43,3 +43,17 @@ def create_write_off_operation(serializer_data: Iterable[dict[str: str]], user: 
                                            type_operation='WRITE-OFF')
         result.append(operation.guid)
     return result
+
+
+def prepare_pallet_collect_to_exchange(pallet: Pallet) -> None:
+    operation_pallet_instance = OperationPallet.objects.filter(pallet=pallet).first()
+    if not operation_pallet_instance:
+        raise APIException('Не найдена операция сбора паллет')
+
+    operation = PalletCollectOperation.objects.filter(guid=operation_pallet_instance.operation).first()
+    if not operation:
+        raise APIException('Не найдена операция сбора паллет')
+
+    operation.status = TaskStatus.CLOSE
+    operation.close()
+

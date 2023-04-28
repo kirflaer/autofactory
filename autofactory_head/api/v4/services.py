@@ -69,6 +69,6 @@ def change_content_write_off_operation(content: dict[str: str], instance: WriteO
 
         PalletSource.objects.create(pallet_source=row.pallet, external_key=element.key,
                                     count=element.count, type_collect=TypeCollect.WRITE_OFF, related_task=instance.guid,
-                                    product=row.pallet.product)
+                                    product=row.pallet.product, weight=element.weight)
 
     return {'operation': instance.guid, 'result': 'success'}

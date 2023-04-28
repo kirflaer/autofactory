@@ -9,6 +9,7 @@ from tasks.models import TaskBaseModel
 class PalletContent:
     key: str
     count: int
+    weight: int
 
 
 @dataclass

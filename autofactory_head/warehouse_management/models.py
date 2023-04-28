@@ -38,6 +38,7 @@ class TypeCollect(models.TextChoices):
     SHIPMENT = 'SHIPMENT'
     ACCEPTANCE = 'ACCEPTANCE'
     SELECTION = 'SELECTION'
+    WRITE_OFF = 'WRITE_OFF'
 
 
 class StatusCellContent(models.TextChoices):
@@ -354,7 +355,8 @@ class PalletProduct(models.Model):
 
 
 class PalletSource(models.Model):
-    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources')
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources',
+                               null=True)
     pallet_source = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета источник')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
     weight = models.FloatField('Вес', default=0.0)
@@ -366,6 +368,9 @@ class PalletSource(models.Model):
                               on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Пользователь')
     additional_collect = models.BooleanField('Дополнение к заданию', blank=True, default=False)
+    type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
+                                    default=TypeCollect.SHIPMENT)
+    related_task = models.CharField('Идентификатор связанного задания', max_length=150, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Паллета источник'

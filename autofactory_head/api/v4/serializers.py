@@ -8,9 +8,9 @@ from api.v4.services import prepare_pallet_collect_to_exchange
 from catalogs.serializers import ExternalSerializer
 from factory_core.models import Shift
 from warehouse_management.models import ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, \
-    PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation
+    PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
 from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
-    OperationPalletSerializer
+    OperationPalletSerializer, PalletSourceReadSerializer
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -94,7 +94,10 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_sources(obj):
-        pass
+        keys = OperationPallet.objects.filter(operation=obj.guid).values_list('guid', flat=True)
+        sources = PalletSource.objects.filter(external_key__in=list(keys), type_collect=TypeCollect.WRITE_OFF)
+        serializer = PalletSourceReadSerializer(sources, many=True)
+        return serializer.data
 
     @staticmethod
     def get_pallets(obj):
@@ -104,7 +107,7 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
             serializer = PalletShipmentSerializerV4(row.pallet)
             result.append({'count': row.count,
                            'pallet': serializer.data,
-                           'key': ''})
+                           'key': row.guid})
         return result
 
 

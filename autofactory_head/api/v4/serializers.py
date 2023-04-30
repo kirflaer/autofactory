@@ -11,6 +11,7 @@ from warehouse_management.models import ShipmentOperation, PalletCollectOperatio
     PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
 from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
     OperationPalletSerializer, PalletSourceReadSerializer
+from users.models import User
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -120,3 +121,9 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             prepare_pallet_collect_to_exchange(instance)
         return super().update(instance, validated_data)
+
+
+class UsersListSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name',)
+        model = User

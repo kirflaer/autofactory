@@ -125,5 +125,5 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 
 class UsersListSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name',)
+        fields = ('username',)
         model = User

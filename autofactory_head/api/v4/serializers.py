@@ -121,9 +121,3 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             prepare_pallet_collect_to_exchange(instance)
         return super().update(instance, validated_data)
-
-
-class UsersListSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ('username',)
-        model = User

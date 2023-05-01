@@ -1,9 +1,11 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets, status
+from rest_framework.response import Response
+from rest_framework.request import Request
+from rest_framework.exceptions import APIException
 
 from api.v3.views import TasksViewSet
 from api.v4.routers import get_task_router
-from api.v4.serializers import PalletUpdateSerializer, UsersListSerializer
+from api.v4.serializers import PalletUpdateSerializer
 from tasks.task_services import RouterTask
 from warehouse_management.models import Pallet
 from users.models import User
@@ -21,12 +23,23 @@ class PalletCollectUpdate(generics.UpdateAPIView):
     serializer_class = PalletUpdateSerializer
 
 
-class UsersListViewSet(generics.ListAPIView):
+class UsersListViewSet(viewsets.ViewSet):
     permission_classes = (permissions.AllowAny,)
 
-    queryset = User.objects.filter(show_in_list=True)
+    def list(self, request: Request):
+        self._validate_query_params(request)
 
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('role',)
+        filter_fields = {'show_in_list':  True}
+        filter_fields.update(request.query_params.dict())
 
-    serializer_class = UsersListSerializer
+        queryset = User.objects.filter(**filter_fields).values_list('username', flat=True)
+        if len(queryset):
+            return Response({'users': queryset})
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    @staticmethod
+    def _validate_query_params(request: Request):
+        model_fields = set(dir(User))
+        query_keys = set(request.query_params.dict().keys())
+        if len(query_keys.difference(model_fields)):
+            raise APIException('Неверные параметры запроса')

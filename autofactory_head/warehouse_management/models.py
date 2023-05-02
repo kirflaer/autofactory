@@ -1,3 +1,4 @@
+import datetime
 import uuid
 from typing import List, Optional
 
@@ -120,7 +121,7 @@ class Pallet(models.Model):
     pallet_type = models.CharField('Тип', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, verbose_name='Смена', blank=True, null=True)
 
-    # Для совместимости со второй версие везде будет записываться guid смены (shift)
+    # Для совместимости со второй версией везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
     not_fully_collected = models.BooleanField('Собрана не полностью', default=False, blank=True, null=True)
 
@@ -298,10 +299,16 @@ class PalletCollectOperation(OperationBaseOperation):
 
     type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
                                     default=TypeCollect.ACCEPTANCE)
+    modified = models.DateTimeField('Принято в работу', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Сбор паллет'
         verbose_name_plural = 'Сбор паллет'
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.type_collect == TypeCollect.SHIPMENT and not self.modified and self.status == TaskStatus.WORK:
+            self.modified = datetime.datetime.now()
+        super().save(force_insert, force_update, using, update_fields)
 
     def close(self):
         super().close()

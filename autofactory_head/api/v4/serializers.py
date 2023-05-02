@@ -11,6 +11,7 @@ from warehouse_management.models import ShipmentOperation, PalletCollectOperatio
     PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
 from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
     OperationPalletSerializer, PalletSourceReadSerializer
+from users.models import User
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -69,7 +70,7 @@ class PalletCollectShipmentSerializerV4(PalletCollectShipmentSerializer):
 
     class Meta:
         model = PalletCollectOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user', 'is_owner')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user', 'is_owner', 'modified')
 
     @staticmethod
     def get_pallets(obj):

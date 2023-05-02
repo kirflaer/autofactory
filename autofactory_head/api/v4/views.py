@@ -38,7 +38,7 @@ class UsersListViewSet(viewsets.ViewSet):
         queryset = User.objects.filter(**filter_fields).values_list('username', flat=True)
         if len(queryset):
             return Response({'users': queryset})
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response({'users': []})
 
     @staticmethod
     def _validate_query_params(request: Request):

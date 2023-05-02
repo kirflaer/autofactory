@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -8,7 +9,9 @@ from api.v4.routers import get_task_router
 from api.v4.serializers import PalletUpdateSerializer
 from tasks.task_services import RouterTask
 from warehouse_management.models import Pallet
-from users.models import User
+
+
+User = get_user_model()
 
 
 class TasksViewSetV4(TasksViewSet):

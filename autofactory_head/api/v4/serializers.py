@@ -11,7 +11,6 @@ from warehouse_management.models import ShipmentOperation, PalletCollectOperatio
     PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
 from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
     OperationPalletSerializer, PalletSourceReadSerializer
-from users.models import User
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -67,6 +66,7 @@ class PalletShipmentSerializerV4(PalletShipmentSerializer):
 class PalletCollectShipmentSerializerV4(PalletCollectShipmentSerializer):
     pallets = serializers.SerializerMethodField()
     user = serializers.SlugRelatedField(read_only=True, slug_field='username')
+    modified = serializers.DateTimeField(format='%H:%M')
 
     class Meta:
         model = PalletCollectOperation

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+{% load user_filters %}
+
+{% block menu %}
+    {% include './include/top_menu.html' %}
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid p-0">
+
+        <!-- <h1 class="h3 mb-3">Form Layouts</h1> -->
+
+        <div class="row">
+            <div class="col-12 col-xl-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">{{ new_element_text }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="mb-3 row">
+                                    <label class="col-form-label col-sm-3 text-sm-right"
+                                           for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    <div class="col-sm-10">
+                                        {% if field.field.widget.input_type == 'checkbox' %}
+                                            {{ field | addclass:"form-check-input" }}
+                                        {% else %}
+                                            {{ field | addclass:"form-control" }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+
+                            <button type="button" class="btn btn-primary my-1" data-bs-toggle="modal"
+                                    data-bs-target="#centeredModalPrimary">
+                                Сохранить
+                            </button>
+
+                            <div class="modal fade" id="centeredModalPrimary" tabindex="-1" role="dialog"
+                                 aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title">Выберите тип смены</h4>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body m-3">
+                                            <label class="form-check">
+                                                <input class="form-check-input" type="radio" value="MARKED"
+                                                       name="type_shift" checked>
+                                                <span class="form-check-label"> Маркируемая</span>
+                                            </label>
+                                            <label class="form-check">
+                                                <input class="form-check-input" type="radio" value="UNMARKED"
+                                                       name="type_shift">
+                                                <span class="form-check-label"> Не маркируемая </span>
+                                            </label>
+                                            <label class="form-check">
+                                                <input class="form-check-input" type="radio" value="SEMI_PRODUCTS"
+                                                       name="type_shift">
+                                                <span class="form-check-label"> Полуфабрикат </span>
+                                            </label>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Закрыть
+                                            </button>
+                                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

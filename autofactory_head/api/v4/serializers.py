@@ -1,12 +1,16 @@
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperationReadSerializer, \
     PalletShipmentSerializer
+from api.v4.services import prepare_pallet_collect_to_exchange
+from catalogs.serializers import ExternalSerializer
 from factory_core.models import Shift
 from warehouse_management.models import ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, \
-    PalletStatus, PalletProduct, SuitablePallets
-from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer
+    PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
+from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
+    OperationPalletSerializer, PalletSourceReadSerializer
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -62,10 +66,11 @@ class PalletShipmentSerializerV4(PalletShipmentSerializer):
 class PalletCollectShipmentSerializerV4(PalletCollectShipmentSerializer):
     pallets = serializers.SerializerMethodField()
     user = serializers.SlugRelatedField(read_only=True, slug_field='username')
+    modified = serializers.DateTimeField(format='%H:%M')
 
     class Meta:
         model = PalletCollectOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user', 'is_owner')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'user', 'is_owner', 'modified')
 
     @staticmethod
     def get_pallets(obj):
@@ -73,3 +78,46 @@ class PalletCollectShipmentSerializerV4(PalletCollectShipmentSerializer):
         pallets = Pallet.objects.filter(guid__in=pallet_guids, status=PalletStatus.WAITED)
         serializer = PalletShipmentSerializerV4(pallets, many=True)
         return serializer.data
+
+
+class WriteOffOperationWriteSerializer(serializers.Serializer):
+    external_source = ExternalSerializer()
+    pallets = OperationPalletSerializer(many=True)
+
+
+class WriteOffOperationReadSerializer(serializers.ModelSerializer):
+    pallets = serializers.SerializerMethodField()
+    sources = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WriteOffOperation
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources')
+
+    @staticmethod
+    def get_sources(obj):
+        keys = OperationPallet.objects.filter(operation=obj.guid).values_list('guid', flat=True)
+        sources = PalletSource.objects.filter(external_key__in=list(keys), type_collect=TypeCollect.WRITE_OFF)
+        serializer = PalletSourceReadSerializer(sources, many=True)
+        return serializer.data
+
+    @staticmethod
+    def get_pallets(obj):
+        pallets = OperationPallet.objects.filter(operation=obj.guid)
+        result = []
+        for row in pallets:
+            serializer = PalletShipmentSerializerV4(row.pallet)
+            result.append({'count': row.count,
+                           'pallet': serializer.data,
+                           'key': row.guid})
+        return result
+
+
+class PalletUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('status',)
+        model = Pallet
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            prepare_pallet_collect_to_exchange(instance)
+        return super().update(instance, validated_data)

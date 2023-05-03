@@ -17,7 +17,7 @@ from warehouse_management.models import (
     PalletProduct,
     OrderOperation,
     PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
-    StorageArea, StorageCellContentState, RepackingOperation, SuitablePallets
+    StorageArea, StorageCellContentState, RepackingOperation, SuitablePallets, WriteOffOperation
 )
 from warehouse_management.warehouse_services import (get_unused_cells_for_placement,
                                                      create_inventory_with_placement_operation)
@@ -89,7 +89,8 @@ class PalletAdmin(admin.ModelAdmin):
 @admin.register(PalletSource)
 class PalletSourceAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'pallet_source', 'product', 'weight', 'count', 'batch_number', 'production_date')
-    search_fields = ('pallet_source__id', 'pallet_source__guid')
+    search_fields = ('pallet_source__id', 'pallet_source__guid', 'related_task')
+    list_filter = ('type_collect', )
 
 
 @admin.register(OperationPallet)
@@ -220,3 +221,9 @@ class RepackingOperationAdmin(admin.ModelAdmin):
 @admin.register(SuitablePallets)
 class SuitablePalletsAdmin(admin.ModelAdmin):
     list_display = ('pallet_product', 'pallet', 'count',)
+
+
+@admin.register(WriteOffOperation)
+class SuitablePalletsAdmin(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')

@@ -10,6 +10,12 @@ from catalogs.models import Line, Product
 User = get_user_model()
 
 
+class TypeShift(models.TextChoices):
+    MARKED = 'MARKED'
+    UNMARKED = 'UNMARKED'
+    SEMI_PRODUCTS = 'SEMI_PRODUCTS'
+
+
 class ExternalSystemExchangeMixin(models.Model):
     """Расширение для моделей добавлющие возможность контролировать статус обмена
     Во внешнюю систему отправляются все ready_to_unload
@@ -69,6 +75,7 @@ class Shift(models.Model):
     closed = models.BooleanField('Закрыта', default=False)
     number = models.PositiveIntegerField('Номер', default=0)
     author = models.ForeignKey(User, verbose_name='Автор', on_delete=models.SET_NULL, blank=True, null=True)
+    type = models.CharField('Тип', max_length=20, choices=TypeShift.choices, default=TypeShift.MARKED, null=True)
 
     class Meta:
         verbose_name = 'Смена'

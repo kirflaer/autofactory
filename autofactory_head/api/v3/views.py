@@ -31,7 +31,7 @@ class ShiftListViewSet(generics.ListAPIView):
     queryset = Shift.objects.all()
     serializer_class = api_serializers.ShiftSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('line', 'closed')
+    filterset_fields = ('line', 'closed', 'type')
 
 
 class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):

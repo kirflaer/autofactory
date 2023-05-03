@@ -236,12 +236,13 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 
 class PalletShortSerializer(serializers.ModelSerializer):
     product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
+    production_shop = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
 
     class Meta:
         model = Pallet
         fields = (
             'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group',
-            'weight')
+            'weight', 'production_shop')
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
@@ -670,3 +671,18 @@ class InventoryWithPlacementOperationReadSerializer(serializers.ModelSerializer)
         if not row:
             return None
         return row.cell_source.external_key
+
+
+class OperationPalletSerializer(serializers.Serializer):
+    pallet = serializers.CharField()
+    count = serializers.IntegerField()
+
+    def validate(self, attrs):
+        pallet = Pallet.objects.filter(id=attrs.get('pallet')).first()
+        if not pallet:
+            raise APIException(f'Не найдена паллета {attrs.get("pallet")}')
+
+        if pallet.status == PalletStatus.ARCHIVED:
+            raise APIException(f'Паллета {attrs.get("pallet")} является архивной')
+
+        return super().validate(attrs)

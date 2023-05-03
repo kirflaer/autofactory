@@ -142,7 +142,7 @@ class User(AbstractUser):
     log_level = models.CharField('Уровень логирования', max_length=255,
                                  choices=LEVEL, default=ERROR)
     inactive_sound_enabled = models.BooleanField(
-        'Включать звуковое оповещение при неактивности', default=False)
+        'Включать звуковое оповещение при не активности', default=False)
     inactive_period_in_sec = models.PositiveIntegerField('Интервал оповещения',
                                                          default=0)
     is_local_admin = models.BooleanField(
@@ -157,6 +157,7 @@ class User(AbstractUser):
 
     privileged_user = models.BooleanField('Привилегированный пользователь', default=False)
     mode = models.ForeignKey('UserMode', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Режим')
+    show_in_list = models.BooleanField('Показывать в списке', default=False)
 
     class Meta:
         ordering = ('username',)

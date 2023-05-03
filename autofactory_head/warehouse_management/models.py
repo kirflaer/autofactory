@@ -1,3 +1,4 @@
+import datetime
 import uuid
 from typing import List, Optional
 
@@ -13,6 +14,7 @@ User = get_user_model()
 
 
 class PalletStatus(models.TextChoices):
+    NEW = 'NEW'
     COLLECTED = 'COLLECTED'
     CONFIRMED = 'CONFIRMED'
     POSTED = 'POSTED'
@@ -37,11 +39,43 @@ class TypeCollect(models.TextChoices):
     SHIPMENT = 'SHIPMENT'
     ACCEPTANCE = 'ACCEPTANCE'
     SELECTION = 'SELECTION'
+    WRITE_OFF = 'WRITE_OFF'
 
 
 class StatusCellContent(models.TextChoices):
     PLACED = 'PLACED'
     REMOVED = 'REMOVED'
+
+
+@dataclass
+class CellContent:
+    cell_source: str
+    cell_destination: str
+
+
+@dataclass
+class PlacementToCellsContent:
+    cells: List[CellContent]
+
+
+class PlacementToCellsTask(TaskBaseModel):
+    content: Optional[PlacementToCellsContent] = None
+
+
+@dataclass
+class ProductContent:
+    plan: int
+    fact: int
+    product: str
+
+
+@dataclass
+class InventoryTaskContent:
+    products: List[ProductContent]
+
+
+class InventoryTask(TaskBaseModel):
+    content: InventoryTaskContent
 
 
 class StorageArea(BaseExternalModel):
@@ -76,7 +110,7 @@ class Pallet(models.Model):
                                 null=True)
     creation_date = models.DateTimeField('Дата создания', auto_now_add=True)
     collector = models.ForeignKey(User, verbose_name='Сборщик', on_delete=models.CASCADE, blank=True, null=True)
-    status = models.CharField('Статус', max_length=20, choices=PalletStatus.choices, default=PalletStatus.COLLECTED)
+    status = models.CharField('Статус', max_length=20, choices=PalletStatus.choices, default=PalletStatus.NEW)
     weight = models.IntegerField('Вес', default=0)
     content_count = models.PositiveIntegerField('Количество позиций внутри паллеты', default=0)
     batch_number = models.CharField('Номер партии', max_length=150, blank=True, null=True)
@@ -87,7 +121,7 @@ class Pallet(models.Model):
     pallet_type = models.CharField('Тип', max_length=50, choices=PalletType.choices, default=PalletType.FULLED)
     shift = models.ForeignKey(Shift, on_delete=models.CASCADE, verbose_name='Смена', blank=True, null=True)
 
-    # Для совместимости со второй версие везде будет записываться guid смены (shift)
+    # Для совместимости со второй версией везде будет записываться guid смены (shift)
     marking_group = models.CharField('Группа маркировки', blank=True, null=True, max_length=36)
     not_fully_collected = models.BooleanField('Собрана не полностью', default=False, blank=True, null=True)
 
@@ -265,10 +299,16 @@ class PalletCollectOperation(OperationBaseOperation):
 
     type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
                                     default=TypeCollect.ACCEPTANCE)
+    modified = models.DateTimeField('Принято в работу', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Сбор паллет'
         verbose_name_plural = 'Сбор паллет'
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.type_collect == TypeCollect.SHIPMENT and not self.modified and self.status == TaskStatus.WORK:
+            self.modified = datetime.datetime.now()
+        super().save(force_insert, force_update, using, update_fields)
 
     def close(self):
         super().close()
@@ -322,7 +362,8 @@ class PalletProduct(models.Model):
 
 
 class PalletSource(models.Model):
-    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources')
+    pallet = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета', related_name='sources',
+                               null=True)
     pallet_source = models.ForeignKey(Pallet, on_delete=models.CASCADE, verbose_name='Паллета источник')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, verbose_name='Номенклатура', null=True, blank=True)
     weight = models.FloatField('Вес', default=0.0)
@@ -334,6 +375,9 @@ class PalletSource(models.Model):
                               on_delete=models.SET_NULL)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Пользователь')
     additional_collect = models.BooleanField('Дополнение к заданию', blank=True, default=False)
+    type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
+                                    default=TypeCollect.SHIPMENT)
+    related_task = models.CharField('Идентификатор связанного задания', max_length=150, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Паллета источник'
@@ -384,32 +428,9 @@ class SuitablePallets(models.Model):
         verbose_name_plural = 'Подходящие паллеты (посторчная выгрузка)'
 
 
-@dataclass
-class CellContent:
-    cell_source: str
-    cell_destination: str
+class WriteOffOperation(OperationBaseOperation):
+    type_task = 'WRITE_OFF'
 
-
-@dataclass
-class PlacementToCellsContent:
-    cells: List[CellContent]
-
-
-class PlacementToCellsTask(TaskBaseModel):
-    content: Optional[PlacementToCellsContent] = None
-
-
-@dataclass
-class ProductContent:
-    plan: int
-    fact: int
-    product: str
-
-
-@dataclass
-class InventoryTaskContent:
-    products: List[ProductContent]
-
-
-class InventoryTask(TaskBaseModel):
-    content: InventoryTaskContent
+    class Meta:
+        verbose_name = 'Списание продукции'
+        verbose_name_plural = 'Списание продукции'

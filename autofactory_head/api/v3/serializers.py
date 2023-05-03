@@ -4,7 +4,7 @@ from api.serializers import MarkingSerializer, AggregationsSerializer
 from catalogs.models import Product
 from factory_core.models import ShiftProduct, Shift
 from packing.models import MarkingOperation
-from warehouse_management.models import StorageArea, StorageCell, StorageCellContentState, StatusCellContent
+from warehouse_management.models import StorageArea, StorageCell
 from warehouse_management.serializers import PalletReadSerializer
 from warehouse_management.warehouse_services import get_cell_state
 
@@ -41,8 +41,9 @@ class ShiftSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shift
-        fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products')
-        read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products')
+        fields = (
+            'guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products', 'type')
+        read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'type')
 
 
 class ShiftUpdateSerializer(ShiftSerializer):

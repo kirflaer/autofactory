@@ -27,7 +27,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
     if validated_data.get('sources') is not None:
         sources = validated_data.pop('sources')
         for source in sources:
-            pallet_source = Pallet.objects.select_for_update().filter(guid=source['pallet_source']).first()
+            pallet_source = Pallet.objects.filter(guid=source['pallet_source']).first()
             if pallet_source is None:
                 raise APIException('Не найдена паллета источник')
 

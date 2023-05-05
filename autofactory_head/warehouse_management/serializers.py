@@ -236,12 +236,13 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 
 class PalletShortSerializer(serializers.ModelSerializer):
     product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
+    production_shop = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
 
     class Meta:
         model = Pallet
         fields = (
             'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group',
-            'weight')
+            'weight', 'production_shop')
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):

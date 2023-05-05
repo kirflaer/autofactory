@@ -147,8 +147,8 @@ class ShiftListView(OperationBasicListView):
         qs = super().get_queryset()
         user = self.request.user
         if user.is_superuser or user.is_local_admin:
-            return qs
-        return qs.filter(line__storage=user.shop)
+            return qs[:300]
+        return qs.filter(line__storage=user.shop)[:300]
 
 
 @login_required
@@ -177,7 +177,7 @@ def shift_close(request):
 
 class ShiftCreateView(LoginRequiredMixin, CreateView):
     model = Shift
-    template_name = 'new_base.html'
+    template_name = 'new_shift.html'
     form_class = ShiftForm
     success_url = reverse_lazy('shifts')
     extra_context = {'new_element_text': 'Открытие новой смены'}
@@ -190,13 +190,20 @@ class ShiftCreateView(LoginRequiredMixin, CreateView):
         return form
 
     def form_valid(self, form):
+        type_shift = self.request.POST.get('type_shift')
+        message = ''
+        if not type_shift:
+            message = f'Не передан тип смены.'
+
         form_line = form.cleaned_data['line']
-        if Shift.objects.filter(line=form_line, closed=False).exists():
-            message = f'Невозможно открыть смену. На линии {form_line} уже открыта смена.'
-            return redirect(
-                f'{reverse_lazy("shifts")}?message={message}')
+        if Shift.objects.filter(line=form_line, closed=False, type=type_shift).exists():
+            message = f'Невозможно открыть смену. На линии {form_line} уже открыта смена c типом {type_shift}.'
+
+        if len(message):
+            return redirect(f'{reverse_lazy("shifts")}?message={message}')
 
         shift = form.save(commit=False)
+        shift.type = type_shift
         shift.author = self.request.user
         shift.save()
         return super().form_valid(form)

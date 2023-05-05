@@ -10,7 +10,7 @@ from factory_core.models import Shift
 from warehouse_management.models import ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, \
     PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
 from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
-    OperationPalletSerializer, PalletSourceReadSerializer
+    OperationPalletSerializer, PalletSourceReadSerializer, PalletReadSerializer
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -105,7 +105,7 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
         pallets = OperationPallet.objects.filter(operation=obj.guid)
         result = []
         for row in pallets:
-            serializer = PalletShipmentSerializerV4(row.pallet)
+            serializer = PalletReadSerializer(row.pallet)
             result.append({'count': row.count,
                            'pallet': serializer.data,
                            'key': row.guid})

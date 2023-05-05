@@ -18,4 +18,4 @@ class WriteOffTaskContent:
 
 
 class WriteOffTask(TaskBaseModel):
-    content: WriteOffTaskContent
+    content: WriteOffTaskContent | None

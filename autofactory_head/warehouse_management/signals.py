@@ -1,6 +1,6 @@
 from django.db.models.signals import pre_delete
 from .models import InventoryOperation, OperationCell, StorageCellContentState, StatusCellContent, ShipmentOperation, \
-    PalletCollectOperation, OperationPallet, SelectionOperation, WriteOffOperation
+    PalletCollectOperation, OperationPallet, SelectionOperation, WriteOffOperation, InventoryAddressWarehouseOperation
 from django.dispatch import receiver
 
 
@@ -46,3 +46,8 @@ def pre_delete_shipment(sender, **kwargs):
 @receiver(pre_delete, sender=WriteOffOperation)
 def pre_delete_write_off(sender, **kwargs):
     OperationPallet.objects.filter(operation=kwargs['instance'].guid).delete()
+
+
+@receiver(pre_delete, signal=InventoryAddressWarehouseOperation)
+def pre_delete_inventory_address_warehouse(sender, **kwargs):
+    pass

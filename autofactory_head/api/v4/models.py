@@ -19,3 +19,13 @@ class WriteOffTaskContent:
 
 class WriteOffTask(TaskBaseModel):
     content: WriteOffTaskContent | None
+
+
+@dataclass
+class InventoryContent:
+    key: str
+    fact: int
+
+
+class InventoryTask(TaskBaseModel):
+    content = InventoryContent | None

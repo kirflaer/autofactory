@@ -1,12 +1,13 @@
-from api.v4.models import WriteOffTask
+from api.v4.models import WriteOffTask, InventoryTask
 from api.v4.serializers import PalletCollectOperationWriteSerializer, ShipmentOperationReadSerializerV4, \
     PalletCollectShipmentSerializerV4, WriteOffOperationReadSerializer, WriteOffOperationWriteSerializer
 from api.v4.services import create_collect_operation, create_write_off_operation, change_content_write_off_operation
 from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
-from warehouse_management.models import PalletCollectOperation, ShipmentOperation, WriteOffOperation
+from warehouse_management.models import (PalletCollectOperation, ShipmentOperation, WriteOffOperation,
+                                         InventoryAddressWarehouseOperation)
 from warehouse_management.serializers import (PalletReadSerializer, PalletCollectOperationReadSerializer,
-                                              ShipmentOperationWriteSerializer, )
+                                              ShipmentOperationWriteSerializer, InventoryAddressWarehouseSerializer)
 from warehouse_management.warehouse_services import create_shipment_operation
 
 
@@ -38,4 +39,10 @@ def get_task_router() -> dict[str: RouterTask]:
                                     write_serializer=WriteOffOperationWriteSerializer,
                                     content_model=WriteOffTask,
                                     change_content_function=change_content_write_off_operation),
+            'INVENTORY_ADDRESS_WAREHOUSE': RouterTask(task=InventoryAddressWarehouseOperation,
+                                                      create_function=InventoryAddressWarehouseSerializer,
+                                                      read_serializer=InventoryAddressWarehouseSerializer,
+                                                      write_serializer=InventoryAddressWarehouseSerializer,
+                                                      content_model=InventoryTask,
+                                                      change_content_function=InventoryTask)
             }

@@ -12,7 +12,7 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
                                          SelectionOperation, StorageCell,
-                                         RepackingOperation, StorageArea, InventoryAddressWarehouse,
+                                         RepackingOperation, StorageArea,
                                          InventoryAddressWarehouseOperation)
 from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info, get_cell_state
 
@@ -690,16 +690,6 @@ class OperationPalletSerializer(serializers.Serializer):
 
 
 class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = InventoryAddressWarehouseOperation
         fields = ('product', 'pallet', 'cell', 'plan', 'fact')
-
-    def create(self, validated_data):
-        inventory = InventoryAddressWarehouse.objects.create(**validated_data)
-        return inventory
-
-    def update(self, instance, validated_data):
-        InventoryAddressWarehouse.objects.update(instance, **validated_data)
-
-

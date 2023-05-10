@@ -436,7 +436,7 @@ class WriteOffOperation(OperationBaseOperation):
         verbose_name_plural = 'Списание продукции'
 
 
-class InventoryAddressWarehouse(ManyToManyOperationMixin):
+class InventoryAddressWarehouseContent(ManyToManyOperationMixin):
     product = models.ForeignKey(to=Product, on_delete=models.CASCADE, verbose_name='Номенклатура')
     pallet = models.ForeignKey(to=Pallet, on_delete=models.CASCADE, verbose_name='Паллета')
     cell = models.ForeignKey(to=StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка')
@@ -444,8 +444,8 @@ class InventoryAddressWarehouse(ManyToManyOperationMixin):
     fact = models.PositiveIntegerField('Количество (факт)', default=0.0)
 
     class Meta:
-        verbose_name = 'Инвентаризация адресного склада'
-        verbose_name_plural = 'Инвентаризация адресного склада'
+        verbose_name = 'Инвентаризация адресного склада (Содержимое операции)'
+        verbose_name_plural = 'Инвентаризация адресного склада (Содержимое операции)'
 
 
 class InventoryAddressWarehouseOperation(OperationBaseOperation):

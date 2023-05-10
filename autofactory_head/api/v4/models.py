@@ -1,7 +1,5 @@
 from typing import List
-
 from pydantic.dataclasses import dataclass
-
 from tasks.models import TaskBaseModel
 
 
@@ -22,10 +20,10 @@ class WriteOffTask(TaskBaseModel):
 
 
 @dataclass
-class InventoryContent:
+class InventoryAddressContent:
     key: str
     fact: int
 
 
-class InventoryTask(TaskBaseModel):
-    content = InventoryContent | None
+class InventoryAddressTask(TaskBaseModel):
+    content: List[InventoryAddressContent] | None

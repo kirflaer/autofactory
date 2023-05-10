@@ -1,6 +1,7 @@
-from api.v4.models import WriteOffTask, InventoryTask
-from api.v4.serializers import PalletCollectOperationWriteSerializer, ShipmentOperationReadSerializerV4, \
-    PalletCollectShipmentSerializerV4, WriteOffOperationReadSerializer, WriteOffOperationWriteSerializer
+from api.v4.models import WriteOffTask, InventoryAddressTask
+from api.v4.serializers import (PalletCollectOperationWriteSerializer, ShipmentOperationReadSerializerV4,
+                                PalletCollectShipmentSerializerV4, WriteOffOperationReadSerializer,
+                                WriteOffOperationWriteSerializer)
 from api.v4.services import create_collect_operation, create_write_off_operation, change_content_write_off_operation
 from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
@@ -43,6 +44,6 @@ def get_task_router() -> dict[str: RouterTask]:
                                                       create_function=InventoryAddressWarehouseSerializer,
                                                       read_serializer=InventoryAddressWarehouseSerializer,
                                                       write_serializer=InventoryAddressWarehouseSerializer,
-                                                      content_model=InventoryTask,
-                                                      change_content_function=InventoryTask)
+                                                      content_model=InventoryAddressTask,
+                                                      change_content_function=InventoryAddressTask)
             }

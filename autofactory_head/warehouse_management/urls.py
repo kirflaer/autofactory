@@ -1,8 +1,8 @@
 from django.urls import path
 
 from .views import (
-    ShipmentListView, OrderListView,
-    OrderDetailListView, SourceRemoveView, SourceListView, PalletProductUpdateView, PalletListView, PalletDetailView
+    ShipmentListView, OrderListView, OrderDetailListView, SourceRemoveView, SourceListView, PalletProductUpdateView,
+    PalletListView, PalletDetailView
 )
 
 urlpatterns = [

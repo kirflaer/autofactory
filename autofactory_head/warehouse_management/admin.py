@@ -234,3 +234,8 @@ class SuitablePalletsAdmin(admin.ModelAdmin):
 class InventoryAddressWarehouse(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(InventoryAddressWarehouseContent)
+class InventoryAddressWarehouseContentAdmin(admin.ModelAdmin):
+    list_display = ('guid', 'product', 'pallet', 'cell')

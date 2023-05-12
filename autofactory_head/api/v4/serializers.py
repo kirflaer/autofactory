@@ -7,10 +7,13 @@ from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperatio
 from api.v4.services import prepare_pallet_collect_to_exchange
 from catalogs.serializers import ExternalSerializer
 from factory_core.models import Shift
-from warehouse_management.models import ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, \
-    PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
+from warehouse_management.models import (
+    ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, PalletStatus, PalletProduct,
+    SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
+    InventoryAddressWarehouseContent
+)
 from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
-    OperationPalletSerializer, PalletSourceReadSerializer, PalletReadSerializer
+    OperationPalletSerializer, PalletSourceReadSerializer, PalletReadSerializer, InventoryAddressWarehouseSerializer
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -121,3 +124,19 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             prepare_pallet_collect_to_exchange(instance)
         return super().update(instance, validated_data)
+
+
+class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InventoryAddressWarehouseOperation
+        fields = (
+            'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded'
+        )
+
+
+class InventoryAddressWarehouseWriteSerializer(serializers.Serializer):
+    external_source = ExternalSerializer()
+    products = InventoryAddressWarehouseSerializer(many=True)
+
+    class Meta:
+        fields = ('external_source', 'products')

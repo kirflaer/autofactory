@@ -1,14 +1,18 @@
-from api.v4.models import WriteOffTask, InventoryAddressTask
+from api.v4.models import WriteOffTask, InventoryAddressWarehouseTask
 from api.v4.serializers import (PalletCollectOperationWriteSerializer, ShipmentOperationReadSerializerV4,
                                 PalletCollectShipmentSerializerV4, WriteOffOperationReadSerializer,
-                                WriteOffOperationWriteSerializer)
-from api.v4.services import create_collect_operation, create_write_off_operation, change_content_write_off_operation
+                                WriteOffOperationWriteSerializer, InventoryAddressWarehouseReadSerializer,
+                                InventoryAddressWarehouseWriteSerializer)
+from api.v4.services import (
+    create_collect_operation, create_write_off_operation, change_content_write_off_operation,
+    create_inventory_operation, change_content_inventory_operation
+)
 from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
 from warehouse_management.models import (PalletCollectOperation, ShipmentOperation, WriteOffOperation,
                                          InventoryAddressWarehouseOperation)
 from warehouse_management.serializers import (PalletReadSerializer, PalletCollectOperationReadSerializer,
-                                              ShipmentOperationWriteSerializer, InventoryAddressWarehouseSerializer)
+                                              ShipmentOperationWriteSerializer)
 from warehouse_management.warehouse_services import create_shipment_operation
 
 
@@ -41,9 +45,9 @@ def get_task_router() -> dict[str: RouterTask]:
                                     content_model=WriteOffTask,
                                     change_content_function=change_content_write_off_operation),
             'INVENTORY_ADDRESS_WAREHOUSE': RouterTask(task=InventoryAddressWarehouseOperation,
-                                                      create_function=InventoryAddressWarehouseSerializer,
-                                                      read_serializer=InventoryAddressWarehouseSerializer,
-                                                      write_serializer=InventoryAddressWarehouseSerializer,
-                                                      content_model=InventoryAddressTask,
-                                                      change_content_function=InventoryAddressTask)
+                                                      create_function=create_inventory_operation,
+                                                      read_serializer=InventoryAddressWarehouseReadSerializer,
+                                                      write_serializer=InventoryAddressWarehouseWriteSerializer,
+                                                      content_model=InventoryAddressWarehouseTask,
+                                                      change_content_function=change_content_inventory_operation)
             }

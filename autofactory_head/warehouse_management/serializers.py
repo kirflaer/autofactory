@@ -13,7 +13,7 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
                                          SelectionOperation, StorageCell,
                                          RepackingOperation, StorageArea,
-                                         InventoryAddressWarehouseOperation)
+                                         InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent)
 from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info, get_cell_state
 
 
@@ -690,6 +690,12 @@ class OperationPalletSerializer(serializers.Serializer):
 
 
 class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
+    product = serializers.CharField()
+    pallet = serializers.CharField()
+    cell = serializers.CharField()
+    plan = serializers.IntegerField()
+    fact = serializers.IntegerField(required=False)
+
     class Meta:
         model = InventoryAddressWarehouseOperation
-        fields = ('product', 'pallet', 'cell', 'plan', 'fact')
+        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')

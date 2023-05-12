@@ -20,10 +20,16 @@ class WriteOffTask(TaskBaseModel):
 
 
 @dataclass
-class InventoryAddressContent:
-    key: str
+class ProductContent:
+    plan: int
     fact: int
+    product: str
 
 
-class InventoryAddressTask(TaskBaseModel):
-    content: List[InventoryAddressContent] | None
+@dataclass
+class InventoryAddressWarehouseTaskContent:
+    products: List[ProductContent]
+
+
+class InventoryAddressWarehouseTask(TaskBaseModel):
+    content: InventoryAddressWarehouseTaskContent

@@ -1,3 +1,5 @@
+from datetime import datetime as dt
+
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
@@ -5,15 +7,14 @@ from rest_framework.exceptions import APIException
 from api.serializers import StorageSerializer
 from catalogs.models import ExternalSource
 from catalogs.serializers import ExternalSerializer
-from factory_core.models import Shift
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
-                                         SelectionOperation, StorageCellContentState, StatusCellContent, StorageCell,
-                                         RepackingOperation, StorageArea, SuitablePallets)
+                                         SelectionOperation, StorageCell,
+                                         RepackingOperation, StorageArea,
+                                         InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent)
 from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info, get_cell_state
-from datetime import datetime as dt
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -686,3 +687,15 @@ class OperationPalletSerializer(serializers.Serializer):
             raise APIException(f'Паллета {attrs.get("pallet")} является архивной')
 
         return super().validate(attrs)
+
+
+class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
+    product = serializers.CharField()
+    pallet = serializers.CharField()
+    cell = serializers.CharField()
+    plan = serializers.IntegerField()
+    fact = serializers.IntegerField(required=False)
+
+    class Meta:
+        model = InventoryAddressWarehouseOperation
+        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')

@@ -17,7 +17,8 @@ from warehouse_management.models import (
     PalletProduct,
     OrderOperation,
     PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
-    StorageArea, StorageCellContentState, RepackingOperation, SuitablePallets, WriteOffOperation
+    StorageArea, StorageCellContentState, RepackingOperation, SuitablePallets, WriteOffOperation,
+    InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent
 )
 from warehouse_management.warehouse_services import (get_unused_cells_for_placement,
                                                      create_inventory_with_placement_operation)
@@ -90,7 +91,7 @@ class PalletAdmin(admin.ModelAdmin):
 class PalletSourceAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'pallet_source', 'product', 'weight', 'count', 'batch_number', 'production_date')
     search_fields = ('pallet_source__id', 'pallet_source__guid', 'related_task')
-    list_filter = ('type_collect', )
+    list_filter = ('type_collect',)
 
 
 @admin.register(OperationPallet)
@@ -227,3 +228,14 @@ class SuitablePalletsAdmin(admin.ModelAdmin):
 class SuitablePalletsAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(InventoryAddressWarehouseOperation)
+class InventoryAddressWarehouse(admin.ModelAdmin):
+    list_display = (
+        'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(InventoryAddressWarehouseContent)
+class InventoryAddressWarehouseContentAdmin(admin.ModelAdmin):
+    list_display = ('guid', 'product', 'pallet', 'cell')

@@ -3,8 +3,10 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DeleteView, UpdateView
 
 from warehouse_management.forms import PalletProductForm
-from warehouse_management.models import Pallet, ShipmentOperation, OrderOperation, PalletProduct, OperationPallet, \
-    PalletSource, OperationCell
+from warehouse_management.models import (
+    Pallet, ShipmentOperation, OrderOperation, PalletProduct, PalletSource, OperationCell,
+    InventoryAddressWarehouseOperation
+)
 
 
 class ShipmentListView(LoginRequiredMixin, ListView):

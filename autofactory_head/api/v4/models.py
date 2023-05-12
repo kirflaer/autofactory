@@ -13,6 +13,7 @@ class PalletContent:
 @dataclass
 class WriteOffTaskContent:
     pallets: List[PalletContent]
+    comment: str | None
 
 
 class WriteOffTask(TaskBaseModel):

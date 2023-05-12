@@ -7,6 +7,8 @@ from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperatio
 from api.v4.services import prepare_pallet_collect_to_exchange
 from catalogs.serializers import ExternalSerializer
 from factory_core.models import Shift
+from datetime import datetime as dt
+
 from warehouse_management.models import (
     ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, PalletStatus, PalletProduct,
     SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
@@ -91,6 +93,7 @@ class WriteOffOperationWriteSerializer(serializers.Serializer):
 class WriteOffOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
     sources = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = WriteOffOperation
@@ -113,6 +116,15 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
                            'pallet': serializer.data,
                            'key': row.guid})
         return result
+
+    @staticmethod
+    def get_date(obj):
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
+        except ValueError:
+            date = obj.date.strftime('%d.%m.%Y')
+        return date
 
 
 class PalletUpdateSerializer(serializers.ModelSerializer):

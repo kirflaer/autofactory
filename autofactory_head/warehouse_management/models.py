@@ -430,6 +430,7 @@ class SuitablePallets(models.Model):
 
 class WriteOffOperation(OperationBaseOperation):
     type_task = 'WRITE_OFF'
+    comment = models.CharField('Комментарий', max_length=150)
 
     class Meta:
         verbose_name = 'Списание продукции'

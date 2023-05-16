@@ -119,6 +119,9 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_date(obj):
+        if obj.external_source is None:
+            return obj.date.strftime('%d.%m.%Y')
+
         try:
             date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
             date = date.strftime('%d.%m.%Y')

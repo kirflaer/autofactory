@@ -12,7 +12,7 @@ class PalletContent:
 
 @dataclass
 class WriteOffTaskContent:
-    pallets: List[PalletContent]
+    pallets: List[PalletContent] | None
     comment: str | None
 
 

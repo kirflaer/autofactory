@@ -91,13 +91,14 @@ class WriteOffOperationWriteSerializer(serializers.Serializer):
 
 
 class WriteOffOperationReadSerializer(serializers.ModelSerializer):
+    external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     pallets = serializers.SerializerMethodField()
     sources = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
 
     class Meta:
         model = WriteOffOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources', 'external_key')
 
     @staticmethod
     def get_sources(obj):

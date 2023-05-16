@@ -64,14 +64,16 @@ def prepare_pallet_collect_to_exchange(pallet: Pallet) -> None:
 @transaction.atomic
 def change_content_write_off_operation(content: dict[str: str], instance: WriteOffOperation) -> dict:
     """ Добавляет результат сбора операции списания"""
-    for element in content["pallets"]:
-        row = OperationPallet.objects.filter(guid=element.key).first()
-        if not row:
-            APIException('Не найдена паллета задания по ключу')
+    if content.get('pallets') is not None:
+        for element in content['pallets']:
+            row = OperationPallet.objects.filter(guid=element.key).first()
+            if not row:
+                APIException('Не найдена паллета задания по ключу')
 
-        PalletSource.objects.create(pallet_source=row.pallet, external_key=element.key,
-                                    count=element.count, type_collect=TypeCollect.WRITE_OFF, related_task=instance.guid,
-                                    product=row.pallet.product, weight=element.weight)
+            PalletSource.objects.create(pallet_source=row.pallet, external_key=element.key,
+                                        count=element.count, type_collect=TypeCollect.WRITE_OFF,
+                                        related_task=instance.guid,
+                                        product=row.pallet.product, weight=element.weight)
     if content.get('comment') is not None:
         instance.comment = content['comment']
         instance.save()

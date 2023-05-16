@@ -1,6 +1,7 @@
 from typing import List
 from pydantic.dataclasses import dataclass
 from tasks.models import TaskBaseModel
+from pydantic.main import BaseModel
 
 
 @dataclass
@@ -10,8 +11,7 @@ class PalletContent:
     weight: int
 
 
-@dataclass
-class WriteOffTaskContent:
+class WriteOffTaskContent(BaseModel):
     pallets: List[PalletContent] | None
     comment: str | None
 
@@ -20,8 +20,7 @@ class WriteOffTask(TaskBaseModel):
     content: WriteOffTaskContent | None
 
 
-@dataclass
-class ProductContent:
+class ProductContent(BaseModel):
     plan: int
     fact: int
     product: str

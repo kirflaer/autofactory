@@ -312,7 +312,7 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_pallets(obj):
         pallets_ids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
-        pallets = Pallet.objects.filter(guid__in=pallets_ids)
+        pallets = Pallet.objects.filter(guid__in=pallets_ids).exclude(status=PalletStatus.ARCHIVED)
         serializer = PalletReadSerializer(pallets, many=True)
         return serializer.data
 

@@ -98,7 +98,7 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = WriteOffOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources', 'external_key')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources', 'external_key', 'comment')
 
     @staticmethod
     def get_sources(obj):

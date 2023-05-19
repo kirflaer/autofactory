@@ -143,11 +143,33 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 
 
 class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
+    sources = serializers.SerializerMethodField()
+
     class Meta:
         model = InventoryAddressWarehouseOperation
         fields = (
-            'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded'
+            'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded',
+            'products', 'sources'
         )
+
+    @staticmethod
+    def get_sources(obj):
+        keys = InventoryAddressWarehouseContent.objects.filter(operation=obj.guid).values_list('guid', flat=True)
+        sources = PalletSource.objects.filter(external_key__in=list(keys), type_collect=TypeCollect.INVENTORY)
+        serializer = PalletSourceReadSerializer(sources, many=True)
+        return serializer.data
+
+    @staticmethod
+    def get_products(obj):
+        products = InventoryAddressWarehouseContent.objects.filter(operation=obj.guid)
+        result = []
+        for row in products:
+            serializer = InventoryAddressWarehouseSerializer(row)
+            result.append({'count': row.plan,
+                           'product': serializer.data,
+                           'key': row.guid})
+        return result
 
 
 class InventoryAddressWarehouseWriteSerializer(serializers.Serializer):

@@ -21,9 +21,9 @@ class WriteOffTask(TaskBaseModel):
 
 
 class ProductContent(BaseModel):
-    plan: int
-    fact: int
-    product: str
+    key: str
+    count: int
+    weight: int
 
 
 @dataclass

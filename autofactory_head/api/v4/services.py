@@ -109,16 +109,19 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 @transaction.atomic
 def change_content_inventory_operation(content: dict[str: str], instance: InventoryAddressWarehouseOperation) -> dict:
     for element in content['products']:
-        inventory_row = InventoryAddressWarehouseContent.objects.filter(
-            operation=instance.guid,
-            product__guid=element.product,
-            plan=element.plan
+        row = InventoryAddressWarehouseContent.objects.filter(
+            operation=instance.guid
         ).first()
 
-        if inventory_row is None:
+        if row is None:
             continue
 
-        inventory_row.fact = element.fact
-        inventory_row.save()
+        PalletSource.objects.create(pallet_source=row.pallet, external_key=element.key,
+                                    count=element.count, type_collect=TypeCollect.INVENTORY,
+                                    related_task=instance.guid,
+                                    product=row.product, weight=element.weight)
+
+        row.fact += element.count
+        row.save()
 
     return {'operation': instance.guid, 'result': 'success'}

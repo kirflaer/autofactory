@@ -40,6 +40,7 @@ class TypeCollect(models.TextChoices):
     ACCEPTANCE = 'ACCEPTANCE'
     SELECTION = 'SELECTION'
     WRITE_OFF = 'WRITE_OFF'
+    INVENTORY = 'INVENTORY'
 
 
 class StatusCellContent(models.TextChoices):

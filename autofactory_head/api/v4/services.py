@@ -55,8 +55,8 @@ def prepare_pallet_collect_to_exchange(pallet: Pallet) -> None:
     if not operation:
         raise APIException('Не найдена операция сбора паллет')
 
-    operation.status = TaskStatus.CLOSE
-    operation.close()
+    operation.status = TaskStatus.WAIT
+    operation.save()
 
 
 @transaction.atomic

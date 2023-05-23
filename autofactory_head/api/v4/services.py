@@ -125,3 +125,23 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
         row.save()
 
     return {'operation': instance.guid, 'result': 'success'}
+
+
+@transaction.atomic
+def divide_pallet(serializer_data: dict, user: User) -> None:
+    current_pallet = Pallet.objects.get(id=serializer_data['source_pallet']['id'])
+    current_pallet.content_count = serializer_data['source_pallet']['count']
+    current_pallet.weight = serializer_data['source_pallet']['weight']
+    current_pallet.save()
+
+    if current_pallet.product is not None:
+        serializer_data['new_pallet']['product'] = current_pallet.product.guid
+
+    if current_pallet.shift is not None:
+        serializer_data['new_pallet']['shift'] = current_pallet.shift.guid
+
+    operation = PalletCollectOperation.objects.create(type_collect=TypeCollect.DIVIDED, user=user,
+                                                      status=TaskStatus.CLOSE)
+    pallets = create_pallets((serializer_data['new_pallet'],))
+    fill_operation_pallets(operation, pallets)
+    operation.close()

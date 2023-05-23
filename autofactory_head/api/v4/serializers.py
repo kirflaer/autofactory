@@ -14,17 +14,12 @@ from warehouse_management.models import (
     SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
     InventoryAddressWarehouseContent
 )
-from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
-    OperationPalletSerializer, PalletSourceReadSerializer, PalletReadSerializer, InventoryAddressWarehouseSerializer
+from warehouse_management.serializers import (PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer,
+                                              OperationPalletSerializer, PalletSourceReadSerializer,
+                                              PalletReadSerializer, InventoryAddressWarehouseSerializer)
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
     pallets = PalletWriteSerializer(many=True)
     shift = serializers.UUIDField()
 
@@ -178,3 +173,22 @@ class InventoryAddressWarehouseWriteSerializer(serializers.Serializer):
 
     class Meta:
         fields = ('external_source', 'products')
+
+
+class PalletDivideContentSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    count = serializers.IntegerField()
+    weight = serializers.IntegerField()
+    id = serializers.CharField()
+
+
+class PalletDivideSerializer(serializers.Serializer):
+    new_pallet = PalletDivideContentSerializer(many=False)
+    source_pallet = PalletDivideContentSerializer(many=False)
+
+    def validate(self, attrs):
+        instance = Pallet.objects.filter(id=attrs.get('source_pallet').get('id'))
+        if not instance:
+            raise APIException('Паллета не найдена')
+
+        return super().validate(attrs)

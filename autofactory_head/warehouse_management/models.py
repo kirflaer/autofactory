@@ -41,6 +41,7 @@ class TypeCollect(models.TextChoices):
     SELECTION = 'SELECTION'
     WRITE_OFF = 'WRITE_OFF'
     INVENTORY = 'INVENTORY'
+    DIVIDED = 'DIVIDED'
 
 
 class StatusCellContent(models.TextChoices):

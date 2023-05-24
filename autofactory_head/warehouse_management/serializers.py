@@ -20,12 +20,6 @@ from warehouse_management.warehouse_services import check_and_collect_orders, en
 class OperationBaseSerializer(serializers.Serializer):
     external_source = ExternalSerializer()
 
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
 
 class OrderOperationReadSerializer(serializers.Serializer):
     client_presentation = serializers.CharField()

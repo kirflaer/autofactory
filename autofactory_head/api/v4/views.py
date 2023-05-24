@@ -10,6 +10,7 @@ from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer
 from api.v4.services import divide_pallet
 from tasks.task_services import RouterTask
 from warehouse_management.models import Pallet
+from warehouse_management.serializers import PalletReadSerializer, PalletShortSerializer
 
 User = get_user_model()
 

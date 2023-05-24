@@ -8,7 +8,7 @@ from catalogs.models import Product
 from tasks.models import TaskStatus
 from warehouse_management.models import (
     PalletCollectOperation, WriteOffOperation, Pallet, OperationPallet, PalletSource, TypeCollect,
-    InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell
+    InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus
 )
 from warehouse_management.warehouse_services import create_pallets, fill_operation_pallets, \
     get_or_create_external_source
@@ -128,10 +128,15 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
 
 
 @transaction.atomic
-def divide_pallet(serializer_data: dict, user: User) -> None:
+def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     current_pallet = Pallet.objects.get(id=serializer_data['source_pallet']['id'])
-    current_pallet.content_count = serializer_data['source_pallet']['count']
-    current_pallet.weight = serializer_data['source_pallet']['weight']
+    current_pallet.content_count -= serializer_data['source_pallet']['count']
+    current_pallet.status = serializer_data['source_pallet']['status']
+
+    if current_pallet.content_count <= 0:
+        current_pallet.content_count = 0
+        current_pallet.status = PalletStatus.ARCHIVED
+
     current_pallet.save()
 
     if current_pallet.product is not None:
@@ -145,3 +150,4 @@ def divide_pallet(serializer_data: dict, user: User) -> None:
     pallets = create_pallets((serializer_data['new_pallet'],))
     fill_operation_pallets(operation, pallets)
     operation.close()
+    return pallets

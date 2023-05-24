@@ -313,6 +313,7 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
     pallet_collect_keys = list(OperationPallet.objects.filter(pallet__shift=shift).values_list('operation', flat=True))
     operations = PalletCollectOperation.objects.filter(guid__in=pallet_collect_keys, status=TaskStatus.WAIT)
     for operation in operations:
+        operation.status = TaskStatus.CLOSE
         operation.close()
 
     # Оффлайн смены

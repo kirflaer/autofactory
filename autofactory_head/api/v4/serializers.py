@@ -181,7 +181,7 @@ class PalletDivideSourceSerializer(serializers.Serializer):
 
 class PalletDivideNewSerializer(serializers.Serializer):
     status = serializers.CharField()
-    count = serializers.IntegerField()
+    content_count = serializers.IntegerField()
     id = serializers.CharField()
 
 
@@ -193,7 +193,7 @@ class PalletDivideSerializer(serializers.Serializer):
         instance = Pallet.objects.filter(id=attrs.get('source_pallet')).first()
         if not instance:
             raise APIException('Паллета не найдена')
-        if instance.content_count < attrs.get('new_pallet').get('count'):
+        if instance.content_count < attrs.get('new_pallet').get('content_count'):
             raise APIException('У разделяемой паллеты не хватает количества')
 
         return super().validate(attrs)

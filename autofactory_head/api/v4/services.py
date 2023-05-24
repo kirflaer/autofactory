@@ -130,7 +130,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
 @transaction.atomic
 def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     current_pallet = Pallet.objects.get(id=serializer_data['source_pallet'])
-    current_pallet.content_count -= serializer_data['new_pallet']['count']
+    current_pallet.content_count -= serializer_data['new_pallet']['content_count']
 
     if current_pallet.content_count <= 0:
         current_pallet.content_count = 0

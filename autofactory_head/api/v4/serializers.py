@@ -175,21 +175,25 @@ class InventoryAddressWarehouseWriteSerializer(serializers.Serializer):
         fields = ('external_source', 'products')
 
 
-class PalletDivideContentSerializer(serializers.Serializer):
+class PalletDivideSourceSerializer(serializers.Serializer):
+    id = serializers.CharField()
+
+
+class PalletDivideNewSerializer(serializers.Serializer):
     status = serializers.CharField()
     count = serializers.IntegerField()
     id = serializers.CharField()
 
 
 class PalletDivideSerializer(serializers.Serializer):
-    new_pallet = PalletDivideContentSerializer(many=False)
-    source_pallet = PalletDivideContentSerializer(many=False)
+    new_pallet = PalletDivideNewSerializer()
+    source_pallet = serializers.CharField()
 
     def validate(self, attrs):
-        instance = Pallet.objects.filter(id=attrs.get('source_pallet').get('id')).first()
+        instance = Pallet.objects.filter(id=attrs.get('source_pallet')).first()
         if not instance:
             raise APIException('Паллета не найдена')
-        if instance.content_count < attrs.get('source_pallet').get('count'):
+        if instance.content_count < attrs.get('new_pallet').get('count'):
             raise APIException('У разделяемой паллеты не хватает количества')
 
         return super().validate(attrs)

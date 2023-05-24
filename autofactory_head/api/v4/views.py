@@ -32,8 +32,9 @@ class PalletDivideViewSet(viewsets.ViewSet):
     def divide_pallets(request: Request):
         serializer = PalletDivideSerializer(data=request.data)
         if serializer.is_valid():
-            divide_pallet(serializer.validated_data, request.user)
-            return Response({'status': 'success'})
+            pallets = divide_pallet(serializer.validated_data, request.user)
+            serializer = PalletReadSerializer(pallets[0])
+            return Response({'status': 'success', 'pallets': serializer.data})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

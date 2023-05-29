@@ -94,9 +94,9 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
         operation = InventoryAddressWarehouseOperation.objects.create(external_source=external_source)
 
         for row in element['products']:
-            product = Product.objects.filter(guid=row['product']).first()
+            product = Product.objects.filter(external_key=row['product']).first()
             pallet = Pallet.objects.filter(id=row['pallet']).first()
-            cell = StorageCell.objects.filter(guid=row['cell']).first()
+            cell = StorageCell.objects.filter(external_key=row['cell']).first()
             inventory = InventoryAddressWarehouseContent.objects.create(
                 product=product, pallet=pallet, cell=cell, plan=row['plan']
             )

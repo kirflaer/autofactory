@@ -15,6 +15,7 @@ from catalogs.models import (
     Product
 )
 from factory_core.models import Shift
+from tasks.models import TaskStatus
 from warehouse_management.models import Pallet, OperationPallet, PalletCollectOperation
 
 from .models import (
@@ -298,7 +299,7 @@ def get_marking_filters(request_data: dict) -> dict:
 
 
 def register_to_exchange_marking_data(shift: Shift) -> None:
-    """ Отмечате готовность к обмену маркировки с сборы паллет по смене """
+    """ Отмечает готовность к обмену маркировки и сборы паллет по смене """
     if not shift.closed:
         raise APIException('Для регистрации зависимых данных к обмену необходимо закрыть смену')
 
@@ -308,6 +309,14 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
         operation.ready_to_unload = True
         operation.save()
 
+    # Онлайн смены
+    pallet_collect_keys = list(OperationPallet.objects.filter(pallet__shift=shift).values_list('operation', flat=True))
+    operations = PalletCollectOperation.objects.filter(guid__in=pallet_collect_keys, status=TaskStatus.WAIT)
+    for operation in operations:
+        operation.status = TaskStatus.CLOSE
+        operation.close()
+
+    # Оффлайн смены
     filter_kwargs = {'batch_number': shift.batch_number,
                      'production_date': shift.production_date,
                      'marking_group': shift.code_offline,
@@ -322,8 +331,7 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
     pallets_ids = Pallet.objects.filter(shift=shift).values_list('guid', flat=True)
     tasks_ids = OperationPallet.objects.filter(pallet__guid__in=pallets_ids).values_list('operation', flat=True)
     for task in PalletCollectOperation.objects.filter(guid__in=tasks_ids):
-        task.ready_to_unload = True
-        task.save()
+        task.close()
 
 
 def get_marks_in_shifts(shift: Shift) -> set:

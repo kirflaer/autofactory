@@ -71,6 +71,7 @@ class UnitSerializer(serializers.ModelSerializer):
         fields = (
             'product', 'name', 'is_default', 'guid', 'capacity', 'count_in_pallet', 'gtin')
         model = Unit
+        read_only_fields = ('product',)
 
 
 class ProductSerializer(serializers.ModelSerializer):

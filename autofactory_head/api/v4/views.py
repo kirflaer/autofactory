@@ -6,10 +6,11 @@ from rest_framework.exceptions import APIException
 
 from api.v3.views import TasksViewSet
 from api.v4.routers import get_task_router
-from api.v4.serializers import PalletUpdateSerializer
+from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer
+from api.v4.services import divide_pallet
 from tasks.task_services import RouterTask
 from warehouse_management.models import Pallet
-
+from warehouse_management.serializers import PalletReadSerializer, PalletShortSerializer
 
 User = get_user_model()
 
@@ -26,13 +27,25 @@ class PalletCollectUpdate(generics.UpdateAPIView):
     serializer_class = PalletUpdateSerializer
 
 
+class PalletDivideViewSet(viewsets.ViewSet):
+    @staticmethod
+    def divide_pallets(request: Request):
+        serializer = PalletDivideSerializer(data=request.data)
+        if serializer.is_valid():
+            pallets = divide_pallet(serializer.validated_data, request.user)
+            serializer = PalletReadSerializer(pallets[0])
+            return Response({'status': 'success', 'new_pallet': serializer.data})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UsersListViewSet(viewsets.ViewSet):
     permission_classes = (permissions.AllowAny,)
 
     def list(self, request: Request):
         self._validate_query_params(request)
 
-        filter_fields = {'show_in_list':  True}
+        filter_fields = {'show_in_list': True}
         filter_fields.update(request.query_params.dict())
 
         queryset = User.objects.filter(**filter_fields).values_list('username', flat=True)

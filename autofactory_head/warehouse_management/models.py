@@ -40,6 +40,8 @@ class TypeCollect(models.TextChoices):
     ACCEPTANCE = 'ACCEPTANCE'
     SELECTION = 'SELECTION'
     WRITE_OFF = 'WRITE_OFF'
+    INVENTORY = 'INVENTORY'
+    DIVIDED = 'DIVIDED'
 
 
 class StatusCellContent(models.TextChoices):
@@ -430,7 +432,28 @@ class SuitablePallets(models.Model):
 
 class WriteOffOperation(OperationBaseOperation):
     type_task = 'WRITE_OFF'
+    comment = models.CharField('Комментарий', max_length=150, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Списание продукции'
         verbose_name_plural = 'Списание продукции'
+
+
+class InventoryAddressWarehouseContent(ManyToManyOperationMixin):
+    product = models.ForeignKey(to=Product, on_delete=models.CASCADE, verbose_name='Номенклатура')
+    pallet = models.ForeignKey(to=Pallet, on_delete=models.CASCADE, verbose_name='Паллета')
+    cell = models.ForeignKey(to=StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка')
+    plan = models.PositiveIntegerField('Количество (план)', default=0.0)
+    fact = models.PositiveIntegerField('Количество (факт)', default=0.0)
+
+    class Meta:
+        verbose_name = 'Инвентаризация адресного склада (Содержимое операции)'
+        verbose_name_plural = 'Инвентаризация адресного склада (Содержимое операции)'
+
+
+class InventoryAddressWarehouseOperation(OperationBaseOperation):
+    type_task = 'INVENTORY_ADDRESS_WAREHOUSE'
+
+    class Meta:
+        verbose_name = 'Инвентаризация адресного склада'
+        verbose_name_plural = 'Инвентаризация адресного склада'

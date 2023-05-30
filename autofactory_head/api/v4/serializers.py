@@ -7,19 +7,19 @@ from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperatio
 from api.v4.services import prepare_pallet_collect_to_exchange
 from catalogs.serializers import ExternalSerializer
 from factory_core.models import Shift
-from warehouse_management.models import ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, \
-    PalletStatus, PalletProduct, SuitablePallets, WriteOffOperation, PalletSource, TypeCollect
-from warehouse_management.serializers import PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, \
-    OperationPalletSerializer, PalletSourceReadSerializer
+from datetime import datetime as dt
+
+from warehouse_management.models import (
+    ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, PalletStatus, PalletProduct,
+    SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
+    InventoryAddressWarehouseContent
+)
+from warehouse_management.serializers import (PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer,
+                                              OperationPalletSerializer, PalletSourceReadSerializer,
+                                              PalletReadSerializer, InventoryAddressWarehouseSerializer)
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
-    def create(self, validated_data):
-        pass
-
-    def update(self, instance, validated_data):
-        pass
-
     pallets = PalletWriteSerializer(many=True)
     shift = serializers.UUIDField()
 
@@ -86,12 +86,14 @@ class WriteOffOperationWriteSerializer(serializers.Serializer):
 
 
 class WriteOffOperationReadSerializer(serializers.ModelSerializer):
+    external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     pallets = serializers.SerializerMethodField()
     sources = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = WriteOffOperation
-        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources')
+        fields = ('guid', 'date', 'number', 'status', 'pallets', 'sources', 'external_key', 'comment')
 
     @staticmethod
     def get_sources(obj):
@@ -105,11 +107,23 @@ class WriteOffOperationReadSerializer(serializers.ModelSerializer):
         pallets = OperationPallet.objects.filter(operation=obj.guid)
         result = []
         for row in pallets:
-            serializer = PalletShipmentSerializerV4(row.pallet)
+            serializer = PalletReadSerializer(row.pallet)
             result.append({'count': row.count,
                            'pallet': serializer.data,
                            'key': row.guid})
         return result
+
+    @staticmethod
+    def get_date(obj):
+        if obj.external_source is None:
+            return obj.date.strftime('%d.%m.%Y')
+
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
+        except ValueError:
+            date = obj.date.strftime('%d.%m.%Y')
+        return date
 
 
 class PalletUpdateSerializer(serializers.ModelSerializer):
@@ -121,3 +135,65 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             prepare_pallet_collect_to_exchange(instance)
         return super().update(instance, validated_data)
+
+
+class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
+    sources = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InventoryAddressWarehouseOperation
+        fields = (
+            'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded',
+            'products', 'sources'
+        )
+
+    @staticmethod
+    def get_sources(obj):
+        keys = InventoryAddressWarehouseContent.objects.filter(operation=obj.guid).values_list('guid', flat=True)
+        sources = PalletSource.objects.filter(external_key__in=list(keys), type_collect=TypeCollect.INVENTORY)
+        serializer = PalletSourceReadSerializer(sources, many=True)
+        return serializer.data
+
+    @staticmethod
+    def get_products(obj):
+        products = InventoryAddressWarehouseContent.objects.filter(operation=obj.guid)
+        result = []
+        for row in products:
+            serializer = InventoryAddressWarehouseSerializer(row)
+            result.append({'count': row.plan,
+                           'product': serializer.data,
+                           'key': row.guid})
+        return result
+
+
+class InventoryAddressWarehouseWriteSerializer(serializers.Serializer):
+    external_source = ExternalSerializer()
+    products = InventoryAddressWarehouseSerializer(many=True)
+
+    class Meta:
+        fields = ('external_source', 'products')
+
+
+class PalletDivideSourceSerializer(serializers.Serializer):
+    id = serializers.CharField()
+
+
+class PalletDivideNewSerializer(serializers.Serializer):
+    status = serializers.CharField()
+    content_count = serializers.IntegerField()
+    id = serializers.CharField()
+
+
+class PalletDivideSerializer(serializers.Serializer):
+    new_pallet = PalletDivideNewSerializer()
+    source_pallet = serializers.CharField()
+
+    def validate(self, attrs):
+        instance = Pallet.objects.filter(id=attrs.get('source_pallet')).first()
+        if not instance:
+            raise APIException('Паллета не найдена')
+        if instance.content_count < attrs.get('new_pallet').get('content_count'):
+            raise APIException('У разделяемой паллеты не хватает количества')
+
+        return super().validate(attrs)

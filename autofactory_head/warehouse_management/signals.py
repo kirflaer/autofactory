@@ -1,6 +1,6 @@
 from django.db.models.signals import pre_delete
-from .models import InventoryOperation, OperationCell, StorageCellContentState, StatusCellContent, ShipmentOperation, \
-    PalletCollectOperation, OperationPallet, SelectionOperation, WriteOffOperation
+from .models import (InventoryOperation, OperationCell, StorageCellContentState, StatusCellContent, ShipmentOperation,
+                     PalletCollectOperation, OperationPallet, SelectionOperation, WriteOffOperation)
 from django.dispatch import receiver
 
 

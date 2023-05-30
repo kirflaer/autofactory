@@ -15,7 +15,7 @@ from packing.models import (
     MarkingOperationMark,
 )
 
-from warehouse_management.models import PalletContent, Pallet
+from warehouse_management.models import PalletContent, Pallet, PalletStatus
 
 from catalogs.models import Line
 
@@ -155,7 +155,12 @@ class ShiftListView(OperationBasicListView):
 @require_http_methods(['POST', 'GET'])
 def shift_close(request):
     if len(request.GET):
-        pallet_count = Pallet.objects.filter(shift__guid=request.GET['shift']).count()
+        pallet_count = Pallet.objects.filter(shift__guid=request.GET['shift'], status=PalletStatus.COLLECTED).count()
+
+        if not pallet_count:
+            return redirect(
+                f'{reverse_lazy("shifts")}?message={"Нет собранных паллет в смене. Закрытие смены невозможно"}')
+
         return render(request, 'confirm_shift.html', {'shift': request.GET['shift'], 'pallet_count': pallet_count})
 
     shift_guid = request.POST.get('shift')

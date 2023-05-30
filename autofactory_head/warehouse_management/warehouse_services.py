@@ -327,7 +327,7 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                 product = None
             else:
                 product = element['product']
-            element['product'] = Product.objects.filter(guid=product).first()
+            element['product'] = Product.objects.filter(Q(guid=product) | Q(external_key=product)).first()
 
             if not element.get('cell'):
                 cell = None
@@ -339,7 +339,9 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
                 production_shop = None
             else:
                 production_shop = element['production_shop']
-            element['production_shop'] = Storage.objects.filter(guid=production_shop).first()
+            element['production_shop'] = Storage.objects.filter(
+                Q(guid=production_shop) | Q(external_key=production_shop)
+            ).first()
 
             if element.get('code_offline') is not None:
                 element['marking_group'] = element['code_offline']

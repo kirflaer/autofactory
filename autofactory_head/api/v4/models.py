@@ -32,4 +32,4 @@ class InventoryAddressWarehouseTaskContent:
 
 
 class InventoryAddressWarehouseTask(TaskBaseModel):
-    content: InventoryAddressWarehouseTaskContent
+    content: InventoryAddressWarehouseTaskContent | None

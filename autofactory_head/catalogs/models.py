@@ -128,6 +128,7 @@ class Line(BaseModel):
                                                null=True,
                                                blank=True,
                                                verbose_name='Тип пр. операции')
+    check_collect_pallet = models.BooleanField('Проверять собранные паллеты', default=True)
 
     class Meta:
         verbose_name = 'Линия производства'

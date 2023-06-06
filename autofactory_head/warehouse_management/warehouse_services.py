@@ -546,3 +546,10 @@ def get_unused_cells_for_placement() -> list[StorageCell]:
             result.append(cell)
 
     return result
+
+
+def get_pallets_in_acceptance(value: str) -> dict[str, list] | None:
+    """ Получает паллеты находящие в незакрытых заданиях на приемку """
+    operations = list(AcceptanceOperation.objects.exclude(status=TaskStatus.CLOSE).values_list('guid', flat=True))
+    pallets = OperationPallet.objects.filter(operation__in=operations).values_list('pallet__guid', flat=True)
+    return {'guid__in': list(pallets)}

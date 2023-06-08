@@ -145,7 +145,7 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
         serializer_data['new_pallet']['shift'] = current_pallet.shift.guid
 
     instance = current_pallet.__dict__
-    keys = ('batch_number', 'production_date', 'series')
+    keys = ('batch_number', 'production_date', 'series', 'production_shop')
     for key in keys:
         serializer_data['new_pallet'][key] = instance[key]
 

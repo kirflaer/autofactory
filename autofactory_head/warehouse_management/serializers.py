@@ -686,7 +686,7 @@ class OperationPalletSerializer(serializers.Serializer):
 class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
     product = serializers.CharField()
     pallet = PalletReadSerializer()
-    cell = serializers.CharField()
+    cell = StorageCellsSerializer()
     plan = serializers.IntegerField()
     fact = serializers.IntegerField(required=False)
 

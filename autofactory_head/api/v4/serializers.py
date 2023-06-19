@@ -140,6 +140,7 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     sources = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = InventoryAddressWarehouseOperation
@@ -165,6 +166,18 @@ class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
                            'product': serializer.data,
                            'key': row.guid})
         return result
+
+    @staticmethod
+    def get_date(obj):
+        if obj.external_source is None:
+            return obj.date.strftime('%d.%m.%Y')
+
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
+        except ValueError:
+            date = obj.date.strftime('%d.%m.%Y')
+        return date
 
 
 class InventoryAddressWarehouseWriteSerializer(serializers.Serializer):

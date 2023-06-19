@@ -155,9 +155,10 @@ class ShiftListView(OperationBasicListView):
 @require_http_methods(['POST', 'GET'])
 def shift_close(request):
     if len(request.GET):
-        pallet_count = Pallet.objects.filter(shift__guid=request.GET['shift'], status=PalletStatus.COLLECTED).count()
+        instance = Shift.objects.get(guid=request.GET['shift'])
+        pallet_count = Pallet.objects.filter(shift=instance, status=PalletStatus.COLLECTED).count()
 
-        if not pallet_count:
+        if instance.line.check_collect_pallet and not pallet_count:
             return redirect(
                 f'{reverse_lazy("shifts")}?message={"Нет собранных паллет в смене. Закрытие смены невозможно"}')
 

@@ -18,7 +18,8 @@ from tasks.models import TaskStatus
 from tasks.task_services import change_task_properties
 from warehouse_management.models import Pallet, PalletStatus
 from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer
-from warehouse_management.warehouse_services import create_pallets, get_pallet_filter_from_shipment
+from warehouse_management.warehouse_services import create_pallets, get_pallet_filter_from_shipment, \
+    get_pallets_in_acceptance
 
 User = get_user_model()
 
@@ -52,7 +53,8 @@ class PalletViewSet(generics.ListCreateAPIView):
             'ids': 'id__in',
             'guids': 'guid__in',
             'keys': 'external_key__in',
-            'external_task_key': get_pallet_filter_from_shipment
+            'external_task_key': get_pallet_filter_from_shipment,
+            'pallets_in_acceptance': get_pallets_in_acceptance
         }
 
         qs = super().get_queryset()

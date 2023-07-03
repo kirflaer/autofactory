@@ -12,11 +12,15 @@ from warehouse_management.models import (
 class ShipmentListView(LoginRequiredMixin, ListView):
     context_object_name = 'data'
     ordering = '-date'
+    paginate_by = 50
     model = ShipmentOperation
     template_name = 'shipment.html'
     extra_context = {
         'title': 'Заявки к отгрузке',
     }
+
+    def get_queryset(self):
+        return super().get_queryset()[:200]
 
 
 class OrderListView(LoginRequiredMixin, ListView):

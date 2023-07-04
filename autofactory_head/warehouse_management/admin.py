@@ -116,6 +116,7 @@ class OperationPalletAdmin(admin.ModelAdmin):
 
 @admin.register(AcceptanceOperation)
 class AcceptanceOperationAdmin(admin.ModelAdmin):
+    ordering = ('-date',)
     list_filter = (('date', DateRangeFilter), 'unloaded', 'closed')
     list_display = (
         'date', 'guid', 'user', 'number', 'type_task', 'status', 'external_source',

@@ -35,7 +35,7 @@ class LineProductAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ('name', 'product',)
+    list_display = ('name', 'product', 'weight')
 
 
 @admin.register(Organization)

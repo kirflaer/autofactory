@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from api.v3.models import MarkingData
 from rest_framework.exceptions import APIException
 from catalogs.models import Product
@@ -7,7 +5,6 @@ from factory_core.models import Shift
 from pydantic.error_wrappers import ValidationError
 from packing.marking_services import get_base64_string, get_marks_in_shifts
 from packing.models import MarkingOperation, MarkingOperationMark
-from warehouse_management.models import Pallet
 
 
 def load_manual_marks(operation: MarkingOperation, data: list) -> None:

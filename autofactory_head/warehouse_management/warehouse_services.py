@@ -7,18 +7,15 @@ from django.db.models import Q, Sum
 from dateutil import parser
 from rest_framework.exceptions import APIException
 
-from catalogs.models import ExternalSource, Product, Storage, Direction, Client
+from catalogs.models import ExternalSource, Product, Storage
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
-from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
-                                         OperationProduct, PalletCollectOperation,
-                                         PlacementToCellsOperation,
-                                         OperationCell,
-                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
-                                         InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
-                                         StorageCellContentState, StatusCellContent, RepackingOperation,
-                                         SuitablePallets)
+from warehouse_management.models import (
+    AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet, OperationProduct, PalletCollectOperation,
+    PlacementToCellsOperation, OperationCell, MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
+    PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation, InventoryOperation, PalletStatus, TypeCollect,
+    SelectionOperation, StorageCell, StorageCellContentState, StatusCellContent, RepackingOperation, SuitablePallets
+)
 
 User = get_user_model()
 
@@ -206,11 +203,18 @@ def create_order_operation(serializer_data: dict[str: str], user: User,
 def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
     """ Создает операцию перемещения между ячейками"""
     result = []
-    for element in serializer_data:
-        operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
-                                                                 status=TaskStatus.CLOSE)
-        fill_operation_cells(operation, element['cells'])
-        result.append(operation.guid)
+
+        # operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
+        #                                                          status=TaskStatus.CLOSE)
+        # fill_operation_cells(operation, element['cells'])
+        # result.append(operation.guid)
+        # change_cell_content_state(
+        #     {
+        #         'cell_source': element['cells']['cell'],
+        #         'cell_destination': element['cells']['changed_cell']
+        #     },
+        #     Pallet.objects.filter(guid=element['cells']['pallet'])
+        # )
     return result
 
 

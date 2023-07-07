@@ -17,16 +17,18 @@ from factory_core.models import Shift
 from packing.marking_services import create_marking_marks, clear_raw_marks
 
 from packing.models import MarkingOperation
+from packing.marking_services import shift_close
 from tasks.task_services import RouterTask
 from warehouse_management.models import StorageArea, Pallet, StorageCell
-from warehouse_management.serializers import OperationCellsSerializer, ChangeCellSerializer, \
-    PalletUpdateShipmentSerializer, PalletUpdateRepackingSerializer, StorageCellsSerializer
+from warehouse_management.serializers import (
+    ChangeCellSerializer, PalletUpdateShipmentSerializer, PalletUpdateRepackingSerializer
+)
 from warehouse_management.warehouse_services import change_cell_content_state
 
 User = get_user_model()
 
 
-class ShiftListViewSet(generics.ListAPIView):
+class ShiftListViewSet(generics.ListCreateAPIView):
     """Список смен"""
     queryset = Shift.objects.all()
     serializer_class = api_serializers.ShiftSerializer
@@ -44,6 +46,11 @@ class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
             return api_serializers.ShiftRetrieveSerializer
         else:
             return api_serializers.ShiftUpdateSerializer
+
+    def perform_update(self, serializer):
+        if self.request.data.get('closed'):
+            shift = self.get_object()
+            shift_close(shift.guid)
 
 
 class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):

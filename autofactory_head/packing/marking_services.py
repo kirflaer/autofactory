@@ -3,12 +3,15 @@ import datetime
 import uuid
 from collections.abc import Iterable
 from datetime import datetime as dt, timedelta
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 
 import pytz
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count
+from django.http import HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
 from rest_framework.exceptions import APIException
 
 from catalogs.models import (
@@ -339,3 +342,22 @@ def get_marks_in_shifts(shift: Shift) -> set:
     operations = list(MarkingOperation.objects.filter(shift=shift).values_list('guid', flat=True))
     marks = MarkingOperationMark.objects.filter(operation__in=operations).values_list('mark', flat=True)
     return set(marks)
+
+
+def shift_close(shift_guid: uuid.UUID) -> Union[HttpResponsePermanentRedirect, HttpResponseRedirect]:
+
+    if shift_guid is None:
+        return redirect(f'{reverse_lazy("shifts")}?message={"Не корректные параметры для закрытия смены"}')
+
+    shift = get_object_or_404(Shift, pk=shift_guid)
+    shift_marking = MarkingOperation.objects.filter(shift=shift)
+    if shift_marking.filter(closed=False).exists():
+        return redirect(
+            f'{reverse_lazy("shifts")}?message={"Существуют незакрытые маркировки. Закрытие смены невозможно"}')
+
+    with transaction.atomic():
+        shift.closed = True
+        shift.save()
+        register_to_exchange_marking_data(shift)
+
+    return redirect(reverse_lazy('shifts'))

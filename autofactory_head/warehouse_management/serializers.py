@@ -13,8 +13,10 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
                                          SelectionOperation, StorageCell,
                                          RepackingOperation, StorageArea,
-                                         InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent)
-from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info, get_cell_state
+                                         InventoryAddressWarehouseOperation)
+from warehouse_management.warehouse_services import (
+    check_and_collect_orders, enrich_pallet_info, get_cell_state
+)
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -373,14 +375,10 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
-class MovementCellContent(serializers.Serializer):
-    product = serializers.CharField()
-    cell = serializers.CharField()
-    changed_cell = serializers.CharField()
-
-
 class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
-    cells = MovementCellContent(many=True)
+    pallet = serializers.CharField()
+    cell_source = serializers.CharField()
+    cell_destination = serializers.CharField()
 
 
 class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
@@ -392,8 +390,13 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
         fields = ('guid', 'number', 'status', 'date', 'cells')
 
     @staticmethod
-    def get_cells():
-        return []
+    def get_cells(obj):
+        operation: OperationCell = OperationCell.objects.filter(guid=obj.operation.guid).first()
+        return {
+            'cell_source': operation.cell_source.external_key,
+            'cell_destination': operation.cell_destination.external_key,
+            'pallet': operation.pallet.id
+        }
 
 
 class ShipmentOperationWriteSerializer(serializers.ModelSerializer):

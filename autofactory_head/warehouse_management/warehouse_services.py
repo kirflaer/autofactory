@@ -7,18 +7,15 @@ from django.db.models import Q, Sum
 from dateutil import parser
 from rest_framework.exceptions import APIException
 
-from catalogs.models import ExternalSource, Product, Storage, Direction, Client
+from catalogs.models import ExternalSource, Product, Storage
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
-from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
-                                         OperationProduct, PalletCollectOperation,
-                                         PlacementToCellsOperation,
-                                         OperationCell,
-                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
-                                         InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
-                                         StorageCellContentState, StatusCellContent, RepackingOperation,
-                                         SuitablePallets)
+from warehouse_management.models import (
+    AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet, OperationProduct, PalletCollectOperation,
+    PlacementToCellsOperation, OperationCell, MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
+    PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation, InventoryOperation, PalletStatus, TypeCollect,
+    SelectionOperation, StorageCell, StorageCellContentState, StatusCellContent, RepackingOperation, SuitablePallets
+)
 
 User = get_user_model()
 
@@ -203,14 +200,24 @@ def create_order_operation(serializer_data: dict[str: str], user: User,
 
 
 @transaction.atomic
-def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_movement_cell_operation(serializer_data: dict[str: str], user: User) -> Iterable[str]:
     """ Создает операцию перемещения между ячейками"""
     result = []
-    for element in serializer_data:
-        operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
-                                                                 status=TaskStatus.CLOSE)
-        fill_operation_cells(operation, element['cells'])
-        result.append(operation.guid)
+
+    operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
+                                                             status=TaskStatus.CLOSE)
+    pallet = Pallet.objects.filter(guid=serializer_data['pallet']).first()
+
+    cells = [{
+        'cell': serializer_data['cell_source'],
+        'cell_destination': serializer_data['cell_destination'],
+        'pallet': serializer_data['pallet']
+    }]
+
+    fill_operation_cells(operation, cells)
+    result.append(operation.guid)
+    change_cell_content_state(serializer_data, pallet)
+
     return result
 
 
@@ -271,7 +278,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 @transaction.atomic
 def create_arrival_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
-    """ Создает операцию приенмки товаров. Возвращает идентификаторы внешнего источника """
+    """ Создает операцию приемки товаров. Возвращает идентификаторы внешнего источника """
 
     result = []
     for element in serializer_data:
@@ -307,8 +314,12 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 
 
 @transaction.atomic
-def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None = None, task: Task | None = None) -> \
-        list[Pallet]:
+def create_pallets(
+        serializer_data: Iterable[dict[str: str]],
+        user: User | None = None,
+        task: Task | None = None
+) -> list[Pallet]:
+
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
@@ -438,7 +449,7 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
             cell_destination = None
 
         if element.get('pallet') is not None:
-            pallet = Pallet.objects.filter(id=element['pallet']).first()
+            pallet = Pallet.objects.filter(Q(id=element['pallet']) | Q(guid=element['pallet'])).first()
 
             if pallet is not None and not pallet.series and element.get('series') is not None:
                 pallet.series = element.get('series')

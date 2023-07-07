@@ -38,12 +38,15 @@ class MarkingSerializerOffline(MarkingSerializer):
 class ShiftSerializer(serializers.ModelSerializer):
     products = serializers.HiddenField(default='')
     shift_products = serializers.ListField(write_only=True)
+    closed = serializers.BooleanField(required=False)
 
     class Meta:
         model = Shift
         fields = (
-            'guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products', 'type')
-        read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'type')
+            'guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products', 'type',
+            'closed'
+        )
+        read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'type')
 
 
 class ShiftUpdateSerializer(ShiftSerializer):

@@ -504,6 +504,9 @@ def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
     """ Меняет расположение паллеты в ячейке. Возвращает статус из области новой ячейки """
     cell_source = StorageCell.objects.get(guid=content['cell_source'])
     cell_destination = StorageCell.objects.get(guid=content['cell_destination'])
+    if cell_destination.storage_area is None:
+        raise APIException('Отсутствует складское помещение у ячейки назначения.')
+
     StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
     StorageCellContentState.objects.create(cell=cell_destination, pallet=pallet)
 

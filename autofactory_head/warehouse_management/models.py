@@ -84,6 +84,7 @@ class StorageArea(BaseExternalModel):
     new_status_on_admission = models.CharField('Статус', max_length=20, choices=PalletStatus.choices,
                                                default=PalletStatus.SELECTED)
     use_for_automatic_placement = models.BooleanField('Используется для автоматического размещения', default=False)
+    allow_movement = models.BooleanField('Разрешить перемещение между ячейками', default=False)
 
     class Meta:
         verbose_name = 'Область хранения'

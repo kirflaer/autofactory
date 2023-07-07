@@ -202,11 +202,20 @@ def create_order_operation(serializer_data: dict[str: str], user: User,
 @transaction.atomic
 def create_movement_cell_operation(serializer_data: dict[str: str], user: User) -> Iterable[str]:
     """ Создает операцию перемещения между ячейками"""
+    pallet = Pallet.objects.get(guid=serializer_data['pallet'])
+    cell_destination = StorageCell.objects.get(guid=serializer_data['cell_destination'])
+
+    if cell_destination.storage_area is None:
+        raise APIException('Отсутствует складское помещение у ячейки назначения.')
+
+    if pallet.status not in (PalletStatus.FOR_REPACKING, PalletStatus.FOR_SHIPMENT,
+                             PalletStatus.PLACED) and not cell_destination.storage_area.allow_movement:
+        raise APIException('Перемещение недоступно.')
+
     result = []
 
     operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
                                                              status=TaskStatus.CLOSE)
-    pallet = Pallet.objects.filter(guid=serializer_data['pallet']).first()
 
     cells = [{
         'cell': serializer_data['cell_source'],

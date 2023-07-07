@@ -381,6 +381,19 @@ class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
     cell_source = serializers.CharField()
     cell_destination = serializers.CharField()
 
+    def validate(self, attrs):
+        cell_source = StorageCell.objects.filter(guid=attrs.get('cell_source')).first()
+        if not cell_source:
+            raise APIException('Ячейка источник не найдена.')
+
+        cell_destination = StorageCell.objects.filter(guid=attrs.get('cell_destination')).first()
+        if not cell_destination:
+            raise APIException('Ячейка назначения не найдена.')
+
+        pallet = Pallet.objects.filter(guid=attrs.get('pallet')).first()
+        if not pallet:
+            raise APIException('Паллета не найдена.')
+
 
 class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
     cells = serializers.SerializerMethodField()

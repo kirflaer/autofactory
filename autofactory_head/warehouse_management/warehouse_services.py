@@ -206,14 +206,17 @@ def create_movement_cell_operation(serializer_data: dict[str: str], user: User) 
 
     operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
                                                              status=TaskStatus.CLOSE)
+    pallet = Pallet.objects.filter(guid=serializer_data['pallet']).first()
+
     cells = [{
         'cell': serializer_data['cell_source'],
-        'changed_cell': serializer_data['cell_destination']
+        'cell_destination': serializer_data['cell_destination'],
+        'pallet': serializer_data['pallet']
     }]
 
     fill_operation_cells(operation, cells)
     result.append(operation.guid)
-    change_cell_content_state(serializer_data, Pallet.objects.filter(guid=serializer_data['pallet']).first())
+    change_cell_content_state(serializer_data, pallet)
 
     return result
 
@@ -275,7 +278,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 @transaction.atomic
 def create_arrival_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
-    """ Создает операцию приенмки товаров. Возвращает идентификаторы внешнего источника """
+    """ Создает операцию приемки товаров. Возвращает идентификаторы внешнего источника """
 
     result = []
     for element in serializer_data:
@@ -446,7 +449,7 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
             cell_destination = None
 
         if element.get('pallet') is not None:
-            pallet = Pallet.objects.filter(id=element['pallet']).first()
+            pallet = Pallet.objects.filter(Q(id=element['pallet']) | Q(guid=element['pallet'])).first()
 
             if pallet is not None and not pallet.series and element.get('series') is not None:
                 pallet.series = element.get('series')

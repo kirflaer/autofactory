@@ -295,11 +295,12 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
     pallets_count = serializers.SerializerMethodField()
     external_source = ExternalSerializer()
+    user = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         model = AcceptanceOperation
         fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products', 'pallets',
-                  'pallets_count', 'batch_number', 'external_source')
+                  'pallets_count', 'batch_number', 'external_source', 'user')
 
     @staticmethod
     def get_pallets_count(obj):

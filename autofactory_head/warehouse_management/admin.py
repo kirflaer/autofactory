@@ -112,6 +112,7 @@ class OperationProductAdmin(admin.ModelAdmin):
 class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('operation', 'type_operation', 'cell_source', 'cell_destination', 'pallet')
     search_fields = ('operation', 'pallet__id', 'pallet__guid')
+    list_filter = ('type_operation',)
 
 
 @admin.register(AcceptanceOperation)

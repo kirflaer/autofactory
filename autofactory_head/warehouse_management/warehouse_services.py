@@ -200,21 +200,21 @@ def create_order_operation(serializer_data: dict[str: str], user: User,
 
 
 @transaction.atomic
-def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_movement_cell_operation(serializer_data: dict[str: str], user: User) -> Iterable[str]:
     """ Создает операцию перемещения между ячейками"""
     result = []
 
-        # operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
-        #                                                          status=TaskStatus.CLOSE)
-        # fill_operation_cells(operation, element['cells'])
-        # result.append(operation.guid)
-        # change_cell_content_state(
-        #     {
-        #         'cell_source': element['cells']['cell'],
-        #         'cell_destination': element['cells']['changed_cell']
-        #     },
-        #     Pallet.objects.filter(guid=element['cells']['pallet'])
-        # )
+    operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
+                                                             status=TaskStatus.CLOSE)
+    cells = [{
+        'cell': serializer_data['cell_source'],
+        'changed_cell': serializer_data['cell_destination']
+    }]
+
+    fill_operation_cells(operation, cells)
+    result.append(operation.guid)
+    change_cell_content_state(serializer_data, Pallet.objects.filter(guid=serializer_data['pallet']).first())
+
     return result
 
 
@@ -311,8 +311,12 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 
 
 @transaction.atomic
-def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None = None, task: Task | None = None) -> \
-        list[Pallet]:
+def create_pallets(
+        serializer_data: Iterable[dict[str: str]],
+        user: User | None = None,
+        task: Task | None = None
+) -> list[Pallet]:
+
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')

@@ -379,7 +379,6 @@ class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
     pallet = serializers.CharField()
     cell_source = serializers.CharField()
     cell_destination = serializers.CharField()
-    barcode = serializers.CharField()
 
 
 class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
@@ -392,7 +391,13 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_cells(obj):
-        queryset = OperationCell.objects.filter(guid=obj)
+        operation: OperationCell = OperationCell.objects.filter(guid=obj.operation.guid).first()
+        cell_source = operation.cell_source.external_key
+        cell_destination = operation.cell_destination.external_key
+        return {
+            'cell_source': cell_source,
+            'cell_destination': cell_destination
+        }
 
 
 class ShipmentOperationWriteSerializer(serializers.ModelSerializer):

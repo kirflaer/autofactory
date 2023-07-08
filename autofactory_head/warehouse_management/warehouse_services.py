@@ -350,16 +350,10 @@ def create_pallets(
             element['product'] = Product.objects.filter(Q(guid=product) | Q(external_key=product)).first()
 
             if element['product'] and element['product'].is_weight:
-                weight = (
-                    Unit.objects.filter(
-                        is_default=True,
-                        product=element['product']
-                    )
-                    .values_list('wight', flat=True)
-                )
+                unit = Unit.objects.filter(is_default=True, product=element['product']).first()
 
-                if len(weight):
-                    element['weight'] = weight[0]
+                if unit:
+                    element['weight'] = unit.weight
 
             if not element.get('cell'):
                 cell = None
@@ -391,18 +385,17 @@ def create_pallets(
 
         if element.get('products') is not None:
             products = [product['product'] for product in element['products']]
-            units = Unit.objects.get(is_default=True, product__in=products, product__is_weight=True)
+            units = Unit.objects.filter(is_default=True, product__in=products, product__is_weight=True)
             total_weight = 0
             count_of_products = 0
             for unit in units:
                 total_weight += unit.weight
                 count_of_products += 1
 
-            pallet_weight = total_weight * count_of_products
+            pallet.weight = total_weight * count_of_products
 
             products_count = PalletProduct.objects.filter(pallet=pallet).count()
             if not products_count:
-                pallet.weight = pallet_weight
                 suitable_pallets = None
                 for product in element['products']:
                     product['pallet'] = pallet
@@ -536,8 +529,6 @@ def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
     """ Меняет расположение паллеты в ячейке. Возвращает статус из области новой ячейки """
     cell_source = StorageCell.objects.get(guid=content['cell_source'])
     cell_destination = StorageCell.objects.get(guid=content['cell_destination'])
-    if cell_destination.storage_area is None:
-        raise APIException('Отсутствует складское помещение у ячейки назначения.')
 
     StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
     StorageCellContentState.objects.create(cell=cell_destination, pallet=pallet)

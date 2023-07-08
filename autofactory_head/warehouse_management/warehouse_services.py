@@ -331,7 +331,6 @@ def create_pallets(
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
-    total_weight = 0
 
     for element in serializer_data:
         search_field = 'id' if element.get('id') is not None else 'external_key'
@@ -349,9 +348,17 @@ def create_pallets(
                 product = element['product']
             element['product'] = Product.objects.filter(Q(guid=product) | Q(external_key=product)).first()
 
-            if element['product'] is not None and element['product'].is_weight:
-                unit = Unit.objects.filter(product=element['product'], is_default=True).first()
-                total_weight += unit.weight
+            if element['product'] and element['product'].is_weight:
+                weight = (
+                    Unit.objects.filter(
+                        is_default=True,
+                        product=element['product']
+                    )
+                    .values_list('wight', flat=True)
+                )
+
+                if len(weight):
+                    element['weight'] = weight[0]
 
             if not element.get('cell'):
                 cell = None
@@ -382,9 +389,19 @@ def create_pallets(
             pallet = Pallet.objects.create(**fields)
 
         if element.get('products') is not None:
+            products = [product['product'] for product in element['products']]
+            units = Unit.objects.get(is_default=True, product__in=products, product__is_weight=True)
+            total_weight = 0
+            count_of_products = 0
+            for unit in units:
+                total_weight += unit.weight
+                count_of_products += 1
+
+            pallet_weight = total_weight * count_of_products
+
             products_count = PalletProduct.objects.filter(pallet=pallet).count()
             if not products_count:
-                pallet.weight = total_weight * products_count
+                pallet.weight = pallet_weight
                 suitable_pallets = None
                 for product in element['products']:
                     product['pallet'] = pallet

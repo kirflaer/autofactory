@@ -394,6 +394,8 @@ class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
         if not pallet:
             raise APIException('Паллета не найдена.')
 
+        return attrs
+
 
 class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
     cells = serializers.SerializerMethodField()

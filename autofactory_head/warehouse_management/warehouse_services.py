@@ -6,6 +6,7 @@ from django.db.models import Q, Sum
 from dateutil import parser
 from rest_framework.exceptions import APIException
 
+from api.exceptions import BadRequest
 from catalogs.models import ExternalSource, Product, Storage, Unit
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
@@ -207,9 +208,9 @@ def create_movement_cell_operation(serializer_data: dict[str: str], user: User) 
     if cell_destination.storage_area is None:
         raise APIException('Отсутствует складское помещение у ячейки назначения.')
 
-    if pallet.status not in (PalletStatus.FOR_REPACKING, PalletStatus.FOR_SHIPMENT,
-                             PalletStatus.PLACED) and not cell_destination.storage_area.allow_movement:
-        raise APIException('Перемещение недоступно.')
+    if not (pallet.status in (PalletStatus.FOR_REPACKING, PalletStatus.FOR_SHIPMENT,
+                              PalletStatus.PLACED) and cell_destination.storage_area.allow_movement):
+        raise BadRequest('Перемещение недоступно.')
 
     result = []
 

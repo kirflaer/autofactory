@@ -1,5 +1,4 @@
-import uuid
-from typing import Iterable, Optional
+from typing import Iterable
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -7,7 +6,7 @@ from django.db.models import Q, Sum
 from dateutil import parser
 from rest_framework.exceptions import APIException
 
-from catalogs.models import ExternalSource, Product, Storage
+from catalogs.models import ExternalSource, Product, Storage, Unit
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
 from warehouse_management.models import (
@@ -332,6 +331,7 @@ def create_pallets(
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
+    total_weight = 0
 
     for element in serializer_data:
         search_field = 'id' if element.get('id') is not None else 'external_key'
@@ -348,6 +348,10 @@ def create_pallets(
             else:
                 product = element['product']
             element['product'] = Product.objects.filter(Q(guid=product) | Q(external_key=product)).first()
+
+            if element['product'] is not None and element['product'].is_weight:
+                unit = Unit.objects.filter(product=element['product'], is_default=True).first()
+                total_weight += unit.weight
 
             if not element.get('cell'):
                 cell = None
@@ -380,6 +384,7 @@ def create_pallets(
         if element.get('products') is not None:
             products_count = PalletProduct.objects.filter(pallet=pallet).count()
             if not products_count:
+                pallet.weight = total_weight * products_count
                 suitable_pallets = None
                 for product in element['products']:
                     product['pallet'] = pallet

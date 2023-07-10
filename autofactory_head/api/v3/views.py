@@ -39,18 +39,7 @@ class ShiftListViewSet(generics.ListCreateAPIView):
 class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
     queryset = Shift.objects.all()
     lookup_field = 'pk'
-    serializer_class = api_serializers.ShiftSerializer
-
-    def get_serializer_class(self):
-        if self.request.stream is None:
-            return api_serializers.ShiftRetrieveSerializer
-        else:
-            return api_serializers.ShiftUpdateSerializer
-
-    def perform_update(self, serializer):
-        if self.request.data.get('closed'):
-            shift = self.get_object()
-            shift_close(shift.guid)
+    serializer_class = api_serializers.ShiftUpdateSerializer
 
 
 class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):

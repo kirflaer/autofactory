@@ -408,6 +408,8 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_cells(obj: MovementBetweenCellsOperation):
         operation: OperationCell = OperationCell.objects.filter(operation=obj.guid).first()
+        if not operation:
+            return None
         return {
             'cell_source': operation.cell_source.external_key,
             'cell_destination': operation.cell_destination.external_key,

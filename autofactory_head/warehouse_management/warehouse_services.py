@@ -7,7 +7,7 @@ from dateutil import parser
 from rest_framework.exceptions import APIException
 
 from api.exceptions import BadRequest
-from catalogs.models import ExternalSource, Product, Storage
+from catalogs.models import ExternalSource, Product, Storage, Unit
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
 from warehouse_management.models import (
@@ -349,6 +349,12 @@ def create_pallets(
                 product = element['product']
             element['product'] = Product.objects.filter(Q(guid=product) | Q(external_key=product)).first()
 
+            if element['product'] and element['product'].is_weight:
+                unit = Unit.objects.filter(is_default=True, product=element['product']).first()
+
+                if unit:
+                    element['weight'] = element['content_count'] if element.get('content_count') else 0 * unit.weight
+
             if not element.get('cell'):
                 cell = None
             else:
@@ -513,8 +519,6 @@ def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
     """ Меняет расположение паллеты в ячейке. Возвращает статус из области новой ячейки """
     cell_source = StorageCell.objects.get(guid=content['cell_source'])
     cell_destination = StorageCell.objects.get(guid=content['cell_destination'])
-    if cell_destination.storage_area is None:
-        raise APIException('Отсутствует складское помещение у ячейки назначения.')
 
     StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
     StorageCellContentState.objects.create(cell=cell_destination, pallet=pallet)

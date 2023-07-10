@@ -36,6 +36,7 @@ class LineProductAdmin(admin.ModelAdmin):
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
     list_display = ('name', 'product', 'weight')
+    search_fields = ('product__guid', 'product__gtin')
 
 
 @admin.register(Organization)
@@ -77,6 +78,7 @@ class LineAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'guid', 'gtin', 'external_key')
+    search_fields = ('gtin', 'guid', 'name')
 
 
 @admin.register(RegularExpression)

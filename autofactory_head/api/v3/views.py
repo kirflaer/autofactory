@@ -41,6 +41,12 @@ class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
     lookup_field = 'pk'
     serializer_class = api_serializers.ShiftUpdateSerializer
 
+    def get_serializer_class(self):
+        if self.request.stream is None:
+            return api_serializers.ShiftRetrieveSerializer
+        else:
+            return api_serializers.ShiftUpdateSerializer
+
 
 class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):
     serializer_class = api_serializers.MarkingSerializerOnlineRead

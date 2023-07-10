@@ -349,11 +349,11 @@ def create_pallets(
                 product = element['product']
             element['product'] = Product.objects.filter(Q(guid=product) | Q(external_key=product)).first()
 
-            if element['product'] and element['product'].is_weight:
+            if element['product'] and not element['product'].variable_pallet_weight:
                 unit = Unit.objects.filter(is_default=True, product=element['product']).first()
 
-                if unit:
-                    element['weight'] = element['content_count'] if element.get('content_count') else 0 * unit.weight
+                if unit and element.get('content_count'):
+                    element['weight'] = element['content_count'] * unit.weight
 
             if not element.get('cell'):
                 cell = None

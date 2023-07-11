@@ -390,7 +390,7 @@ class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
         if not cell_destination:
             raise APIException('Ячейка назначения не найдена.')
 
-        pallet = Pallet.objects.filter(guid=attrs.get('pallet')).first()
+        pallet = Pallet.objects.filter(id=attrs.get('pallet')).first()
         if not pallet:
             raise APIException('Паллета не найдена.')
 

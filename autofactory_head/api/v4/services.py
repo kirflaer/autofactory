@@ -152,8 +152,17 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     for key in keys:
         serializer_data['new_pallet'][key] = instance[key]
 
+    # Ищем приемку по исходной паллете и связываем текущий сбор паллет с приемкой
+    # Для того чтобы при закрытии приемки эти паллеты тоже закрылись
+    operation_pallet = OperationPallet.objects.filter(pallet=current_pallet,
+                                                      type_operation='ACCEPTANCE_TO_STOCK').first()
+    if operation_pallet is None:
+        parent_task = None
+    else:
+        parent_task = operation_pallet.operation
+
     operation = PalletCollectOperation.objects.create(type_collect=TypeCollect.DIVIDED, user=user,
-                                                      status=TaskStatus.CLOSE)
+                                                      status=TaskStatus.CLOSE, parent_task=parent_task)
     pallets = create_pallets((serializer_data['new_pallet'],))
     fill_operation_pallets(operation, pallets)
     operation.close()

@@ -234,8 +234,13 @@ class AcceptanceOperation(OperationBaseOperation):
         verbose_name_plural = 'Приемка товаров (Заказ на перемещение)'
 
     def close(self):
+        # Находим сборы паллет по разделенным ОБП паллетам и закрываем меняем статус по ним
+        operations = list(PalletCollectOperation.objects.filter(parent_task=self.guid).values_list('guid', flat=True))
+
         # При закрытии переделываем все PRE_FOR_SHIPMENT в FOR_SHIPMENT в рамках задания
-        rows = OperationPallet.objects.filter(operation=self.guid, pallet__status=PalletStatus.PRE_FOR_SHIPMENT)
+        operations.append(self.guid)
+
+        rows = OperationPallet.objects.filter(operation__in=operations, pallet__status=PalletStatus.PRE_FOR_SHIPMENT)
         for row in rows:
             row.pallet.status = PalletStatus.FOR_SHIPMENT
             row.pallet.save()

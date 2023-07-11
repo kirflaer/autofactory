@@ -329,7 +329,7 @@ class PalletCollectOperation(OperationBaseOperation):
 
     def close(self):
         super().close()
-        if self.parent_task is None:
+        if self.parent_task is None or not self.PARENT_TASK_TYPES.get(self.type_collect):
             return
 
         open_task_count = PalletCollectOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(

@@ -26,6 +26,7 @@ class PalletStatus(models.TextChoices):
     PLACED = 'PLACED'
     FOR_REPACKING = 'FOR_REPACKING'
     FOR_PLACED = 'FOR_PLACED'
+    PRE_FOR_SHIPMENT = 'PRE_FOR_SHIPMENT'
 
 
 class PalletType(models.TextChoices):
@@ -231,6 +232,14 @@ class AcceptanceOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Приемка на склад'
         verbose_name_plural = 'Приемка товаров (Заказ на перемещение)'
+
+    def close(self):
+        # При закрытии переделываем все PRE_FOR_SHIPMENT в FOR_SHIPMENT в рамках задания
+        rows = OperationPallet.objects.filter(operation=self.guid, pallet__status=PalletStatus.PRE_FOR_SHIPMENT)
+        for row in rows:
+            row.pallet.status = PalletStatus.FOR_SHIPMENT
+            row.pallet.save()
+        super().close()
 
 
 class StorageCellContentState(models.Model):

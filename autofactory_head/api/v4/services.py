@@ -130,13 +130,6 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
 @transaction.atomic
 def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     current_pallet = Pallet.objects.get(id=serializer_data['source_pallet'])
-    current_pallet.content_count -= serializer_data['new_pallet']['content_count']
-
-    if current_pallet.content_count <= 0:
-        current_pallet.content_count = 0
-        current_pallet.status = PalletStatus.ARCHIVED
-
-    current_pallet.save()
 
     if current_pallet.product is not None:
         serializer_data['new_pallet']['product'] = current_pallet.product.guid
@@ -166,4 +159,22 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     pallets = create_pallets((serializer_data['new_pallet'],))
     fill_operation_pallets(operation, pallets)
     operation.close()
+
+    if len(pallets) and isinstance(pallets[0], Pallet):
+        new_pallet = pallets[0]
+    else:
+        raise APIException('Ошибка при разделении паллет')
+
+    if current_pallet.weight != 0 and new_pallet.weight != 0:
+        current_pallet.weight -= new_pallet.weight
+
+    current_pallet.content_count -= new_pallet.content_count
+
+    if current_pallet.content_count <= 0 or current_pallet.weight < 0:
+        current_pallet.content_count = 0
+        current_pallet.weight = 0
+        current_pallet.status = PalletStatus.ARCHIVED
+
+    current_pallet.save()
+
     return pallets

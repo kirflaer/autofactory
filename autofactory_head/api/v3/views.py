@@ -52,6 +52,8 @@ class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
             shift = self.get_object()
             shift_close(shift.guid)
 
+        serializer.save()
+
 
 class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):
     serializer_class = api_serializers.MarkingSerializerOnlineRead

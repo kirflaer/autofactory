@@ -26,6 +26,7 @@ class PalletStatus(models.TextChoices):
     PLACED = 'PLACED'
     FOR_REPACKING = 'FOR_REPACKING'
     FOR_PLACED = 'FOR_PLACED'
+    PRE_FOR_SHIPMENT = 'PRE_FOR_SHIPMENT'
 
 
 class PalletType(models.TextChoices):
@@ -84,6 +85,7 @@ class StorageArea(BaseExternalModel):
     new_status_on_admission = models.CharField('Статус', max_length=20, choices=PalletStatus.choices,
                                                default=PalletStatus.SELECTED)
     use_for_automatic_placement = models.BooleanField('Используется для автоматического размещения', default=False)
+    allow_movement = models.BooleanField('Разрешить перемещение между ячейками', default=False)
 
     class Meta:
         verbose_name = 'Область хранения'
@@ -231,6 +233,19 @@ class AcceptanceOperation(OperationBaseOperation):
         verbose_name = 'Приемка на склад'
         verbose_name_plural = 'Приемка товаров (Заказ на перемещение)'
 
+    def close(self):
+        # Находим сборы паллет по разделенным ОБП паллетам и закрываем меняем статус по ним
+        operations = list(PalletCollectOperation.objects.filter(parent_task=self.guid).values_list('guid', flat=True))
+
+        # При закрытии переделываем все PRE_FOR_SHIPMENT в FOR_SHIPMENT в рамках задания
+        operations.append(self.guid)
+
+        rows = OperationPallet.objects.filter(operation__in=operations, pallet__status=PalletStatus.PRE_FOR_SHIPMENT)
+        for row in rows:
+            row.pallet.status = PalletStatus.FOR_SHIPMENT
+            row.pallet.save()
+        super().close()
+
 
 class StorageCellContentState(models.Model):
     creating_date = models.DateTimeField('Дата создания', auto_now_add=True)
@@ -314,7 +329,7 @@ class PalletCollectOperation(OperationBaseOperation):
 
     def close(self):
         super().close()
-        if self.parent_task is None:
+        if self.parent_task is None or not self.PARENT_TASK_TYPES.get(self.type_collect):
             return
 
         open_task_count = PalletCollectOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(

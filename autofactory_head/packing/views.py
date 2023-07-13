@@ -1,6 +1,5 @@
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import get_user_model
@@ -9,7 +8,7 @@ from django.views.decorators.http import require_http_methods
 
 from factory_core.models import Shift
 from packing.forms import MarkingOperationForm, ShiftForm
-from packing.marking_services import get_marking_filters, register_to_exchange_marking_data
+from packing.marking_services import get_marking_filters, shift_close
 from packing.models import (
     MarkingOperation,
     MarkingOperationMark,
@@ -153,7 +152,7 @@ class ShiftListView(OperationBasicListView):
 
 @login_required
 @require_http_methods(['POST', 'GET'])
-def shift_close(request):
+def shift_processing(request):
     if len(request.GET):
         instance = Shift.objects.get(guid=request.GET['shift'])
         pallet_count = Pallet.objects.filter(shift=instance, status=PalletStatus.COLLECTED).count()
@@ -165,20 +164,8 @@ def shift_close(request):
         return render(request, 'confirm_shift.html', {'shift': request.GET['shift'], 'pallet_count': pallet_count})
 
     shift_guid = request.POST.get('shift')
-    if shift_guid is None:
-        return redirect(f'{reverse_lazy("shifts")}?message={"Не корректные параметры для закрытия смены"}')
-    shift = get_object_or_404(Shift, pk=shift_guid)
-    shift_marking = MarkingOperation.objects.filter(shift=shift)
-    if shift_marking.filter(closed=False).exists():
-        return redirect(
-            f'{reverse_lazy("shifts")}?message={"Существуют незакрытые маркировки. Закрытие смены невозможно"}')
 
-    with transaction.atomic():
-        shift.closed = True
-        shift.save()
-        register_to_exchange_marking_data(shift)
-
-    return redirect(reverse_lazy('shifts'))
+    return shift_close(shift_guid)
 
 
 class ShiftCreateView(LoginRequiredMixin, CreateView):

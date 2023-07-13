@@ -13,8 +13,10 @@ from warehouse_management.models import (AcceptanceOperation, OperationProduct, 
                                          PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
                                          SelectionOperation, StorageCell,
                                          RepackingOperation, StorageArea,
-                                         InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent)
-from warehouse_management.warehouse_services import check_and_collect_orders, enrich_pallet_info, get_cell_state
+                                         InventoryAddressWarehouseOperation)
+from warehouse_management.warehouse_services import (
+    check_and_collect_orders, enrich_pallet_info, get_cell_state
+)
 
 
 class OperationBaseSerializer(serializers.Serializer):
@@ -293,11 +295,12 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
     pallets = serializers.SerializerMethodField()
     pallets_count = serializers.SerializerMethodField()
     external_source = ExternalSerializer()
+    user = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         model = AcceptanceOperation
         fields = ('guid', 'number', 'status', 'date', 'storage', 'production_date', 'products', 'pallets',
-                  'pallets_count', 'batch_number', 'external_source')
+                  'pallets_count', 'batch_number', 'external_source', 'user')
 
     @staticmethod
     def get_pallets_count(obj):
@@ -373,14 +376,25 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
         return serializer.data
 
 
-class MovementCellContent(serializers.Serializer):
-    product = serializers.CharField()
-    cell = serializers.CharField()
-    changed_cell = serializers.CharField()
-
-
 class MovementBetweenCellsOperationWriteSerializer(serializers.Serializer):
-    cells = MovementCellContent(many=True)
+    pallet = serializers.CharField()
+    cell_source = serializers.CharField()
+    cell_destination = serializers.CharField()
+
+    def validate(self, attrs):
+        cell_source = StorageCell.objects.filter(guid=attrs.get('cell_source')).first()
+        if not cell_source:
+            raise APIException('Ячейка источник не найдена.')
+
+        cell_destination = StorageCell.objects.filter(guid=attrs.get('cell_destination')).first()
+        if not cell_destination:
+            raise APIException('Ячейка назначения не найдена.')
+
+        pallet = Pallet.objects.filter(id=attrs.get('pallet')).first()
+        if not pallet:
+            raise APIException('Паллета не найдена.')
+
+        return attrs
 
 
 class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
@@ -392,8 +406,15 @@ class MovementBetweenCellsOperationReadSerializer(serializers.ModelSerializer):
         fields = ('guid', 'number', 'status', 'date', 'cells')
 
     @staticmethod
-    def get_cells():
-        return []
+    def get_cells(obj: MovementBetweenCellsOperation):
+        operation: OperationCell = OperationCell.objects.filter(operation=obj.guid).first()
+        if not operation:
+            return None
+        return {
+            'cell_source': operation.cell_source.external_key,
+            'cell_destination': operation.cell_destination.external_key,
+            'pallet': operation.pallet.id
+        }
 
 
 class ShipmentOperationWriteSerializer(serializers.ModelSerializer):

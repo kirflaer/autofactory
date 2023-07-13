@@ -1,5 +1,4 @@
-import uuid
-from typing import Iterable, Optional
+from typing import Iterable
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -7,18 +6,16 @@ from django.db.models import Q, Sum
 from dateutil import parser
 from rest_framework.exceptions import APIException
 
-from catalogs.models import ExternalSource, Product, Storage, Direction, Client
+from api.exceptions import BadRequest
+from catalogs.models import ExternalSource, Product, Storage, Unit
 from factory_core.models import Shift
 from tasks.models import TaskStatus, Task
-from warehouse_management.models import (AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet,
-                                         OperationProduct, PalletCollectOperation,
-                                         PlacementToCellsOperation,
-                                         OperationCell,
-                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation,
-                                         InventoryOperation, PalletStatus, TypeCollect, SelectionOperation, StorageCell,
-                                         StorageCellContentState, StatusCellContent, RepackingOperation,
-                                         SuitablePallets)
+from warehouse_management.models import (
+    AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet, OperationProduct, PalletCollectOperation,
+    PlacementToCellsOperation, OperationCell, MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
+    PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation, InventoryOperation, PalletStatus, TypeCollect,
+    SelectionOperation, StorageCell, StorageCellContentState, StatusCellContent, RepackingOperation, SuitablePallets
+)
 
 User = get_user_model()
 
@@ -203,14 +200,33 @@ def create_order_operation(serializer_data: dict[str: str], user: User,
 
 
 @transaction.atomic
-def create_movement_cell_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_movement_cell_operation(serializer_data: dict[str: str], user: User) -> Iterable[str]:
     """ Создает операцию перемещения между ячейками"""
+    pallet = Pallet.objects.get(id=serializer_data['pallet'])
+    cell_destination = StorageCell.objects.get(guid=serializer_data['cell_destination'])
+
+    if cell_destination.storage_area is None:
+        raise APIException('Отсутствует складское помещение у ячейки назначения.')
+
+    if not (pallet.status in (PalletStatus.FOR_REPACKING, PalletStatus.FOR_SHIPMENT,
+                              PalletStatus.PLACED) and cell_destination.storage_area.allow_movement):
+        raise BadRequest('Перемещение недоступно.')
+
     result = []
-    for element in serializer_data:
-        operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
-                                                                 status=TaskStatus.CLOSE)
-        fill_operation_cells(operation, element['cells'])
-        result.append(operation.guid)
+
+    operation = MovementBetweenCellsOperation.objects.create(ready_to_unload=True, closed=True,
+                                                             status=TaskStatus.CLOSE)
+
+    cells = [{
+        'cell': serializer_data['cell_source'],
+        'cell_destination': serializer_data['cell_destination'],
+        'pallet': serializer_data['pallet']
+    }]
+
+    fill_operation_cells(operation, cells)
+    result.append(operation.guid)
+    change_cell_content_state(serializer_data, pallet)
+
     return result
 
 
@@ -271,7 +287,7 @@ def create_acceptance_operation(serializer_data: Iterable[dict[str: str]], user:
 
 @transaction.atomic
 def create_arrival_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
-    """ Создает операцию приенмки товаров. Возвращает идентификаторы внешнего источника """
+    """ Создает операцию приемки товаров. Возвращает идентификаторы внешнего источника """
 
     result = []
     for element in serializer_data:
@@ -307,8 +323,12 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 
 
 @transaction.atomic
-def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None = None, task: Task | None = None) -> \
-        list[Pallet]:
+def create_pallets(
+        serializer_data: Iterable[dict[str: str]],
+        user: User | None = None,
+        task: Task | None = None
+) -> list[Pallet]:
+
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')
@@ -328,6 +348,12 @@ def create_pallets(serializer_data: Iterable[dict[str: str]], user: User | None 
             else:
                 product = element['product']
             element['product'] = Product.objects.filter(Q(guid=product) | Q(external_key=product)).first()
+
+            if element['product'] and not element['product'].variable_pallet_weight:
+                unit = Unit.objects.filter(is_default=True, product=element['product']).first()
+
+                if unit and element.get('content_count'):
+                    element['weight'] = element['content_count'] * unit.weight
 
             if not element.get('cell'):
                 cell = None
@@ -493,6 +519,7 @@ def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
     """ Меняет расположение паллеты в ячейке. Возвращает статус из области новой ячейки """
     cell_source = StorageCell.objects.get(guid=content['cell_source'])
     cell_destination = StorageCell.objects.get(guid=content['cell_destination'])
+
     StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
     StorageCellContentState.objects.create(cell=cell_destination, pallet=pallet)
 

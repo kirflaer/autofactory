@@ -234,12 +234,19 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 class PalletShortSerializer(serializers.ModelSerializer):
     product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
     production_shop = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
+    department = serializers.SerializerMethodField()
 
     class Meta:
         model = Pallet
         fields = (
             'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group',
-            'weight', 'production_shop')
+            'weight', 'production_shop', 'department')
+
+    @staticmethod
+    def get_department(obj: Pallet):
+        if obj.shift and obj.shift.line and obj.shift.line.department:
+            return obj.shift.line.department.external_key
+        return None
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):

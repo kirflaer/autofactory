@@ -4,6 +4,7 @@ from django.db import transaction
 from django.core.cache import cache
 from rest_framework import serializers
 from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 
 from api.serializers import StorageSerializer
@@ -190,23 +191,21 @@ class PalletUpdateShipmentSerializer(PalletUpdateSerializer):
         request: Request = self.context['request']
         request_id = request.stream.headers.get('id')
         if request_id:
-            cache_data = cache.get(request_id)
-            if cache_data:
-                match cache_data['status']:
-                    case 'done':
-                        instance = cache_data['instance']
-                    case 'wait':
-                        pass
-            else:
-                cache.set(request_id, {'status': 'wait', 'code': 102}, 3600)
-                instance = self.update_pallet(instance, validated_data)
-                cache.set(request_id, {'status': 'done', 'code': 200, 'instance': instance}, 3600)
+            cache_data = cache.get_or_set(request_id, {'status': 'wait', 'code': 102}, 3600)
+            match cache_data['status']:
+                case 'done':
+                    return cache_data['instance']
+                case 'wait':
+                    return Response(status=102)
+
+            instance = self._update(instance, validated_data)
+            cache.set(request_id, {'status': 'done', 'code': 200, 'instance': instance}, 3600)
         else:
-            instance = self.update_pallet(instance, validated_data)
+            instance = self._update(instance, validated_data)
 
         return instance
 
-    def update_pallet(self, instance, validated_data):
+    def _update(self, instance, validated_data):
         with transaction.atomic():
             instance = super().update(instance, validated_data)
             check_and_collect_orders(self.changed_product_keys)

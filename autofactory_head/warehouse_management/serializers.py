@@ -713,6 +713,18 @@ class OperationPalletSerializer(serializers.Serializer):
 
 class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
     product = serializers.CharField()
+    pallet = PalletReadSerializer()
+    cell = StorageCellsSerializer()
+    plan = serializers.IntegerField()
+    fact = serializers.IntegerField()
+
+    class Meta:
+        model = InventoryAddressWarehouseOperation
+        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')
+
+
+class InventoryWriteSerializer(serializers.ModelSerializer):
+    product = serializers.CharField()
     pallet = serializers.CharField()
     cell = serializers.CharField()
     plan = serializers.IntegerField()

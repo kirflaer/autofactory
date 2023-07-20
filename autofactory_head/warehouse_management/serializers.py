@@ -128,6 +128,7 @@ class PalletWriteSerializer(serializers.Serializer):
     cell = serializers.CharField(required=False)
     name = serializers.CharField(required=False)
     consignee = serializers.CharField(required=False)
+    group = serializers.CharField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):

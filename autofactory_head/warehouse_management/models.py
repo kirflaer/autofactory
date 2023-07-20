@@ -134,6 +134,7 @@ class Pallet(models.Model):
     name = models.CharField('Наименование', blank=True, null=True, max_length=155)
     consignee = models.CharField('Грузополучатель', blank=True, null=True, max_length=155)
     series = models.CharField('Серия', blank=True, null=True, max_length=155)
+    group = models.CharField('Группа паллет', blank=True, null=True, max_length=36)
 
     class Meta:
         verbose_name = 'Паллета'

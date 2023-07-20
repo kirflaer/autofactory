@@ -1,5 +1,11 @@
+from django.contrib.auth import get_user_model
+
 from packing.models import MarkingOperationMark
-from warehouse_management.models import PalletContent
+from warehouse_management.models import PalletContent, Pallet, PalletCollectOperation
+from tasks.models import Task, TaskStatus
+from warehouse_management.models import OperationPallet
+
+User = get_user_model()
 
 
 def get_marks_to_unload() -> list:
@@ -55,3 +61,27 @@ def get_marks_to_unload() -> list:
         data.append(element)
 
     return data
+
+
+def task_take_pallet_collect(instance: PalletCollectOperation, user: User, guid: str) -> None:
+    if instance.status == TaskStatus.NEW and not instance.user:
+        pallet_operation: OperationPallet = OperationPallet.objects.filter(operation=guid).first()
+        if not (pallet_operation.pallet and pallet_operation.pallet.group):
+            return
+
+        pallets = (
+            Pallet.objects.filter(group=pallet_operation.pallet.group)
+            .exclude(guid=pallet_operation.pallet.guid)
+        )
+        operations = OperationPallet.objects.filter(pallet__in=pallets).values_list('operation', flat=True)
+        pallet_collect = PalletCollectOperation.objects.filter(guid__in=operations)
+
+        for item in pallet_collect:
+            task_take(item, user)
+
+
+def task_take(instance: Task, user: User, status: TaskStatus = TaskStatus.WORK) -> None:
+    instance.status = status
+    instance.user = user
+    instance.save()
+

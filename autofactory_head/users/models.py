@@ -64,6 +64,7 @@ class Setting(models.Model):
     collect_pallet_mode_is_active = models.BooleanField('Доступен режим сбора паллет', default=False)
     label_template = models.TextField('Шаблон этикетки', blank=True)
     label_sizes = models.CharField('Размеры этикеток', max_length=255, blank=True)
+    use_cache = models.BooleanField('Использовать кэш', default=False)
 
     class Meta:
         verbose_name = 'Настройки пользователя'

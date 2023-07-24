@@ -107,6 +107,18 @@ REST_FRAMEWORK = {
     ],
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{os.getenv("REDIS_HOST")}:{os.getenv("REDIS_PORT")}',
+        'OPTIONS': {
+            'DB': os.getenv('REDIS_DB'),
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': os.getenv('REDIS_PASS')
+        }
+    }
+}
+
 LANGUAGE_CODE = 'ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True

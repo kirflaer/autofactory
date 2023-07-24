@@ -2,6 +2,7 @@ import uuid
 from django.contrib.auth import get_user_model
 
 from django.db import transaction
+from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import APIException
@@ -140,6 +141,33 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
     queryset = Pallet.objects.all()
     lookup_field = 'guid'
     serializer_class = PalletUpdateShipmentSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        request_id = self.request.stream.headers.get('id')
+        if self.request.user.settings.use_cache and request_id:
+            cache_data = cache.get_or_set(request_id, {'status': 'new', 'code': 102}, 3600)
+            match cache_data['status']:
+                case 'done':
+                    return Response(serializer.data)
+                case 'wait':
+                    return Response(status=102)
+                case _:
+                    cache_data['status'] = 'wait'
+                    cache.set(request_id, cache_data, 3600)
+
+                    super().update(request, *args, **kwargs)
+
+                    cache_data['status'] = 'done'
+                    cache.set(request_id, cache_data, 3600)
+
+                    return Response(serializer.data)
+        else:
+            return super().update(request, *args, **kwargs)
 
 
 class PalletRepackingUpdate(generics.UpdateAPIView):

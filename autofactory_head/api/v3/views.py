@@ -144,12 +144,10 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
     serializer_class = PalletUpdateShipmentSerializer
 
     def update(self, request, *args, **kwargs):
-        time.sleep(20)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-
         request_id = self.request.stream.headers.get('id')
         if self.request.user.settings.use_cache and request_id:
             cache_data = cache.get_or_set(request_id, {'status': 'new', 'code': 102}, 3600)
@@ -166,7 +164,7 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
 
                     cache_data['status'] = 'done'
                     cache.set(request_id, cache_data, 3600)
-
+                    time.sleep(20)
                     return Response(serializer.data)
         else:
             return super().update(request, *args, **kwargs)

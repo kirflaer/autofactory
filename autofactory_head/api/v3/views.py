@@ -1,3 +1,4 @@
+import time
 import uuid
 from django.contrib.auth import get_user_model
 
@@ -143,6 +144,7 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
     serializer_class = PalletUpdateShipmentSerializer
 
     def update(self, request, *args, **kwargs):
+        time.sleep(20)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)

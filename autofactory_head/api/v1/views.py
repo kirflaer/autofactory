@@ -80,7 +80,7 @@ class TasksViewSet(viewsets.ViewSet):
         if instance.status == TaskStatus.WORK:
             raise APIException('Задача уже в работе')
 
-        if type_task == 'PALLET_COLLECT':
+        if type_task == 'PALLET_COLLECT_SHIPMENT':
             task_take_pallet_collect(instance, request.user, guid)
 
         task_take(instance, request.user)

@@ -19,7 +19,7 @@ def cache_api(request, body: dict, function: Callable, *args, **kwargs):
                 cache_data['body'] = body
                 cache_data['status'] = 'done'
                 cache_data['status_code'] = 200
-                time.sleep(20)
+
             except APIException as e:
                 cache_data['status'] = 'error'
                 cache_data['body'] = {'detail': e.args[0]}

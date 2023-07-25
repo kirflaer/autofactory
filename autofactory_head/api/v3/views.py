@@ -155,7 +155,7 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
                 case 'done':
                     return Response(serializer.data)
                 case 'wait':
-                    time.sleep(20)
+                    time.sleep(15)
                     return Response(status=102)
                 case _:
                     cache_data['status'] = 'wait'

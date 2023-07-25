@@ -11,6 +11,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 import api.views as api_views
 import api.v3.serializers as api_serializers
+from api.utils import cache_api
 from api.v2.views import TasksChangeViewSet
 from api.v3.routers import get_task_router
 
@@ -144,30 +145,9 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
     serializer_class = PalletUpdateShipmentSerializer
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = PalletUpdateShipmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        request_id = self.request.stream.headers.get('id')
-        if self.request.user.settings.use_cache and request_id:
-            cache_data = cache.get_or_set(request_id, {'status': 'new', 'code': 102}, 3600)
-            match cache_data['status']:
-                case 'done':
-                    return Response(serializer.data)
-                case 'wait':
-                    return Response(status=102)
-                case _:
-                    cache_data['status'] = 'wait'
-                    cache.set(request_id, cache_data, 3600)
-
-                    super().update(request, *args, **kwargs)
-                    time.sleep(20)
-                    cache_data['status'] = 'done'
-                    cache.set(request_id, cache_data, 3600)
-
-                    return Response(serializer.data)
-        else:
-            return super().update(request, *args, **kwargs)
+        return cache_api(self.request, serializer.validated_data, super().update, *args, **kwargs)
 
 
 class PalletRepackingUpdate(generics.UpdateAPIView):

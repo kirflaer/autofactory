@@ -65,6 +65,7 @@ class Setting(models.Model):
     label_template = models.TextField('Шаблон этикетки', blank=True)
     label_sizes = models.CharField('Размеры этикеток', max_length=255, blank=True)
     use_cache = models.BooleanField('Использовать кэш', default=False)
+    ttl_cache = models.PositiveIntegerField('Время жизни кэша (сек)', default=600)
 
     class Meta:
         verbose_name = 'Настройки пользователя'

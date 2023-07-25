@@ -30,7 +30,6 @@ class TasksViewSet(viewsets.ViewSet):
         return get_task_router()
 
     def list(self, request, type_task):
-        time.sleep(20)
         task_router = self.router.get(type_task.upper())
         if not task_router:
             raise APIException('Тип задачи не найден')

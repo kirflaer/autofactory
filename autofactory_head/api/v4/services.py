@@ -11,7 +11,7 @@ from warehouse_management.models import (
     InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus
 )
 from warehouse_management.warehouse_services import create_pallets, fill_operation_pallets, \
-    get_or_create_external_source
+    get_or_create_external_source, remove_boxes_from_pallet
 
 User = get_user_model()
 
@@ -74,6 +74,7 @@ def change_content_write_off_operation(content: dict[str: str], instance: WriteO
                                         count=element.count, type_collect=TypeCollect.WRITE_OFF,
                                         related_task=instance.guid,
                                         product=row.pallet.product, weight=element.weight)
+            remove_boxes_from_pallet(row.pallet, element.count, element.weight)
     if content.get('comment') is not None:
         instance.comment = content['comment']
         instance.save()

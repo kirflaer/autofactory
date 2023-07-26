@@ -38,12 +38,38 @@ class MarkingSerializerOffline(MarkingSerializer):
 class ShiftSerializer(serializers.ModelSerializer):
     products = serializers.HiddenField(default='')
     shift_products = serializers.ListField(write_only=True)
+    closed = serializers.BooleanField(required=False)
+    type = serializers.CharField(write_only=True)
+    production_date = serializers.DateField(write_only=True)
+    line = serializers.CharField(write_only=True)
+    batch_number = serializers.CharField(write_only=True)
 
     class Meta:
         model = Shift
         fields = (
-            'guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products', 'type')
+            'guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products', 'type',
+            'closed'
+        )
         read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'type')
+
+    def create(self, validated_data):
+        shift = None
+
+        model_field = set(dir(Shift))
+        shift_data = {k: validated_data[k] for k in validated_data if k in model_field}
+
+        if len(shift_data):
+            if shift_data.get('line'):
+                shift_data['line_id'] = shift_data.pop('line')
+
+            shift_data['author'] = self.context.get('request').user
+            shift = super().create(shift_data)
+            for product_guid in validated_data['shift_products']:
+                product = Product.objects.filter(guid=product_guid).first()
+                if product is None:
+                    continue
+                ShiftProduct.objects.create(shift=shift, product=product)
+        return shift
 
 
 class ShiftUpdateSerializer(ShiftSerializer):

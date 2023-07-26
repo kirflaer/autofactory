@@ -11,9 +11,10 @@ from .models import (
 
 @admin.register(Shift)
 class ShiftAdmin(admin.ModelAdmin):
-    list_display = ('creating_date', 'closing_date', 'author', 'batch_number', 'line', 'closed')
+    list_display = ('creating_date', 'guid', 'closing_date', 'author', 'batch_number', 'line', 'closed')
     ordering = ('-creating_date',)
     search_fields = ('batch_number',)
+    list_filter = ('closed',)
 
 
 @admin.register(ShiftProduct)

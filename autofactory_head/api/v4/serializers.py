@@ -14,9 +14,11 @@ from warehouse_management.models import (
     SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
     InventoryAddressWarehouseContent
 )
-from warehouse_management.serializers import (PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer,
-                                              OperationPalletSerializer, PalletSourceReadSerializer,
-                                              PalletReadSerializer, InventoryAddressWarehouseSerializer)
+from warehouse_management.serializers import (
+    PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, OperationPalletSerializer,
+    PalletSourceReadSerializer, PalletReadSerializer, InventoryAddressWarehouseSerializer,
+    InventoryWriteSerializer
+)
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -182,7 +184,7 @@ class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
 
 class InventoryAddressWarehouseWriteSerializer(serializers.Serializer):
     external_source = ExternalSerializer()
-    products = InventoryAddressWarehouseSerializer(many=True)
+    products = InventoryWriteSerializer(many=True)
 
     class Meta:
         fields = ('external_source', 'products')

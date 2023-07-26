@@ -11,7 +11,7 @@ from warehouse_management.models import (
     InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus
 )
 from warehouse_management.warehouse_services import create_pallets, fill_operation_pallets, \
-    get_or_create_external_source
+    get_or_create_external_source, remove_boxes_from_pallet
 
 User = get_user_model()
 
@@ -74,6 +74,7 @@ def change_content_write_off_operation(content: dict[str: str], instance: WriteO
                                         count=element.count, type_collect=TypeCollect.WRITE_OFF,
                                         related_task=instance.guid,
                                         product=row.pallet.product, weight=element.weight)
+            remove_boxes_from_pallet(row.pallet, element.count, element.weight)
     if content.get('comment') is not None:
         instance.comment = content['comment']
         instance.save()
@@ -130,13 +131,6 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
 @transaction.atomic
 def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     current_pallet = Pallet.objects.get(id=serializer_data['source_pallet'])
-    current_pallet.content_count -= serializer_data['new_pallet']['content_count']
-
-    if current_pallet.content_count <= 0:
-        current_pallet.content_count = 0
-        current_pallet.status = PalletStatus.ARCHIVED
-
-    current_pallet.save()
 
     if current_pallet.product is not None:
         serializer_data['new_pallet']['product'] = current_pallet.product.guid
@@ -152,9 +146,36 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     for key in keys:
         serializer_data['new_pallet'][key] = instance[key]
 
+    # Ищем приемку по исходной паллете и связываем текущий сбор паллет с приемкой
+    # Для того чтобы при закрытии приемки эти паллеты тоже закрылись
+    operation_pallet = OperationPallet.objects.filter(pallet=current_pallet,
+                                                      type_operation='ACCEPTANCE_TO_STOCK').first()
+    if operation_pallet is None:
+        parent_task = None
+    else:
+        parent_task = operation_pallet.operation
+
     operation = PalletCollectOperation.objects.create(type_collect=TypeCollect.DIVIDED, user=user,
-                                                      status=TaskStatus.CLOSE)
+                                                      status=TaskStatus.CLOSE, parent_task=parent_task)
     pallets = create_pallets((serializer_data['new_pallet'],))
     fill_operation_pallets(operation, pallets)
     operation.close()
+
+    if len(pallets) and isinstance(pallets[0], Pallet):
+        new_pallet = pallets[0]
+    else:
+        raise APIException('Ошибка при разделении паллет')
+
+    if current_pallet.weight != 0 and new_pallet.weight != 0:
+        current_pallet.weight -= new_pallet.weight
+
+    current_pallet.content_count -= new_pallet.content_count
+
+    if current_pallet.content_count <= 0 or current_pallet.weight < 0:
+        current_pallet.content_count = 0
+        current_pallet.weight = 0
+        current_pallet.status = PalletStatus.ARCHIVED
+
+    current_pallet.save()
+
     return pallets

@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 
 from api.serializers import StorageSerializer
-from catalogs.models import ExternalSource
+from catalogs.models import ExternalSource, Product
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
@@ -733,6 +733,21 @@ class InventoryWriteSerializer(serializers.ModelSerializer):
     cell = serializers.CharField()
     plan = serializers.IntegerField()
     fact = serializers.IntegerField(required=False)
+
+    def validate(self, attrs):
+        pallet = Pallet.objects.filter(id=attrs.get('pallet')).first()
+        if not pallet:
+            raise APIException(f'Не найдена паллета {attrs.get("pallet")}')
+
+        product = Product.objects.filter(external_key=attrs.get('product')).first()
+        if not product:
+            raise APIException(f'Не найден товар {attrs.get("product")}')
+
+        cell = StorageCell.objects.filter(external_key=attrs.get('cell')).first()
+        if not cell:
+            raise APIException(f'Не найдена ячейка {attrs.get("cell")}')
+
+        return super().validate(attrs)
 
     class Meta:
         model = InventoryAddressWarehouseOperation

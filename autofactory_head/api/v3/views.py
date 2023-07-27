@@ -50,13 +50,6 @@ class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
         else:
             return api_serializers.ShiftUpdateSerializer
 
-    def perform_update(self, serializer):
-        if self.request.data.get('closed'):
-            shift = self.get_object()
-            shift_close(shift.guid)
-
-        serializer.save()
-
 
 class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):
     serializer_class = api_serializers.MarkingSerializerOnlineRead

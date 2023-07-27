@@ -9,8 +9,8 @@ from api.v4.routers import get_task_router
 from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer
 from api.v4.services import divide_pallet
 from tasks.task_services import RouterTask
-from warehouse_management.models import Pallet
-from warehouse_management.serializers import PalletReadSerializer, PalletShortSerializer
+from warehouse_management.models import Pallet, PalletSource, PalletProduct, OrderOperation
+from warehouse_management.serializers import PalletReadSerializer
 
 User = get_user_model()
 
@@ -59,3 +59,39 @@ class UsersListViewSet(viewsets.ViewSet):
         query_keys = set(request.query_params.dict().keys())
         if len(query_keys.difference(model_fields)):
             raise APIException('Неверные параметры запроса')
+
+
+class PalletCollectStorySerializer(generics.ListAPIView):
+
+    def list(self, request, *args, **kwargs):
+        pallet = Pallet.objects.get(**kwargs)
+        pallet_source = PalletSource.objects.filter(pallet_source=pallet)
+
+        if not (pallet or pallet_source):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        result = [{
+            'date': None,
+            'client': 'Приход',
+            'count': pallet.initial_count,
+            'user': pallet.collector,
+            'pallet': pallet.name,
+            'number': None
+        }]
+
+        for element in pallet_source:
+            pallet_product = PalletProduct.objects.get(external_key=element.external_key)
+            if not pallet_product:
+                continue
+
+            result.append({
+                'date': pallet_product.order.external_source.date,
+                'client': pallet_product.order.client_presentation,
+                'count': element.count,
+                'user': element.user,
+                'pallet': element.pallet.name,
+                'number': pallet_product.order.external_source.number
+            })
+
+        return Response(result)
+

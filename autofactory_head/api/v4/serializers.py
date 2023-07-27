@@ -143,6 +143,7 @@ class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
     sources = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
+    external_source = ExternalSerializer()
 
     class Meta:
         model = InventoryAddressWarehouseOperation

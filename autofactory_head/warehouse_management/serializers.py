@@ -1,11 +1,14 @@
 from datetime import datetime as dt
 
 from django.db import transaction
-from rest_framework import serializers
+from django.core.cache import cache
+from rest_framework import serializers, status
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.exceptions import APIException
 
 from api.serializers import StorageSerializer
-from catalogs.models import ExternalSource
+from catalogs.models import ExternalSource, Product
 from catalogs.serializers import ExternalSerializer
 from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
                                          Pallet, PlacementToCellsOperation,
@@ -128,6 +131,7 @@ class PalletWriteSerializer(serializers.Serializer):
     cell = serializers.CharField(required=False)
     name = serializers.CharField(required=False)
     consignee = serializers.CharField(required=False)
+    group = serializers.CharField(required=False, allow_null=True)
 
 
 class PalletReadSerializer(serializers.Serializer):
@@ -234,12 +238,19 @@ class PalletCollectOperationWriteSerializer(serializers.Serializer):
 class PalletShortSerializer(serializers.ModelSerializer):
     product = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
     production_shop = serializers.SlugRelatedField(many=False, read_only=True, slug_field='external_key')
+    department = serializers.SerializerMethodField()
 
     class Meta:
         model = Pallet
         fields = (
             'id', 'guid', 'product', 'content_count', 'batch_number', 'production_date', 'status', 'marking_group',
-            'weight', 'production_shop')
+            'weight', 'production_shop', 'department')
+
+    @staticmethod
+    def get_department(obj: Pallet):
+        if obj.shift and obj.shift.line and obj.shift.line.department:
+            return obj.shift.line.department.external_key
+        return None
 
 
 class PalletCollectOperationReadSerializer(serializers.ModelSerializer):
@@ -709,7 +720,34 @@ class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
     pallet = PalletReadSerializer()
     cell = StorageCellsSerializer()
     plan = serializers.IntegerField()
+    fact = serializers.IntegerField()
+
+    class Meta:
+        model = InventoryAddressWarehouseOperation
+        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')
+
+
+class InventoryWriteSerializer(serializers.ModelSerializer):
+    product = serializers.CharField()
+    pallet = serializers.CharField()
+    cell = serializers.CharField()
+    plan = serializers.IntegerField()
     fact = serializers.IntegerField(required=False)
+
+    def validate(self, attrs):
+        pallet = Pallet.objects.filter(id=attrs.get('pallet')).first()
+        if not pallet:
+            raise APIException(f'Не найдена паллета {attrs.get("pallet")}')
+
+        product = Product.objects.filter(external_key=attrs.get('product')).first()
+        if not product:
+            raise APIException(f'Не найден товар {attrs.get("product")}')
+
+        cell = StorageCell.objects.filter(external_key=attrs.get('cell')).first()
+        if not cell:
+            raise APIException(f'Не найдена ячейка {attrs.get("cell")}')
+
+        return super().validate(attrs)
 
     class Meta:
         model = InventoryAddressWarehouseOperation

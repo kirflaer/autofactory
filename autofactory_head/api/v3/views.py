@@ -1,7 +1,9 @@
+import time
 import uuid
 from django.contrib.auth import get_user_model
 
 from django.db import transaction
+from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import APIException
@@ -9,6 +11,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 import api.views as api_views
 import api.v3.serializers as api_serializers
+from api.utils import cache_api
 from api.v2.views import TasksChangeViewSet
 from api.v3.routers import get_task_router
 
@@ -140,6 +143,11 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
     queryset = Pallet.objects.all()
     lookup_field = 'guid'
     serializer_class = PalletUpdateShipmentSerializer
+
+    def update(self, request, *args, **kwargs):
+        serializer = PalletUpdateShipmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return cache_api(self.request, serializer.validated_data, super().update, *args, **kwargs)
 
 
 class PalletRepackingUpdate(generics.UpdateAPIView):

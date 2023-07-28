@@ -31,21 +31,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
             if pallet_source.content_count < source['count']:
                 raise APIException('Не хватает коробок в паллете источнике')
 
-            pallet_source.content_count -= source['count']
-
-            if source.get('weight') is not None:
-                pallet_source.weight -= source['weight']
-
-            if pallet_source.content_count == 0:
-                pallet_source.status = PalletStatus.ARCHIVED
-                cell_state = get_cell_state(pallet=pallet_source)
-                if cell_state is not None and cell_state.status == StatusCellContent.PLACED:
-                    StorageCellContentState.objects.create(cell=cell_state.cell, pallet=pallet_source,
-                                                           status=StatusCellContent.REMOVED)
-
-            if pallet_source.weight < 0:
-                pallet_source.weight = 0
-            pallet_source.save()
+            remove_boxes_from_pallet(pallet_source, source['count'], source.get('weight'))
 
             source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
             source['pallet'] = instance
@@ -63,6 +49,24 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
                 pallet_product_string.is_collected = True
                 pallet_product_string.has_divergence = True
                 pallet_product_string.save()
+
+
+def remove_boxes_from_pallet(pallet: Pallet, count: int, weight: int | None = None) -> None:
+    pallet.content_count -= count
+
+    if weight is not None:
+        pallet.weight -= weight
+
+    if pallet.content_count == 0:
+        pallet.status = PalletStatus.ARCHIVED
+        cell_state = get_cell_state(pallet=pallet)
+        if cell_state is not None and cell_state.status == StatusCellContent.PLACED:
+            StorageCellContentState.objects.create(cell=cell_state.cell, pallet=pallet,
+                                                   status=StatusCellContent.REMOVED)
+
+    if pallet.weight < 0:
+        pallet.weight = 0
+    pallet.save()
 
 
 def check_and_collect_orders(product_keys: list[str]):
@@ -328,7 +332,6 @@ def create_pallets(
         user: User | None = None,
         task: Task | None = None
 ) -> list[Pallet]:
-
     """ Создает паллету и наполняет ее кодами агрегации"""
     result = []
     related_tables = ('codes', 'products')

@@ -1,3 +1,4 @@
+import time
 import uuid
 
 from django.shortcuts import get_object_or_404
@@ -7,7 +8,7 @@ from rest_framework.response import Response
 
 import api.views
 from api.v1.routers import get_task_router, get_content_router
-from api.v1.services import get_marks_to_unload
+from api.v1.services import get_marks_to_unload, task_take_pallet_collect, task_take
 from tasks.models import TaskStatus
 from tasks.serializers import TaskPropertiesSerializer
 from tasks.task_services import (change_task_properties, get_task_queryset, TaskException, get_content_queryset,
@@ -80,9 +81,10 @@ class TasksViewSet(viewsets.ViewSet):
         if instance.status == TaskStatus.WORK:
             raise APIException('Задача уже в работе')
 
-        instance.status = TaskStatus.WORK
-        instance.user = request.user
-        instance.save()
+        if type_task == 'PALLET_COLLECT_SHIPMENT':
+            task_take_pallet_collect(instance, request.user, guid)
+
+        task_take(instance, request.user)
 
         return Response({'type_task': type_task, 'guid': guid, 'status': TaskStatus.WORK})
 

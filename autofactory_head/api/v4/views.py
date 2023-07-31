@@ -1,3 +1,6 @@
+import datetime
+import re
+
 from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
@@ -71,7 +74,7 @@ class PalletCollectStorySerializer(generics.ListAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         result = [{
-            'date': None,
+            'date': pallet.creation_date.strftime('%Y.%m.%d-%H:%M'),
             'client': 'Приход',
             'count': pallet.initial_count,
             'user': pallet.collector,
@@ -80,17 +83,17 @@ class PalletCollectStorySerializer(generics.ListAPIView):
         }]
 
         for element in pallet_source:
-            pallet_product = PalletProduct.objects.get(external_key=element.external_key)
+            pallet_product = PalletProduct.objects.filter(external_key=element.external_key).first()
             if not pallet_product:
                 continue
 
             result.append({
-                'date': pallet_product.order.external_source.date,
+                'date': element.pallet.creation_date.strftime('%Y.%m.%d-%H:%M'),
                 'client': pallet_product.order.client_presentation,
                 'count': element.count,
-                'user': element.user,
+                'user': element.pallet.collector,
                 'pallet': element.pallet.name,
-                'number': pallet_product.order.external_source.number
+                'number': re.findall(r'[1-9]+', pallet_product.order.external_source.number)[-1]
             })
 
         return Response(result)

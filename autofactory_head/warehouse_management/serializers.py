@@ -132,7 +132,6 @@ class PalletWriteSerializer(serializers.Serializer):
     name = serializers.CharField(required=False)
     consignee = serializers.CharField(required=False)
     group = serializers.CharField(required=False, allow_null=True)
-    initial_count = serializers.IntegerField(required=False)
 
 
 class PalletReadSerializer(serializers.Serializer):

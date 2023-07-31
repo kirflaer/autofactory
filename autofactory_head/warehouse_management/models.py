@@ -135,7 +135,7 @@ class Pallet(models.Model):
     consignee = models.CharField('Грузополучатель', blank=True, null=True, max_length=155)
     series = models.CharField('Серия', blank=True, null=True, max_length=155)
     group = models.CharField('Группа паллет', blank=True, null=True, max_length=36)
-    initial_count = models.PositiveIntegerField('Количество ящиков', null=True, default=0)
+    initial_count = models.PositiveIntegerField('Исходное количество ящиков', null=True, default=0)
 
     class Meta:
         verbose_name = 'Паллета'

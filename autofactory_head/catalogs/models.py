@@ -106,11 +106,11 @@ class Product(BaseExternalModel):
     expiration_date = models.PositiveIntegerField('Срок годности', default=0)
     is_weight = models.BooleanField('Весовой товар', default=False)
     semi_product = models.BooleanField('Полуфабрикат', default=False)
-    not_marked = models.BooleanField('Немаркируемый', default=False)
+    not_marked = models.BooleanField('Не маркируемый', default=False)
     variable_pallet_weight = models.BooleanField('Переменный вес паллеты', default=False)
 
     class Meta:
-        verbose_name = 'Номенклаутра'
+        verbose_name = 'Номенклатура'
         verbose_name_plural = 'Номенклатура'
 
 

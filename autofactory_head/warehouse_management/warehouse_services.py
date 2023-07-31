@@ -345,6 +345,10 @@ def create_pallets(
             pallet_filter = {search_field: search_value}
             pallet = Pallet.objects.filter(**pallet_filter).first()
 
+        if pallet and pallet.product and pallet.product.variable_pallet_weight and element.get('weight'):
+            pallet.weight = element['weight']
+            pallet.save()
+
         if not pallet:
             if not element.get('product'):
                 product = None

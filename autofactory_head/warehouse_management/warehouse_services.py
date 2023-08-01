@@ -384,6 +384,9 @@ def create_pallets(
                 element['shift'] = shift
                 element['marking_group'] = shift.guid
 
+            if element.get('content_count'):
+                element['initial_count'] = element['content_count']
+
             serializer_keys = set(element.keys())
             class_keys = set(dir(Pallet))
             [serializer_keys.discard(field) for field in related_tables]

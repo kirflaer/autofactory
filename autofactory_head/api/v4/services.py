@@ -10,8 +10,9 @@ from warehouse_management.models import (
     PalletCollectOperation, WriteOffOperation, Pallet, OperationPallet, PalletSource, TypeCollect,
     InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus
 )
-from warehouse_management.warehouse_services import create_pallets, fill_operation_pallets, \
-    get_or_create_external_source, remove_boxes_from_pallet
+from warehouse_management.warehouse_services import (
+    create_pallets, fill_operation_pallets, get_or_create_external_source, remove_boxes_from_pallet
+)
 
 User = get_user_model()
 

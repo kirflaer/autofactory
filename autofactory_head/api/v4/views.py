@@ -74,10 +74,10 @@ class PalletCollectStorySerializer(generics.ListAPIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
         result = [{
-            'date': pallet.creation_date.strftime('%Y.%m.%d-%H:%M'),
+            'date': pallet.creation_date.strftime('%d.%m.%y-%H:%M'),
             'client': 'Приход',
             'count': pallet.initial_count,
-            'user': pallet.collector,
+            'user': pallet.collector.username,
             'pallet': pallet.name,
             'number': None
         }]
@@ -88,10 +88,10 @@ class PalletCollectStorySerializer(generics.ListAPIView):
                 continue
 
             result.append({
-                'date': element.pallet.creation_date.strftime('%Y.%m.%d-%H:%M'),
+                'date': element.pallet.creation_date.strftime('%d.%m.%y-%H:%M'),
                 'client': pallet_product.order.client_presentation,
                 'count': element.count,
-                'user': element.pallet.collector,
+                'user': element.pallet.collector.username,
                 'pallet': element.pallet.name,
                 'number': re.findall(r'[1-9]+', pallet_product.order.external_source.number)[-1]
             })

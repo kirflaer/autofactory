@@ -21,7 +21,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
     """ Создает операцию перемещения"""
     result = []
     operation = PalletCollectOperation.objects.create(status=TaskStatus.WORK, user=user)
-    pallets = create_pallets(serializer_data['pallets'])
+    pallets = create_pallets(serializer_data['pallets'], user=user)
     fill_operation_pallets(operation, pallets)
     result += pallets
     return result

@@ -391,7 +391,7 @@ def create_pallets(
             class_keys = set(dir(Pallet))
             [serializer_keys.discard(field) for field in related_tables]
             fields = {key: element[key] for key in (class_keys & serializer_keys)}
-            pallet = Pallet.objects.create(**fields)
+            pallet = Pallet.objects.create(**fields, collector=user)
 
         if element.get('products') is not None:
             products_count = PalletProduct.objects.filter(pallet=pallet).count()

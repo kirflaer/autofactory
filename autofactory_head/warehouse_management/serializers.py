@@ -176,6 +176,7 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
     weight = serializers.IntegerField(required=False)
     collected_strings = serializers.ListField(required=False)
     changed_product_keys = []
+    request_user = None
 
     class Meta:
         fields = ('status', 'content_count', 'id', 'sources', 'weight', 'collected_strings', 'not_fully_collected')
@@ -183,7 +184,7 @@ class PalletUpdateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         with transaction.atomic():
-            enrich_pallet_info(validated_data, self.changed_product_keys, instance)
+            enrich_pallet_info(validated_data, self.changed_product_keys, instance, self.request_user)
         return super().update(instance, validated_data)
 
 

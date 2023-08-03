@@ -20,7 +20,7 @@ from warehouse_management.models import (
 User = get_user_model()
 
 
-def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Pallet) -> None:
+def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Pallet, user: User | None) -> None:
     if validated_data.get('sources') is not None:
         sources = validated_data.pop('sources')
         for source in sources:
@@ -37,7 +37,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
             source['pallet'] = instance
             source['product'] = Product.objects.filter(guid=source['product']).first()
 
-            PalletSource.objects.create(**source)
+            PalletSource.objects.create(**source, user=user)
             product_keys.append(source['external_key'])
 
     if validated_data.get('collected_strings') is not None:

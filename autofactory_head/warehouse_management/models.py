@@ -338,13 +338,13 @@ class PalletCollectOperation(OperationBaseOperation):
         open_task_count = PalletCollectOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
             guid=self.guid).count()
 
-        instance = self.PARENT_TASK_TYPES[self.type_collect].objects.get(guid=self.parent_task)
         if not open_task_count:
+            instance = self.PARENT_TASK_TYPES[self.type_collect].objects.get(guid=self.parent_task)
             instance.status = TaskStatus.CLOSE
             instance.close()
 
         if self.type_collect == 'SHIPMENT':
-            orders = OrderOperation.objects.filter(parent_task=instance)
+            orders = OrderOperation.objects.filter(parent_task=self.parent_task)
             not_collected_orders = (
                 PalletProduct.objects.filter(
                     order__in=orders,

@@ -73,28 +73,44 @@ class PalletCollectStorySerializer(generics.ListAPIView):
         if not (pallet or pallet_source):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        result = [{
-            'date': pallet.creation_date.strftime('%d.%m.%y-%H:%M'),
+        data = {
+            'date': None,
             'client': 'Приход',
             'count': pallet.initial_count,
-            'user': pallet.collector.username,
+            'user': None,
             'pallet': pallet.name,
             'number': None
-        }]
+        }
+
+        if pallet.creation_date:
+            data['date'] = pallet.creation_date.strftime('%d.%m.%y-%H:%M')
+
+        if pallet.collector:
+            data['user'] = pallet.collector.name
+
+        result = [data]
 
         for element in pallet_source:
             pallet_product = PalletProduct.objects.filter(external_key=element.external_key).first()
             if not pallet_product:
                 continue
+            data = {'date': None, 'client': None, 'count': element.count, 'user': None, 'pallet': None, 'number': None}
 
-            result.append({
-                'date': element.pallet.creation_date.strftime('%d.%m.%y-%H:%M'),
-                'client': pallet_product.order.client_presentation,
-                'count': element.count,
-                'user': element.pallet.collector.username,
-                'pallet': element.pallet.name,
-                'number': re.findall(r'[1-9]+', pallet_product.order.external_source.number)[-1]
-            })
+            if pallet.creation_date:
+                data['date'] = pallet.creation_date.strftime('%d.%m.%y-%H:%M')
+
+            if element.user:
+                data['user'] = element.user.name
+
+            if pallet_product.order:
+                data['client'] = pallet_product.order.client_presentation
+                if pallet_product.order.external_source:
+                    data['number'] = re.findall(r'[1-9]+', pallet_product.order.external_source.number)[-1]
+
+            if element.pallet:
+                data['pallet'] = element.pallet.name
+
+            result.append(data)
 
         return Response(result)
 

@@ -5,6 +5,7 @@ from typing import List, Optional
 from django.contrib.auth import get_user_model
 from django.db import models
 from pydantic.dataclasses import dataclass
+from rest_framework.exceptions import APIException
 
 from catalogs.models import Product, Storage, Direction, Client, BaseExternalModel
 from factory_core.models import OperationBaseModel, Shift
@@ -341,6 +342,24 @@ class PalletCollectOperation(OperationBaseOperation):
             instance = self.PARENT_TASK_TYPES[self.type_collect].objects.get(guid=self.parent_task)
             instance.status = TaskStatus.CLOSE
             instance.close()
+
+        if self.type_collect == 'SHIPMENT':
+            orders = OrderOperation.objects.filter(parent_task=self.parent_task)
+            not_collected_orders = (
+                PalletProduct.objects.filter(
+                    order__in=orders,
+                    is_collected=False
+                )
+                .values_list('order', flat=True)
+            )
+
+            for order_guid in orders:
+                if order_guid in not_collected_orders:
+                    continue
+                order = OrderOperation.objects.filter(guid=order_guid).first()
+                if not order:
+                    raise APIException(f'Не найден заказ {order_guid} операция отменена')
+                order.close()
 
 
 class OrderOperation(OperationBaseOperation):

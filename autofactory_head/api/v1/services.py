@@ -84,4 +84,3 @@ def task_take(instance: Task, user: User, status: TaskStatus = TaskStatus.WORK) 
     instance.status = status
     instance.user = user
     instance.save()
-

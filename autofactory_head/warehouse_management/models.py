@@ -338,13 +338,13 @@ class PalletCollectOperation(OperationBaseOperation):
         open_task_count = PalletCollectOperation.objects.filter(parent_task=self.parent_task, closed=False).exclude(
             guid=self.guid).count()
 
+        instance = self.PARENT_TASK_TYPES[self.type_collect].objects.get(guid=self.parent_task)
         if not open_task_count:
-            instance = self.PARENT_TASK_TYPES[self.type_collect].objects.get(guid=self.parent_task)
             instance.status = TaskStatus.CLOSE
             instance.close()
 
         if self.type_collect == 'SHIPMENT':
-            orders = OrderOperation.objects.filter(parent_task=self.parent_task)
+            orders = OrderOperation.objects.filter(parent_task=instance)
             not_collected_orders = (
                 PalletProduct.objects.filter(
                     order__in=orders,
@@ -353,12 +353,9 @@ class PalletCollectOperation(OperationBaseOperation):
                 .values_list('order', flat=True)
             )
 
-            for order_guid in orders:
-                if order_guid in not_collected_orders:
+            for order in orders:
+                if order.guid in not_collected_orders:
                     continue
-                order = OrderOperation.objects.filter(guid=order_guid).first()
-                if not order:
-                    raise APIException(f'Не найден заказ {order_guid} операция отменена')
                 order.close()
 
 

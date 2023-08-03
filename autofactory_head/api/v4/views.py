@@ -85,7 +85,7 @@ class PalletCollectStorySerializer(generics.ListAPIView):
             data['date'] = pallet.creation_date.strftime('%d.%m.%y-%H:%M')
 
         if pallet.collector:
-            data['user'] = pallet.collector.name
+            data['user'] = pallet.collector.username
 
         result = [data]
 

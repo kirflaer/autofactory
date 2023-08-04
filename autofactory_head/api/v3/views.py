@@ -146,9 +146,12 @@ class PalletShipmentUpdate(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         serializer = PalletUpdateShipmentSerializer(data=request.data)
-        serializer.request_user = self.request.user
         serializer.is_valid(raise_exception=True)
         return cache_api(self.request, serializer.validated_data, super().update, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        serializer.request_user = self.request.user
+        serializer.save()
 
 
 class PalletRepackingUpdate(generics.UpdateAPIView):

@@ -70,10 +70,9 @@ def remove_boxes_from_pallet(pallet: Pallet, count: int, weight: int | None = No
 
 
 def check_and_collect_orders(product_keys: list[str]):
-    """ Функция проверяет все ли данные по заказам собраны. Если сбор окончен закрывает заказы """
+    """ Функция проверяет все ли данные по заказам собраны. """
     sources = PalletSource.objects.filter(external_key__in=product_keys).values('external_key').annotate(Sum('count'))
     pallet_products = PalletProduct.objects.filter(external_key__in=product_keys)
-    orders = pallet_products.values_list('order', flat=True)
     order_products = pallet_products.values('order', 'external_key').annotate(Sum('count'))
 
     for product in order_products:
@@ -82,16 +81,6 @@ def check_and_collect_orders(product_keys: list[str]):
         order_product = PalletProduct.objects.get(external_key=product['external_key'])
         order_product.is_collected = True
         order_product.save()
-
-    not_collected_orders = PalletProduct.objects.filter(order__in=orders, is_collected=False).values_list('order',
-                                                                                                          flat=True)
-    for order_guid in orders:
-        if order_guid in not_collected_orders:
-            continue
-        order = OrderOperation.objects.filter(guid=order_guid).first()
-        if not order:
-            raise APIException(f'Не найден заказ {order_guid} операция отменена')
-        order.close()
 
 
 @transaction.atomic

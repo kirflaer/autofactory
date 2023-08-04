@@ -353,12 +353,9 @@ class PalletCollectOperation(OperationBaseOperation):
                 .values_list('order', flat=True)
             )
 
-            for order_guid in orders:
-                if order_guid in not_collected_orders:
+            for order in orders:
+                if order.guid in not_collected_orders:
                     continue
-                order = OrderOperation.objects.filter(guid=order_guid).first()
-                if not order:
-                    raise APIException(f'Не найден заказ {order_guid} операция отменена')
                 order.close()
 
 

@@ -199,6 +199,7 @@ class PalletDivideNewSerializer(serializers.Serializer):
     status = serializers.CharField()
     content_count = serializers.IntegerField()
     id = serializers.CharField()
+    weight = serializers.IntegerField(required=False)
 
 
 class PalletDivideSerializer(serializers.Serializer):

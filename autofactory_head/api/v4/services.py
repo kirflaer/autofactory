@@ -10,8 +10,9 @@ from warehouse_management.models import (
     PalletCollectOperation, WriteOffOperation, Pallet, OperationPallet, PalletSource, TypeCollect,
     InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus
 )
-from warehouse_management.warehouse_services import create_pallets, fill_operation_pallets, \
-    get_or_create_external_source, remove_boxes_from_pallet
+from warehouse_management.warehouse_services import (
+    create_pallets, fill_operation_pallets, get_or_create_external_source, remove_boxes_from_pallet
+)
 
 User = get_user_model()
 
@@ -21,7 +22,7 @@ def create_collect_operation(serializer_data: Iterable[dict[str: str]], user: Us
     """ Создает операцию перемещения"""
     result = []
     operation = PalletCollectOperation.objects.create(status=TaskStatus.WORK, user=user)
-    pallets = create_pallets(serializer_data['pallets'])
+    pallets = create_pallets(serializer_data['pallets'], user=user)
     fill_operation_pallets(operation, pallets)
     result += pallets
     return result

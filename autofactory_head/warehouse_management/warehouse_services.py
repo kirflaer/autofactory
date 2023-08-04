@@ -20,7 +20,7 @@ from warehouse_management.models import (
 User = get_user_model()
 
 
-def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Pallet) -> None:
+def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Pallet, user: User | None) -> None:
     if validated_data.get('sources') is not None:
         sources = validated_data.pop('sources')
         for source in sources:
@@ -37,7 +37,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
             source['pallet'] = instance
             source['product'] = Product.objects.filter(guid=source['product']).first()
 
-            PalletSource.objects.create(**source)
+            PalletSource.objects.create(**source, user=user)
             product_keys.append(source['external_key'])
 
     if validated_data.get('collected_strings') is not None:
@@ -70,10 +70,9 @@ def remove_boxes_from_pallet(pallet: Pallet, count: int, weight: int | None = No
 
 
 def check_and_collect_orders(product_keys: list[str]):
-    """ Функция проверяет все ли данные по заказам собраны. Если сбор окончен закрывает заказы """
+    """ Функция проверяет все ли данные по заказам собраны. """
     sources = PalletSource.objects.filter(external_key__in=product_keys).values('external_key').annotate(Sum('count'))
     pallet_products = PalletProduct.objects.filter(external_key__in=product_keys)
-    orders = pallet_products.values_list('order', flat=True)
     order_products = pallet_products.values('order', 'external_key').annotate(Sum('count'))
 
     for product in order_products:
@@ -82,16 +81,6 @@ def check_and_collect_orders(product_keys: list[str]):
         order_product = PalletProduct.objects.get(external_key=product['external_key'])
         order_product.is_collected = True
         order_product.save()
-
-    not_collected_orders = PalletProduct.objects.filter(order__in=orders, is_collected=False).values_list('order',
-                                                                                                          flat=True)
-    for order_guid in orders:
-        if order_guid in not_collected_orders:
-            continue
-        order = OrderOperation.objects.filter(guid=order_guid).first()
-        if not order:
-            raise APIException(f'Не найден заказ {order_guid} операция отменена')
-        order.close()
 
 
 @transaction.atomic
@@ -345,6 +334,10 @@ def create_pallets(
             pallet_filter = {search_field: search_value}
             pallet = Pallet.objects.filter(**pallet_filter).first()
 
+        if pallet and pallet.product and pallet.product.variable_pallet_weight and element.get('weight'):
+            pallet.weight = element['weight']
+            pallet.save()
+
         if not pallet:
             if not element.get('product'):
                 product = None
@@ -380,11 +373,14 @@ def create_pallets(
                 element['shift'] = shift
                 element['marking_group'] = shift.guid
 
+            if element.get('content_count'):
+                element['initial_count'] = element['content_count']
+
             serializer_keys = set(element.keys())
             class_keys = set(dir(Pallet))
             [serializer_keys.discard(field) for field in related_tables]
             fields = {key: element[key] for key in (class_keys & serializer_keys)}
-            pallet = Pallet.objects.create(**fields)
+            pallet = Pallet.objects.create(**fields, collector=user)
 
         if element.get('products') is not None:
             products_count = PalletProduct.objects.filter(pallet=pallet).count()

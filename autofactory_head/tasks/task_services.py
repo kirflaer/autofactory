@@ -16,9 +16,10 @@ class RouterTask(NamedTuple):
     create_function: Callable[[Iterable[dict[str, str]], type(User) | None], Iterable[str]] | None
     read_serializer: type(serializers.Serializer)
     write_serializer: type(serializers.Serializer)
-    content_model: type(TaskBaseModel) | None
+    content_model: type(TaskBaseModel) | None = None
     change_content_function: Callable[[dict[str, str], type(Task)], [str]] | None = None
     answer_serializer: type(serializers.Serializer) | None = None
+    change_properties_function: Callable[[dict[str, str], type(Task)], [str]] | None = None
 
 
 class RouterContent(NamedTuple):

@@ -1,24 +1,22 @@
-import time
 import uuid
 from django.contrib.auth import get_user_model
 
 from django.db import transaction
-from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status, viewsets
 from rest_framework.exceptions import APIException
-
+from rest_framework.request import Request
 from rest_framework.response import Response
+
 import api.views as api_views
 import api.v3.serializers as api_serializers
 from api.utils import cache_api
 from api.v2.views import TasksChangeViewSet
 from api.v3.routers import get_task_router
-
 from api.v3.services import load_manual_marks, load_offline_marking_data
+from api.v4.serializers import ShiftSerializerV4
 from factory_core.models import Shift
 from packing.marking_services import create_marking_marks, clear_raw_marks
-
 from packing.models import MarkingOperation
 from packing.marking_services import shift_close
 from tasks.task_services import RouterTask
@@ -34,9 +32,16 @@ User = get_user_model()
 class ShiftListViewSet(generics.ListCreateAPIView):
     """Список смен"""
     queryset = Shift.objects.all()
-    serializer_class = api_serializers.ShiftSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('line', 'closed', 'type')
+
+    def post(self, request: Request, *args, **kwargs):
+        self.serializer_class = ShiftSerializerV4
+        return self.create(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        self.serializer_class = api_serializers.ShiftSerializer
+        return self.list(request, *args, **kwargs)
 
 
 class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
@@ -49,6 +54,13 @@ class ShiftUpdateView(generics.RetrieveAPIView, generics.UpdateAPIView):
             return api_serializers.ShiftRetrieveSerializer
         else:
             return api_serializers.ShiftUpdateSerializer
+
+    def perform_update(self, serializer):
+        if self.request.data.get('closed'):
+            shift = self.get_object()
+            shift_close(shift.guid)
+
+        serializer.save()
 
 
 class MarkingOnLineViewSet(api_views.MarkingListCreateViewSet):

@@ -5,7 +5,6 @@ from typing import List, Optional
 from django.contrib.auth import get_user_model
 from django.db import models
 from pydantic.dataclasses import dataclass
-from rest_framework.exceptions import APIException
 
 from catalogs.models import Product, Storage, Direction, Client, BaseExternalModel
 from factory_core.models import OperationBaseModel, Shift
@@ -238,16 +237,10 @@ class AcceptanceOperation(OperationBaseOperation):
 
     def close(self):
         # Находим сборы паллет по разделенным ОБП паллетам и закрываем меняем статус по ним
-        operations = list(PalletCollectOperation.objects.filter(parent_task=self.guid).values_list('guid', flat=True))
-
-        # При закрытии переделываем все PRE_FOR_SHIPMENT в FOR_SHIPMENT в рамках задания
-        operations.append(self.guid)
-
-        rows = OperationPallet.objects.filter(operation__in=operations, pallet__status=PalletStatus.PRE_FOR_SHIPMENT)
-        for row in rows:
-            row.pallet.status = PalletStatus.FOR_SHIPMENT
-            row.pallet.save()
-        super().close()
+        operations = list(PalletCollectOperation.objects.filter(parent_task=self.guid, status=TaskStatus.WORK))
+        for operation in operations:
+            operation.status = TaskStatus.CLOSE
+            operation.close()
 
 
 class StorageCellContentState(models.Model):
@@ -343,7 +336,7 @@ class PalletCollectOperation(OperationBaseOperation):
             instance.status = TaskStatus.CLOSE
             instance.close()
 
-        if self.type_collect == 'SHIPMENT':
+        if self.type_collect == TypeCollect.SHIPMENT:
             orders = OrderOperation.objects.filter(parent_task=self.parent_task)
             not_collected_orders = (
                 PalletProduct.objects.filter(
@@ -460,7 +453,7 @@ class SuitablePallets(models.Model):
 
     class Meta:
         verbose_name = 'Подходящие паллеты'
-        verbose_name_plural = 'Подходящие паллеты (посторчная выгрузка)'
+        verbose_name_plural = 'Подходящие паллеты (построчная выгрузка)'
 
 
 class WriteOffOperation(OperationBaseOperation):

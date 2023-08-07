@@ -23,14 +23,12 @@ from warehouse_management.models import (AcceptanceOperation,
                                          MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
                                          PlacementToCellsTask, OperationPallet, Pallet, ArrivalAtStockOperation,
                                          InventoryOperation, InventoryTask)
-from warehouse_management.warehouse_services import (create_acceptance_operation,
-                                                     create_collect_operation,
-                                                     create_placement_operation,
-                                                     change_content_placement_operation,
-                                                     create_movement_cell_operation,
-                                                     create_shipment_operation,
-                                                     create_arrival_operation, create_inventory_operation,
-                                                     change_content_inventory_operation)
+from warehouse_management.warehouse_services import (
+    create_acceptance_operation, create_collect_operation, create_placement_operation,
+    change_content_placement_operation, create_movement_cell_operation, create_shipment_operation,
+    create_arrival_operation, create_inventory_operation, change_content_inventory_operation,
+    change_property_acceptance_to_stock
+)
 
 
 def get_task_router() -> dict[str: RouterTask]:
@@ -41,7 +39,8 @@ def get_task_router() -> dict[str: RouterTask]:
                                               create_function=create_acceptance_operation,
                                               read_serializer=AcceptanceOperationReadSerializer,
                                               write_serializer=AcceptanceOperationWriteSerializer,
-                                              content_model=TaskBaseModel),
+                                              content_model=TaskBaseModel,
+                                              change_properties_function=change_property_acceptance_to_stock),
             'PALLET_COLLECT': RouterTask(task=PalletCollectOperation,
                                          create_function=create_collect_operation,
                                          read_serializer=PalletCollectOperationReadSerializer,

@@ -157,10 +157,9 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
         parent_task = operation_pallet.operation
 
     operation = PalletCollectOperation.objects.create(type_collect=TypeCollect.DIVIDED, user=user,
-                                                      status=TaskStatus.CLOSE, parent_task=parent_task)
+                                                      status=TaskStatus.WORK, parent_task=parent_task)
     pallets = create_pallets((serializer_data['new_pallet'],))
     fill_operation_pallets(operation, pallets)
-    operation.close()
 
     if len(pallets) and isinstance(pallets[0], Pallet):
         new_pallet = pallets[0]

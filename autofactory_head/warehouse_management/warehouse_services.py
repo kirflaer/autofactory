@@ -579,3 +579,18 @@ def get_pallets_in_acceptance(value: str) -> dict[str, list] | None:
     operations = list(AcceptanceOperation.objects.exclude(status=TaskStatus.CLOSE).values_list('guid', flat=True))
     pallets = OperationPallet.objects.filter(operation__in=operations).values_list('pallet__guid', flat=True)
     return {'guid__in': list(pallets)}
+
+
+def change_property_acceptance_to_stock(content: dict[str: str], instance: AcceptanceOperation) -> None:
+    if instance.status == TaskStatus.CLOSE and content.get('unloaded') and content['unloaded']:
+        operations = list(
+            PalletCollectOperation.objects.filter(parent_task=instance.guid).values_list('guid', flat=True)
+        )
+
+        # При закрытии переделываем все PRE_FOR_SHIPMENT в FOR_SHIPMENT в рамках задания
+        operations.append(instance.guid)
+
+        rows = OperationPallet.objects.filter(operation__in=operations, pallet__status=PalletStatus.PRE_FOR_SHIPMENT)
+        for row in rows:
+            row.pallet.status = PalletStatus.FOR_SHIPMENT
+            row.pallet.save()

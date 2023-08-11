@@ -1,3 +1,4 @@
+import datetime
 from random import randrange
 
 from django.db import models
@@ -91,6 +92,9 @@ class Shift(models.Model):
 
         if self.code_offline is None:
             self.code_offline = str(randrange(100, 900, 1))
+
+        if self.closed and not self.closing_date:
+            self.closing_date = datetime.datetime.now(datetime.timezone.utc)
         super().save(force_insert, force_update, using, update_fields)
 
 

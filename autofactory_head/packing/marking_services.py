@@ -21,10 +21,10 @@ from factory_core.models import Shift
 from tasks.models import TaskStatus
 from warehouse_management.models import Pallet, OperationPallet, PalletCollectOperation
 
-from .models import (
+from packing.models import (
     RawMark,
     MarkingOperation,
-    MarkingOperationMark,
+    MarkingOperationMark
 )
 
 User = get_user_model()
@@ -108,7 +108,7 @@ def remove_marks(marks: list) -> None:
 
 @transaction.atomic
 def register_to_exchange(operation: MarkingOperation) -> bool:
-    """Регистрирует к обмену операцию маркировки если есть возможность
+    """Регистрирует к обмену операцию маркировки если есть возможность.
     Возвращает Истина в случае если операция зарегистрирована к обмену"""
 
     start_date = datetime.datetime.now() - timedelta(days=1)
@@ -308,7 +308,7 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
 
     for operation in MarkingOperation.objects.filter(shift=shift):
         if not operation.closed:
-            raise APIException('Существуют незакрытие маркировки. Операция отменена')
+            raise APIException('Существуют не закрытие маркировки. Операция отменена')
         operation.ready_to_unload = True
         operation.save()
 
@@ -338,7 +338,7 @@ def register_to_exchange_marking_data(shift: Shift) -> None:
 
 
 def get_marks_in_shifts(shift: Shift) -> set:
-    """ Возвращает все марки отсканированные в пределах смены """
+    """ Возвращает все марки которые отсканированы в пределах смены """
     operations = list(MarkingOperation.objects.filter(shift=shift).values_list('guid', flat=True))
     marks = MarkingOperationMark.objects.filter(operation__in=operations).values_list('mark', flat=True)
     return set(marks)

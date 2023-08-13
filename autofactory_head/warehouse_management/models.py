@@ -241,6 +241,7 @@ class AcceptanceOperation(OperationBaseOperation):
         for operation in operations:
             operation.status = TaskStatus.CLOSE
             operation.close()
+        super().close()
 
 
 class StorageCellContentState(models.Model):

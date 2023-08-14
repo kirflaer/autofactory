@@ -2,13 +2,14 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
+from api.serializers import LineSerializer
 from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperationReadSerializer, \
     PalletShipmentSerializer
+from api.v3.serializers import ShiftSerializer
 from api.v4.services import prepare_pallet_collect_to_exchange
 from catalogs.serializers import ExternalSerializer
 from factory_core.models import Shift
 from datetime import datetime as dt
-
 from warehouse_management.models import (
     ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, PalletStatus, PalletProduct,
     SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
@@ -19,6 +20,7 @@ from warehouse_management.serializers import (
     PalletSourceReadSerializer, PalletReadSerializer, InventoryAddressWarehouseSerializer,
     InventoryWriteSerializer
 )
+from catalogs.models import Line
 
 
 class PalletCollectOperationWriteSerializer(serializers.Serializer):
@@ -214,3 +216,12 @@ class PalletDivideSerializer(serializers.Serializer):
             raise APIException('У разделяемой паллеты не хватает количества')
 
         return super().validate(attrs)
+
+
+class ShiftSerializerV4(ShiftSerializer):
+    products = serializers.ListField(required=False)
+    shift_products = serializers.ListField(required=False)
+    type = serializers.CharField()
+    production_date = serializers.DateField()
+    line = serializers.PrimaryKeyRelatedField(queryset=Line.objects.all())
+    batch_number = serializers.CharField()

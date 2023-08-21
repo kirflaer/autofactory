@@ -22,7 +22,7 @@ urlpatterns = [
     re_path(r'v[1-9]/scanners/$', DeviceViewSet.as_view(
         {'get': 'list_scanners'})),
     re_path(r'v[1-9]/units/$', UnitsCreateListSet.as_view()),
-    re_path(r'v[1-9]/arks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
+    re_path(r'v[1-9]/marks/add/', MarksViewSet.as_view({'post': 'add_marks'})),
     re_path(r'v[1-9]/marks/remove/', MarksViewSet.as_view({'post': 'remove_marks'})),
 
     path('v1/', include('api.v1.urls')),

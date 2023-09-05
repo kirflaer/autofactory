@@ -1,22 +1,18 @@
 from datetime import datetime as dt
 
 from django.db import transaction
-from django.core.cache import cache
-from rest_framework import serializers, status
-from rest_framework.request import Request
-from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
 from api.serializers import StorageSerializer
 from catalogs.models import ExternalSource, Product
 from catalogs.serializers import ExternalSerializer
-from warehouse_management.models import (AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet,
-                                         Pallet, PlacementToCellsOperation,
-                                         MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
-                                         PalletProduct, PalletStatus, PalletSource, OperationCell, InventoryOperation,
-                                         SelectionOperation, StorageCell,
-                                         RepackingOperation, StorageArea,
-                                         InventoryAddressWarehouseOperation)
+from warehouse_management.models import (
+    AcceptanceOperation, OperationProduct, PalletCollectOperation, OperationPallet, Pallet, PlacementToCellsOperation,
+    MovementBetweenCellsOperation, ShipmentOperation, OrderOperation, PalletProduct, PalletStatus, PalletSource,
+    OperationCell, InventoryOperation, SelectionOperation, StorageCell, RepackingOperation, StorageArea,
+    InventoryAddressWarehouseOperation, TypeCollect
+)
 from warehouse_management.warehouse_services import (
     check_and_collect_orders, enrich_pallet_info, get_cell_state
 )
@@ -320,7 +316,22 @@ class AcceptanceOperationReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_pallets(obj):
-        pallets_ids = OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)
+        pallets_ids = []
+        operations = [OperationPallet.objects.filter(operation=obj.guid).values_list('pallet', flat=True)]
+
+        pallet_collect_operations = (
+            PalletCollectOperation.objects.filter(parent_task=obj.guid, type_collect=TypeCollect.DIVIDED)
+            .values_list('guid', flat=True)
+        )
+        operations.append((
+            OperationPallet.objects.filter(operation__in=pallet_collect_operations)
+            .values_list('pallet', flat=True)
+        ))
+
+        for operation in operations:
+            for pallet in operation:
+                pallets_ids.append(pallet)
+
         pallets = Pallet.objects.filter(guid__in=pallets_ids).exclude(status=PalletStatus.ARCHIVED)
         serializer = PalletReadSerializer(pallets, many=True)
         return serializer.data

@@ -64,7 +64,7 @@ class UsersListViewSet(viewsets.ViewSet):
             raise APIException('Неверные параметры запроса')
 
 
-class PalletCollectStorySerializer(generics.ListAPIView):
+class PalletCollectStoryListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         pallet = Pallet.objects.filter(**kwargs).first()
@@ -96,8 +96,8 @@ class PalletCollectStorySerializer(generics.ListAPIView):
                 continue
             data = {'date': None, 'client': None, 'count': element.count, 'user': None, 'pallet': None, 'number': None}
 
-            if pallet.creation_date:
-                data['date'] = pallet.creation_date.strftime('%d.%m.%y-%H:%M')
+            if element.created_at:
+                data['date'] = element.created_at.strftime('%d.%m.%y-%H:%M')
 
             if element.user:
                 data['user'] = element.user.username

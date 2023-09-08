@@ -48,7 +48,7 @@ class PalletViewSet(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
-        # реализация фильртров на вхождение в диапазон
+        # реализация фильтров на вхождение в диапазон
         list_params = {
             'ids': 'id__in',
             'guids': 'guid__in',

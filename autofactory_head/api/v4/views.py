@@ -8,12 +8,11 @@ from rest_framework.exceptions import APIException
 
 from api.v3.views import TasksViewSet
 from api.v4.routers import get_task_router
-from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer, ShiftSerializerV4
+from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer
 from api.v4.services import divide_pallet
 from tasks.task_services import RouterTask
-from warehouse_management.models import Pallet, PalletSource, PalletProduct, Shift
+from warehouse_management.models import Pallet, PalletSource, PalletProduct
 from warehouse_management.serializers import PalletReadSerializer
-from catalogs.models import Line
 
 User = get_user_model()
 

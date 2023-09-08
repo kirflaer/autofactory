@@ -1,16 +1,20 @@
 from api.v4.models import WriteOffTask, InventoryAddressWarehouseTask
-from api.v4.serializers import (PalletCollectOperationWriteSerializer, ShipmentOperationReadSerializerV4,
-                                PalletCollectShipmentSerializerV4, WriteOffOperationReadSerializer,
-                                WriteOffOperationWriteSerializer, InventoryAddressWarehouseReadSerializer,
-                                InventoryAddressWarehouseWriteSerializer)
+from api.v4.serializers import (
+    PalletCollectOperationWriteSerializer, ShipmentOperationReadSerializerV4,
+    PalletCollectShipmentSerializerV4, WriteOffOperationReadSerializer, WriteOffOperationWriteSerializer,
+    InventoryAddressWarehouseReadSerializer, InventoryAddressWarehouseWriteSerializer, CancelShipmentWriteSerializer,
+    CancelShipmentReadSerializer
+)
 from api.v4.services import (
     create_collect_operation, create_write_off_operation, change_content_write_off_operation,
-    create_inventory_operation, change_content_inventory_operation
+    create_inventory_operation, change_content_inventory_operation, create_cancel_shipment
 )
 from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
-from warehouse_management.models import (PalletCollectOperation, ShipmentOperation, WriteOffOperation,
-                                         InventoryAddressWarehouseOperation)
+from warehouse_management.models import (
+    PalletCollectOperation, ShipmentOperation, WriteOffOperation, InventoryAddressWarehouseOperation,
+    CancelShipmentOperation
+)
 from warehouse_management.serializers import (PalletReadSerializer, PalletCollectOperationReadSerializer,
                                               ShipmentOperationWriteSerializer)
 from warehouse_management.warehouse_services import create_shipment_operation
@@ -47,5 +51,10 @@ def get_task_router() -> dict[str: RouterTask]:
                                                       read_serializer=InventoryAddressWarehouseReadSerializer,
                                                       write_serializer=InventoryAddressWarehouseWriteSerializer,
                                                       content_model=InventoryAddressWarehouseTask,
-                                                      change_content_function=change_content_inventory_operation)
+                                                      change_content_function=change_content_inventory_operation),
+            'CANCEL_SHIPMENT': RouterTask(task=CancelShipmentOperation,
+                                          create_function=create_cancel_shipment,
+                                          read_serializer=CancelShipmentReadSerializer,
+                                          write_serializer=CancelShipmentWriteSerializer,
+                                          content_model=TaskBaseModel)
             }

@@ -6,19 +6,11 @@ from django.contrib import messages
 
 from tasks.models import TaskStatus
 from warehouse_management.models import (
-    AcceptanceOperation,
-    Pallet,
-    OperationPallet,
-    OperationProduct,
-    PalletCollectOperation,
-    PlacementToCellsOperation,
-    MovementBetweenCellsOperation,
-    ShipmentOperation,
-    PalletProduct,
-    OrderOperation,
-    PalletSource, ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell,
-    StorageArea, StorageCellContentState, RepackingOperation, SuitablePallets, WriteOffOperation,
-    InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent
+    AcceptanceOperation, Pallet, OperationPallet, OperationProduct, PalletCollectOperation, PlacementToCellsOperation,
+    MovementBetweenCellsOperation, ShipmentOperation, PalletProduct, OrderOperation, PalletSource,
+    ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell, StorageArea,
+    StorageCellContentState, RepackingOperation, SuitablePallets, WriteOffOperation, InventoryAddressWarehouseOperation,
+    InventoryAddressWarehouseContent, CancelShipmentOperation
 )
 from warehouse_management.warehouse_services import (get_unused_cells_for_placement,
                                                      create_inventory_with_placement_operation)
@@ -241,3 +233,8 @@ class InventoryAddressWarehouse(admin.ModelAdmin):
 @admin.register(InventoryAddressWarehouseContent)
 class InventoryAddressWarehouseContentAdmin(admin.ModelAdmin):
     list_display = ('guid', 'product', 'pallet', 'cell')
+
+
+@admin.register(CancelShipmentOperation)
+class CancelShipmentOperationAdmin(admin.ModelAdmin):
+    list_display = ('date', 'guid', 'user', 'number', 'status', 'closed', 'ready_to_unload', 'unloaded')

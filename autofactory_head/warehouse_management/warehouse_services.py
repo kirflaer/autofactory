@@ -475,7 +475,7 @@ def fill_operation_cells(operation: OperationBaseOperation, raw_data: Iterable[d
         operation_cell.fill_properties(operation)
 
 
-def get_or_create_external_source(raw_data=dict[str: str], field_name='external_source') -> ExternalSource:
+def get_or_create_external_source(raw_data: dict[str: str], field_name='external_source') -> ExternalSource:
     """ Создает либо находит элемент таблицы внешнего источника """
 
     external_source = ExternalSource.objects.filter(

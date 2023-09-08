@@ -2,9 +2,9 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 
-from api.serializers import LineSerializer
-from api.v1.serializers import PalletCollectShipmentSerializer, ShipmentOperationReadSerializer, \
-    PalletShipmentSerializer
+from api.v1.serializers import (
+    PalletCollectShipmentSerializer, ShipmentOperationReadSerializer, PalletShipmentSerializer
+)
 from api.v3.serializers import ShiftSerializer
 from api.v4.services import prepare_pallet_collect_to_exchange
 from catalogs.serializers import ExternalSerializer
@@ -13,12 +13,12 @@ from datetime import datetime as dt
 from warehouse_management.models import (
     ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, PalletStatus, PalletProduct,
     SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
-    InventoryAddressWarehouseContent
+    InventoryAddressWarehouseContent, CancelShipmentOperation, OperationCell
 )
 from warehouse_management.serializers import (
     PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, OperationPalletSerializer,
     PalletSourceReadSerializer, PalletReadSerializer, InventoryAddressWarehouseSerializer,
-    InventoryWriteSerializer
+    InventoryWriteSerializer, StorageCellsSerializer
 )
 from catalogs.models import Line
 
@@ -225,3 +225,36 @@ class ShiftSerializerV4(ShiftSerializer):
     production_date = serializers.DateField()
     line = serializers.PrimaryKeyRelatedField(queryset=Line.objects.all())
     batch_number = serializers.CharField()
+
+
+class CancelShipmentWriteSerializer(serializers.Serializer):
+
+    pallets = serializers.ListField()
+    external_source = ExternalSerializer(write_only=True)
+
+
+class CancelShipmentReadSerializer(serializers.ModelSerializer):
+
+    date = serializers.DateTimeField('%d.%m.%Y')
+    number = serializers.CharField()
+    pallets = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CancelShipmentOperation
+        fields = ('guid', 'status', 'date', 'number', 'pallets')
+
+    @staticmethod
+    def get_pallets(obj) -> list[dict]:
+        operations = OperationCell.objects.filter(operation=obj.guid)
+        pallets = []
+        for operation in operations:
+            serializer_data_pallet = PalletReadSerializer(operation.pallet)
+            serializer_data_cell_source = StorageCellsSerializer(operation.cell_source)
+
+            row = {
+                'pallet': dict(serializer_data_pallet.data),
+                'cell': dict(serializer_data_cell_source.data)
+            }
+            pallets.append(row)
+
+        return pallets

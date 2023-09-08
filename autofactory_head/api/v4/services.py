@@ -8,10 +8,12 @@ from catalogs.models import Product
 from tasks.models import TaskStatus
 from warehouse_management.models import (
     PalletCollectOperation, WriteOffOperation, Pallet, OperationPallet, PalletSource, TypeCollect,
-    InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus
+    InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus,
+    CancelShipmentOperation, StorageCellContentState
 )
 from warehouse_management.warehouse_services import (
-    create_pallets, fill_operation_pallets, get_or_create_external_source, remove_boxes_from_pallet
+    create_pallets, fill_operation_pallets, get_or_create_external_source, remove_boxes_from_pallet,
+    change_cell_content_state, fill_operation_cells
 )
 
 User = get_user_model()
@@ -179,3 +181,21 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     current_pallet.save()
 
     return pallets
+
+
+@transaction.atomic
+def create_cancel_shipment(serializer_data, user: User) -> list:
+
+    result = []
+    for element in serializer_data:
+        external_source = get_or_create_external_source(element)
+        operation = CancelShipmentOperation.objects.filter(external_source=external_source)
+        if operation:
+            result.append(external_source.external_key)
+            continue
+
+        operation = CancelShipmentOperation.objects.create(external_source=external_source)
+        fill_operation_cells(operation, element['pallets'])
+        result.append(operation.guid)
+
+        return result

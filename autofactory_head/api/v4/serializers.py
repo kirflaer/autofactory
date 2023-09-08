@@ -233,7 +233,7 @@ class CancelShipmentWriteSerializer(serializers.Serializer):
     external_source = ExternalSerializer(write_only=True)
 
 
-class CancelShipmentReadSerializer(serializers.Serializer):
+class CancelShipmentReadSerializer(serializers.ModelSerializer):
 
     date = serializers.DateTimeField('%d.%m.%Y')
     number = serializers.CharField()
@@ -241,6 +241,7 @@ class CancelShipmentReadSerializer(serializers.Serializer):
 
     class Meta:
         model = CancelShipmentOperation
+        fields = ('guid', 'status', 'date', 'number', 'pallets')
 
     @staticmethod
     def get_pallets(obj) -> list[dict]:
@@ -257,11 +258,3 @@ class CancelShipmentReadSerializer(serializers.Serializer):
             pallets.append(row)
 
         return pallets
-
-    @staticmethod
-    def get_date(obj) -> str:
-        pass
-
-    @staticmethod
-    def get_number(obj) -> str:
-        pass

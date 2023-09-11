@@ -407,6 +407,7 @@ class PalletSource(models.Model):
     type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
                                     default=TypeCollect.SHIPMENT)
     related_task = models.CharField('Идентификатор связанного задания', max_length=150, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         verbose_name = 'Паллета источник'

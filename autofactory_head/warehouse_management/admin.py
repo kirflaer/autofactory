@@ -146,6 +146,7 @@ class ShipmentOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'number', 'external_source', 'has_selection', 'status', 'closed', 'ready_to_unload',
         'unloaded')
+    search_fields = ('guid', )
 
 
 @admin.register(OrderOperation)

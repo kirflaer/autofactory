@@ -9,7 +9,7 @@ from tasks.models import TaskStatus
 from warehouse_management.models import (
     PalletCollectOperation, WriteOffOperation, Pallet, OperationPallet, PalletSource, TypeCollect,
     InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus,
-    CancelShipmentOperation, StorageCellContentState
+    CancelShipmentOperation, StorageCellContentState, ShipmentOperation
 )
 from warehouse_management.warehouse_services import (
     create_pallets, fill_operation_pallets, get_or_create_external_source, remove_boxes_from_pallet,
@@ -185,7 +185,6 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
 
 @transaction.atomic
 def create_cancel_shipment(serializer_data, user: User) -> list:
-
     result = []
     for element in serializer_data:
         external_source = get_or_create_external_source(element)
@@ -199,3 +198,11 @@ def create_cancel_shipment(serializer_data, user: User) -> list:
         result.append(operation.guid)
 
         return result
+
+
+def check_pallet_collect_shipment(instance: ShipmentOperation) -> dict:
+    operations = PalletCollectOperation.objects.filter(parent_task=instance.guid)
+    return {'all_task_count': operations.count(),
+            'new_task_count': operations.filter(status=TaskStatus.NEW).count(),
+            'close_task_count': operations.filter(status=TaskStatus.CLOSE).count(),
+            'work_task_count': operations.filter(status=TaskStatus.WORK).count()}

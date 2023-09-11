@@ -22,6 +22,20 @@ class TasksViewSetV4(TasksViewSet):
         parent_routers = super().get_routers()
         return parent_routers | get_task_router()
 
+    def custom_method(self, request, type_task, guid, method):
+        task_router = self.router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+
+        if not task_router.custom_methods:
+            raise APIException('Методы для задачи не определены')
+
+        if not task_router.custom_methods.get(method):
+            raise APIException(f'Метод {method} не определен для задач {type_task}')
+
+        instance = TasksViewSetV4._get_task_instance(task_router, guid)
+        return Response(task_router.custom_methods.get(method)(instance))
+
 
 class PalletCollectUpdate(generics.UpdateAPIView):
     queryset = Pallet.objects.all()

@@ -238,10 +238,11 @@ class CancelShipmentReadSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField('%d.%m.%Y')
     number = serializers.CharField()
     pallets = serializers.SerializerMethodField()
+    external_source = ExternalSerializer()
 
     class Meta:
         model = CancelShipmentOperation
-        fields = ('guid', 'status', 'date', 'number', 'pallets')
+        fields = ('guid', 'status', 'date', 'number', 'pallets', 'external_source')
 
     @staticmethod
     def get_pallets(obj) -> list[dict]:

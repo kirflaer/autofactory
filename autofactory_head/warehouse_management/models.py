@@ -496,7 +496,7 @@ class CancelShipmentOperation(OperationBaseOperation):
     def close(self):
         operations = OperationCell.objects.filter(operation=self.guid)
         for operation in operations:
-            operation.pallet.status = PalletStatus.FOR_PLACED
+            operation.pallet.status = PalletStatus.PLACED
             cell = operation.cell_source if not operation.cell_destination else operation.cell_destination
             StorageCellContentState.objects.create(pallet=operation.pallet, cell=cell)
         super().close()

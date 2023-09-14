@@ -9,11 +9,11 @@ from tasks.models import TaskStatus
 from warehouse_management.models import (
     PalletCollectOperation, WriteOffOperation, Pallet, OperationPallet, PalletSource, TypeCollect,
     InventoryAddressWarehouseOperation, InventoryAddressWarehouseContent, StorageCell, PalletStatus,
-    CancelShipmentOperation, StorageCellContentState, ShipmentOperation
+    CancelShipmentOperation, ShipmentOperation, MovementShipmentOperation
 )
 from warehouse_management.warehouse_services import (
     create_pallets, fill_operation_pallets, get_or_create_external_source, remove_boxes_from_pallet,
-    change_cell_content_state, fill_operation_cells
+    fill_operation_cells
 )
 
 User = get_user_model()
@@ -134,6 +134,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
 @transaction.atomic
 def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     current_pallet = Pallet.objects.get(id=serializer_data['source_pallet'])
+    type_task = serializer_data.get('type_task', 'ACCEPTANCE_TO_STOCK')
 
     if current_pallet.product is not None:
         serializer_data['new_pallet']['product'] = current_pallet.product.guid
@@ -149,24 +150,32 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     for key in keys:
         serializer_data['new_pallet'][key] = instance[key]
 
-    # Ищем приемку по исходной паллете и связываем текущий сбор паллет с приемкой
-    # Для того чтобы при закрытии приемки эти паллеты тоже закрылись
-    operation_pallet = OperationPallet.objects.filter(pallet=current_pallet,
-                                                      type_operation='ACCEPTANCE_TO_STOCK').first()
-    if operation_pallet is None:
-        parent_task = None
-    else:
+    operation_pallet = OperationPallet.objects.filter(
+        pallet=current_pallet,
+        type_operation=type_task.upper()
+    ).first()
+
+    parent_task = None
+    if operation_pallet:
         parent_task = operation_pallet.operation
 
-    operation = PalletCollectOperation.objects.create(type_collect=TypeCollect.DIVIDED, user=user,
-                                                      status=TaskStatus.WORK, parent_task=parent_task)
     pallets = create_pallets((serializer_data['new_pallet'],))
-    fill_operation_pallets(operation, pallets)
 
     if len(pallets) and isinstance(pallets[0], Pallet):
         new_pallet = pallets[0]
     else:
         raise APIException('Ошибка при разделении паллет')
+
+    match type_task.upper():
+        case 'ACCEPTANCE_TO_STOCK':
+            operation = PalletCollectOperation.objects.create(type_collect=TypeCollect.DIVIDED, user=user,
+                                                              status=TaskStatus.WORK, parent_task=parent_task)
+            fill_operation_pallets(operation, pallets)
+        case 'MOVEMENT_WITH_SHIPMENT':
+            operation_pallet.dependent_pallet = new_pallet
+            operation_pallet.save()
+        case _:
+            pass
 
     if current_pallet.weight != 0 and new_pallet.weight != 0:
         current_pallet.weight -= new_pallet.weight
@@ -206,3 +215,28 @@ def check_pallet_collect_shipment(instance: ShipmentOperation) -> dict:
             'new_task_count': operations.filter(status=TaskStatus.NEW).count(),
             'close_task_count': operations.filter(status=TaskStatus.CLOSE).count(),
             'work_task_count': operations.filter(status=TaskStatus.WORK).count()}
+
+
+@transaction.atomic
+def create_movement_shipment(serializer_data, _: User) -> list:
+    external_source = get_or_create_external_source(serializer_data)
+    operation_movement = MovementShipmentOperation.objects.filter(external_source=external_source).first()
+    result = []
+    if operation_movement:
+        result.append(operation_movement.guid)
+        return result
+
+    operation_movement = MovementShipmentOperation.objects.create(external_source=external_source)
+    result.append(operation_movement.guid)
+
+    for element in serializer_data['pallets']:
+        operation_pallet = OperationPallet.objects.create(
+            pallet=Pallet.objects.get(id=element['pallet']),
+            count=element['count'],
+            external_source=external_source
+        )
+        operation_pallet.fill_properties(operation_movement)
+
+    fill_operation_cells(operation_movement, serializer_data['pallets'])
+
+    return result

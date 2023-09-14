@@ -3,18 +3,18 @@ from api.v4.serializers import (
     PalletCollectOperationWriteSerializer, ShipmentOperationReadSerializerV4,
     PalletCollectShipmentSerializerV4, WriteOffOperationReadSerializer, WriteOffOperationWriteSerializer,
     InventoryAddressWarehouseReadSerializer, InventoryAddressWarehouseWriteSerializer, CancelShipmentWriteSerializer,
-    CancelShipmentReadSerializer
+    CancelShipmentReadSerializer, MovementShipmentWriteSerializer, MovementShipmentReadSerializer
 )
 from api.v4.services import (
     create_collect_operation, create_write_off_operation, change_content_write_off_operation,
     create_inventory_operation, change_content_inventory_operation, create_cancel_shipment,
-    check_pallet_collect_shipment
+    check_pallet_collect_shipment, create_movement_shipment
 )
 from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
 from warehouse_management.models import (
     PalletCollectOperation, ShipmentOperation, WriteOffOperation, InventoryAddressWarehouseOperation,
-    CancelShipmentOperation
+    CancelShipmentOperation, MovementShipmentOperation
 )
 from warehouse_management.serializers import (PalletReadSerializer, PalletCollectOperationReadSerializer,
                                               ShipmentOperationWriteSerializer)
@@ -58,5 +58,10 @@ def get_task_router() -> dict[str: RouterTask]:
                                           create_function=create_cancel_shipment,
                                           read_serializer=CancelShipmentReadSerializer,
                                           write_serializer=CancelShipmentWriteSerializer,
-                                          content_model=TaskBaseModel)
+                                          content_model=TaskBaseModel),
+            'MOVEMENT_WITH_SHIPMENT': RouterTask(task=MovementShipmentOperation,
+                                                 create_function=create_movement_shipment,
+                                                 read_serializer=MovementShipmentReadSerializer,
+                                                 write_serializer=MovementShipmentWriteSerializer,
+                                                 content_model=TaskBaseModel)
             }

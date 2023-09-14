@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
@@ -13,7 +14,7 @@ from datetime import datetime as dt
 from warehouse_management.models import (
     ShipmentOperation, PalletCollectOperation, OperationPallet, Pallet, PalletStatus, PalletProduct,
     SuitablePallets, WriteOffOperation, PalletSource, TypeCollect, InventoryAddressWarehouseOperation,
-    InventoryAddressWarehouseContent, CancelShipmentOperation, OperationCell
+    InventoryAddressWarehouseContent, CancelShipmentOperation, OperationCell, StorageCell, MovementShipmentOperation
 )
 from warehouse_management.serializers import (
     PalletWriteSerializer, PalletProductSerializer, SuitablePalletSerializer, OperationPalletSerializer,
@@ -207,6 +208,7 @@ class PalletDivideNewSerializer(serializers.Serializer):
 class PalletDivideSerializer(serializers.Serializer):
     new_pallet = PalletDivideNewSerializer()
     source_pallet = serializers.CharField()
+    type_task = serializers.CharField(required=False)
 
     def validate(self, attrs):
         instance = Pallet.objects.filter(id=attrs.get('source_pallet')).first()
@@ -230,7 +232,7 @@ class ShiftSerializerV4(ShiftSerializer):
 class CancelShipmentWriteSerializer(serializers.Serializer):
 
     pallets = serializers.ListField()
-    external_source = ExternalSerializer(write_only=True)
+    external_source = ExternalSerializer()
 
 
 class CancelShipmentReadSerializer(serializers.ModelSerializer):
@@ -257,5 +259,80 @@ class CancelShipmentReadSerializer(serializers.ModelSerializer):
                 'cell': dict(serializer_data_cell_source.data)
             }
             pallets.append(row)
+
+        return pallets
+
+
+class PalletMovementShipmentSerializer(serializers.Serializer):
+    """ Сериализатор паллеты перемещения под отгрузку """
+
+    pallet = serializers.CharField()
+    cell_source = serializers.CharField(source='cell')
+    cell_destination = serializers.CharField()
+    count = serializers.IntegerField()
+
+    def validate(self, attrs):
+        pallet, cell_source, cell_destination = (
+            attrs.get('pallet'), attrs.get('cell'), attrs.get('cell_destination')
+        )
+
+        if not Pallet.objects.filter(id=pallet).exists():
+            raise serializers.ValidationError({'pallet': f'Паллета "{pallet}" не найдена'})
+
+        cells_ext_key = {'cell_source': cell_source, 'cell_destination': cell_destination}
+        cells_queryset = StorageCell.objects.filter(external_key__in=[cell_source, cell_destination])
+
+        for key, value in cells_ext_key.items():
+            if not cells_queryset.filter(external_key=value).exists():
+                raise serializers.ValidationError({key: f'Ячейка "{value}" не найдена'})
+
+        return attrs
+
+
+class MovementShipmentWriteSerializer(serializers.Serializer):
+    """ Сериализатор на запись по операции 'Отмена на перемещение' """
+
+    pallets = PalletMovementShipmentSerializer(many=True)
+    external_source = ExternalSerializer()
+
+
+class MovementShipmentReadSerializer(serializers.ModelSerializer):
+    """ Сериализатор на чтение по операции 'Отмена на перемещение' """
+
+    pallets = serializers.SerializerMethodField()
+    external_key = serializers.CharField(source='external_source.external_key')
+
+    class Meta:
+        model = MovementShipmentOperation
+        fields = ('guid', 'status', 'date', 'number', 'pallets', 'external_key')
+
+    @staticmethod
+    def get_pallets(obj: MovementShipmentOperation):
+        pallets = []
+        operations_cell = OperationCell.objects.filter(operation=obj.guid)
+        operations_pallet = OperationPallet.objects.filter(operation=obj.guid)
+        if not operations_cell.exists() or not operations_pallet.exists():
+            return pallets
+
+        for operation_cell in operations_cell:
+            operation_pallet = operations_pallet.filter(pallet=operation_cell.pallet).first()
+
+            pallet_serializer = PalletReadSerializer(operation_cell.pallet)
+
+            dependent_pallet = None
+            if operation_pallet.dependent_pallet:
+                dependent_pallet_serializer = PalletReadSerializer(operation_pallet.dependent_pallet)
+                dependent_pallet = dict(dependent_pallet_serializer.data)
+
+            cell_source_serializer = StorageCellsSerializer(operation_cell.cell_source)
+            cell_destination_serializer = StorageCellsSerializer(operation_cell.cell_destination)
+
+            pallets.append({
+                'pallet':  dict(pallet_serializer.data),
+                'cell_source': dict(cell_source_serializer.data),
+                'cell_destination': dict(cell_destination_serializer.data),
+                'dependent_pallet': dependent_pallet,
+                'count': operation_pallet.count
+            })
 
         return pallets

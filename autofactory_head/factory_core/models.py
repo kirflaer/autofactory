@@ -1,8 +1,8 @@
 import datetime
 from random import randrange
+import uuid
 
 from django.db import models
-import uuid
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 
@@ -18,7 +18,7 @@ class TypeShift(models.TextChoices):
 
 
 class ExternalSystemExchangeMixin(models.Model):
-    """Расширение для моделей добавлющие возможность контролировать статус обмена
+    """Расширение для моделей добавляющие возможность контролировать статус обмена
     Во внешнюю систему отправляются все ready_to_unload
     После выгрузки внешним запросом помечаются unloaded"""
 

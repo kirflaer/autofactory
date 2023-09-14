@@ -10,7 +10,7 @@ from warehouse_management.models import (
     MovementBetweenCellsOperation, ShipmentOperation, PalletProduct, OrderOperation, PalletSource,
     ArrivalAtStockOperation, InventoryOperation, OperationCell, SelectionOperation, StorageCell, StorageArea,
     StorageCellContentState, RepackingOperation, SuitablePallets, WriteOffOperation, InventoryAddressWarehouseOperation,
-    InventoryAddressWarehouseContent, CancelShipmentOperation
+    InventoryAddressWarehouseContent, CancelShipmentOperation, MovementShipmentOperation
 )
 from warehouse_management.warehouse_services import (get_unused_cells_for_placement,
                                                      create_inventory_with_placement_operation)
@@ -238,4 +238,9 @@ class InventoryAddressWarehouseContentAdmin(admin.ModelAdmin):
 
 @admin.register(CancelShipmentOperation)
 class CancelShipmentOperationAdmin(admin.ModelAdmin):
+    list_display = ('date', 'guid', 'user', 'number', 'status', 'closed', 'ready_to_unload', 'unloaded')
+
+
+@admin.register(MovementShipmentOperation)
+class MovementShipmentOperationAdmin(admin.ModelAdmin):
     list_display = ('date', 'guid', 'user', 'number', 'status', 'closed', 'ready_to_unload', 'unloaded')

@@ -14,7 +14,8 @@ from warehouse_management.models import (
     AcceptanceOperation, Pallet, OperationBaseOperation, OperationPallet, OperationProduct, PalletCollectOperation,
     PlacementToCellsOperation, OperationCell, MovementBetweenCellsOperation, ShipmentOperation, OrderOperation,
     PalletContent, PalletProduct, PalletSource, ArrivalAtStockOperation, InventoryOperation, PalletStatus, TypeCollect,
-    SelectionOperation, StorageCell, StorageCellContentState, StatusCellContent, RepackingOperation, SuitablePallets
+    SelectionOperation, StorageCell, StorageCellContentState, StatusCellContent, RepackingOperation, SuitablePallets,
+    MovementShipmentOperation
 )
 
 User = get_user_model()
@@ -594,3 +595,26 @@ def change_property_acceptance_to_stock(content: dict[str: str], instance: Accep
         for row in rows:
             row.pallet.status = PalletStatus.FOR_SHIPMENT
             row.pallet.save()
+
+
+def movement_shipment_close(instance: MovementShipmentOperation) -> None:
+
+    queryset_operation_cell = OperationCell.objects.filter(operation=instance.guid)
+    for operation_cell in queryset_operation_cell:
+        if operation_cell.pallet.status == PalletStatus.WAITED:
+            operation_cell.pallet.status = PalletStatus.FOR_SHIPMENT
+            operation_cell.pallet.save()
+
+            cell = operation_cell.cell_destination
+            if not cell:
+                cell = operation_cell.cell_source
+
+            StorageCellContentState.objects.create(pallet=operation_cell.pallet, cell=cell)
+        else:
+            change_cell_content_state(
+                {
+                    'cell_source': operation_cell.cell_source.guid,
+                    'cell_destination': operation_cell.cell_destination.guid
+                },
+                pallet=operation_cell.pallet
+            )

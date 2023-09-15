@@ -1,7 +1,12 @@
 from django.db.models.signals import pre_delete
-from .models import (InventoryOperation, OperationCell, StorageCellContentState, StatusCellContent, ShipmentOperation,
-                     PalletCollectOperation, OperationPallet, SelectionOperation, WriteOffOperation)
 from django.dispatch import receiver
+
+from factory_core.signals import operation_pre_close
+from .models import (
+    InventoryOperation, OperationCell, StorageCellContentState, StatusCellContent, ShipmentOperation,
+    PalletCollectOperation, OperationPallet, SelectionOperation, WriteOffOperation, MovementShipmentOperation
+)
+from .warehouse_services import movement_shipment_close
 
 
 def remove_cell_and_state(operation_guid):
@@ -46,3 +51,10 @@ def pre_delete_shipment(sender, **kwargs):
 @receiver(pre_delete, sender=WriteOffOperation)
 def pre_delete_write_off(sender, **kwargs):
     OperationPallet.objects.filter(operation=kwargs['instance'].guid).delete()
+
+
+@receiver(operation_pre_close, sender=MovementShipmentOperation)
+def pre_close_movement_shipment(sender, **kwargs):
+    instance = kwargs['instance']
+    if not instance.closed:
+        movement_shipment_close(instance)

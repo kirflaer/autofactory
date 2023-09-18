@@ -150,14 +150,10 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
     for key in keys:
         serializer_data['new_pallet'][key] = instance[key]
 
-    operation_pallet = OperationPallet.objects.filter(
+    operations_pallet = OperationPallet.objects.filter(
         pallet=current_pallet,
         type_operation=type_task.upper()
-    ).first()
-
-    parent_task = None
-    if operation_pallet:
-        parent_task = operation_pallet.operation
+    )
 
     pallets = create_pallets((serializer_data['new_pallet'],))
 
@@ -168,10 +164,16 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
 
     match type_task.upper():
         case 'ACCEPTANCE_TO_STOCK':
+            parent_task = None
+            operation_pallet = operations_pallet.first()
+            if operation_pallet:
+                parent_task = operation_pallet.operation
+
             operation = PalletCollectOperation.objects.create(type_collect=TypeCollect.DIVIDED, user=user,
                                                               status=TaskStatus.WORK, parent_task=parent_task)
             fill_operation_pallets(operation, pallets)
         case 'MOVEMENT_WITH_SHIPMENT':
+            operation_pallet = operations_pallet.filter(operation=serializer_data.get('guid')).first()
             operation_pallet.dependent_pallet = new_pallet
             operation_pallet.save()
         case _:

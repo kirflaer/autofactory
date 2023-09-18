@@ -209,6 +209,7 @@ class PalletDivideSerializer(serializers.Serializer):
     new_pallet = PalletDivideNewSerializer()
     source_pallet = serializers.CharField()
     type_task = serializers.CharField(required=False)
+    task = serializers.CharField(required=False)
 
     def validate(self, attrs):
         instance = Pallet.objects.filter(id=attrs.get('source_pallet')).first()

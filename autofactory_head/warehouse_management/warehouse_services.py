@@ -600,16 +600,19 @@ def change_property_acceptance_to_stock(content: dict[str: str], instance: Accep
 def movement_shipment_close(instance: MovementShipmentOperation) -> None:
 
     queryset_operation_cell = OperationCell.objects.filter(operation=instance.guid)
+    queryset_operation_op = OperationPallet.objects.filter(operation=instance.guid)
+
     for operation_cell in queryset_operation_cell:
-        if operation_cell.pallet.status == PalletStatus.WAITED:
-            operation_cell.pallet.status = PalletStatus.FOR_SHIPMENT
-            operation_cell.pallet.save()
+        operation_pallet = queryset_operation_op.get(pallet=operation_cell.pallet)
+        if operation_pallet.dependent_pallet:
+            operation_pallet.dependent_pallet.status = PalletStatus.FOR_SHIPMENT
+            operation_pallet.dependent_pallet.save()
 
             cell = operation_cell.cell_destination
             if not cell:
                 cell = operation_cell.cell_source
 
-            StorageCellContentState.objects.create(pallet=operation_cell.pallet, cell=cell)
+            StorageCellContentState.objects.create(pallet=operation_pallet.dependent_pallet, cell=cell)
         else:
             change_cell_content_state(
                 {

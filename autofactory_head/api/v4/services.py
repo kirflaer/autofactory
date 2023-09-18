@@ -241,6 +241,6 @@ def create_movement_shipment(serializer_data, _: User) -> list:
             )
             operation_pallet.fill_properties(operation_movement)
 
-        fill_operation_cells(operation_movement, serializer_data['pallets'])
+        fill_operation_cells(operation_movement, element['pallets'])
 
     return result

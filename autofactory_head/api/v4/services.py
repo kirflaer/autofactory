@@ -219,24 +219,26 @@ def check_pallet_collect_shipment(instance: ShipmentOperation) -> dict:
 
 @transaction.atomic
 def create_movement_shipment(serializer_data, _: User) -> list:
-    external_source = get_or_create_external_source(serializer_data)
-    operation_movement = MovementShipmentOperation.objects.filter(external_source=external_source).first()
+
     result = []
-    if operation_movement:
+    for element in serializer_data:
+        external_source = get_or_create_external_source(element)
+        operation_movement = MovementShipmentOperation.objects.filter(external_source=external_source).first()
+        if operation_movement:
+            result.append(operation_movement.guid)
+            return result
+
+        operation_movement = MovementShipmentOperation.objects.create(external_source=external_source)
         result.append(operation_movement.guid)
-        return result
 
-    operation_movement = MovementShipmentOperation.objects.create(external_source=external_source)
-    result.append(operation_movement.guid)
+        for pallet in element['pallets']:
+            operation_pallet = OperationPallet.objects.create(
+                pallet=Pallet.objects.get(id=pallet['pallet']),
+                count=pallet['count'],
+                external_source=external_source
+            )
+            operation_pallet.fill_properties(operation_movement)
 
-    for element in serializer_data['pallets']:
-        operation_pallet = OperationPallet.objects.create(
-            pallet=Pallet.objects.get(id=element['pallet']),
-            count=element['count'],
-            external_source=external_source
-        )
-        operation_pallet.fill_properties(operation_movement)
-
-    fill_operation_cells(operation_movement, serializer_data['pallets'])
+        fill_operation_cells(operation_movement, serializer_data['pallets'])
 
     return result

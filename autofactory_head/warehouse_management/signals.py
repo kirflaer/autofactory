@@ -55,6 +55,10 @@ def pre_delete_write_off(sender, **kwargs):
 
 @receiver(operation_pre_close, sender=MovementShipmentOperation)
 def pre_close_movement_shipment(sender, **kwargs):
+
+    if sender != MovementShipmentOperation:
+        return
+
     instance = kwargs['instance']
     if not instance.closed:
         movement_shipment_close(instance)

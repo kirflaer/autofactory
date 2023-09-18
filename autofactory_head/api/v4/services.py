@@ -173,7 +173,7 @@ def divide_pallet(serializer_data: dict, user: User) -> list[Pallet]:
                                                               status=TaskStatus.WORK, parent_task=parent_task)
             fill_operation_pallets(operation, pallets)
         case 'MOVEMENT_WITH_SHIPMENT':
-            operation_pallet = operations_pallet.filter(operation=serializer_data.get('guid')).first()
+            operation_pallet = operations_pallet.filter(operation=serializer_data.get('task')).first()
             operation_pallet.dependent_pallet = new_pallet
             operation_pallet.save()
         case _:

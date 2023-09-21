@@ -113,12 +113,10 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 @transaction.atomic
 def change_content_inventory_operation(content: dict[str: str], instance: InventoryAddressWarehouseOperation) -> dict:
     for element in content['products']:
-        row = InventoryAddressWarehouseContent.objects.filter(
-            operation=instance.guid
-        ).first()
+        row = InventoryAddressWarehouseContent.objects.filter(guid=element.key).first()
 
         if row is None:
-            continue
+            raise APIException('Не найдена строка в содержимом инвентаризации')
 
         PalletSource.objects.create(pallet_source=row.pallet, external_key=element.key,
                                     count=element.count, type_collect=TypeCollect.INVENTORY,

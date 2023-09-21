@@ -743,7 +743,7 @@ class InventoryWriteSerializer(serializers.ModelSerializer):
     product = serializers.CharField()
     pallet = serializers.CharField()
     cell = serializers.CharField()
-    plan = serializers.IntegerField()
+    plan = serializers.IntegerField(min_value=0)
     fact = serializers.IntegerField(required=False)
 
     def validate(self, attrs):

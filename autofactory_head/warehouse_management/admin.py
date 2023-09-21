@@ -234,7 +234,7 @@ class InventoryAddressWarehouse(admin.ModelAdmin):
 @admin.register(InventoryAddressWarehouseContent)
 class InventoryAddressWarehouseContentAdmin(admin.ModelAdmin):
     search_fields = ('operation', 'pallet__id')
-    list_display = ('guid', 'product', 'pallet', 'cell')
+    list_display = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')
 
 
 @admin.register(CancelShipmentOperation)

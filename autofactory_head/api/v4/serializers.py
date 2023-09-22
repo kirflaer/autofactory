@@ -302,6 +302,7 @@ class MovementShipmentReadSerializer(serializers.ModelSerializer):
 
     pallets = serializers.SerializerMethodField()
     external_key = serializers.CharField(source='external_source.external_key')
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = MovementShipmentOperation
@@ -337,3 +338,12 @@ class MovementShipmentReadSerializer(serializers.ModelSerializer):
             })
 
         return pallets
+
+    @staticmethod
+    def get_date(obj):
+        try:
+            date = dt.strptime(obj.external_source.date, '%Y-%m-%dT%H:%M:%S')
+            date = date.strftime('%d.%m.%Y')
+        except ValueError:
+            date = obj.date.strftime('%d.%m.%Y')
+        return date

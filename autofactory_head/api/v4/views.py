@@ -8,12 +8,11 @@ from rest_framework.exceptions import APIException
 
 from api.v3.views import TasksViewSet
 from api.v4.routers import get_task_router
-from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer, ShiftSerializerV4
+from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer
 from api.v4.services import divide_pallet
 from tasks.task_services import RouterTask
-from warehouse_management.models import Pallet, PalletSource, PalletProduct, Shift
+from warehouse_management.models import Pallet, PalletSource, PalletProduct
 from warehouse_management.serializers import PalletReadSerializer
-from catalogs.models import Line
 
 User = get_user_model()
 
@@ -22,6 +21,20 @@ class TasksViewSetV4(TasksViewSet):
     def get_routers(self) -> dict[str: RouterTask]:
         parent_routers = super().get_routers()
         return parent_routers | get_task_router()
+
+    def custom_method(self, request, type_task, guid, method):
+        task_router = self.router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+
+        if not task_router.custom_methods:
+            raise APIException('Методы для задачи не определены')
+
+        if not task_router.custom_methods.get(method):
+            raise APIException(f'Метод {method} не определен для задач {type_task}')
+
+        instance = TasksViewSetV4._get_task_instance(task_router, guid)
+        return Response(task_router.custom_methods.get(method)(instance))
 
 
 class PalletCollectUpdate(generics.UpdateAPIView):
@@ -64,7 +77,7 @@ class UsersListViewSet(viewsets.ViewSet):
             raise APIException('Неверные параметры запроса')
 
 
-class PalletCollectStorySerializer(generics.ListAPIView):
+class PalletCollectStoryListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         pallet = Pallet.objects.filter(**kwargs).first()
@@ -96,8 +109,8 @@ class PalletCollectStorySerializer(generics.ListAPIView):
                 continue
             data = {'date': None, 'client': None, 'count': element.count, 'user': None, 'pallet': None, 'number': None}
 
-            if pallet.creation_date:
-                data['date'] = pallet.creation_date.strftime('%d.%m.%y-%H:%M')
+            if element.created_at:
+                data['date'] = element.created_at.strftime('%d.%m.%y-%H:%M')
 
             if element.user:
                 data['user'] = element.user.username

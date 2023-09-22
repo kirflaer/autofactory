@@ -63,7 +63,7 @@ class ProductViewSet(generics.ListCreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('guid',)
+    filterset_fields = ('guid', 'external_key')
 
     def get_serializer(self, *args, **kwargs):
         if self.request.META['REQUEST_METHOD'] == 'GET':

@@ -172,6 +172,10 @@ class PalletRetrieveUpdate(generics.RetrieveAPIView, generics.UpdateAPIView):
 
     def get_object(self):
 
+        include_archive_pallets = self.request.query_params.get('include_archive_pallets', 'false')
+        if include_archive_pallets == 'true':
+            self.queryset = Pallet.objects.all().order_by('content_count')
+
         filter_value = self.kwargs[self.lookup_field]
         try:
             uuid.UUID(filter_value)

@@ -20,6 +20,7 @@ class RouterTask(NamedTuple):
     change_content_function: Callable[[dict[str, str], type(Task)], [str]] | None = None
     answer_serializer: type(serializers.Serializer) | None = None
     change_properties_function: Callable[[dict[str, str], type(Task)], [str]] | None = None
+    custom_methods: dict[str, Callable] | None = None
 
 
 class RouterContent(NamedTuple):

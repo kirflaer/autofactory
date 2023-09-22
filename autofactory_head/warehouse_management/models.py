@@ -7,6 +7,7 @@ from django.db import models
 from pydantic.dataclasses import dataclass
 
 from catalogs.models import Product, Storage, Direction, Client, BaseExternalModel
+from factory_core.signals import operation_pre_close
 from factory_core.models import OperationBaseModel, Shift
 from tasks.models import Task, TaskBaseModel, TaskStatus
 
@@ -168,6 +169,7 @@ class OperationBaseOperation(OperationBaseModel, Task):
 
     def close(self):
         self.ready_to_unload = True
+        operation_pre_close.send(sender=self.__class__, instance=self)
         super().close()
 
 
@@ -407,6 +409,7 @@ class PalletSource(models.Model):
     type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
                                     default=TypeCollect.SHIPMENT)
     related_task = models.CharField('Идентификатор связанного задания', max_length=150, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         verbose_name = 'Паллета источник'
@@ -484,3 +487,29 @@ class InventoryAddressWarehouseOperation(OperationBaseOperation):
     class Meta:
         verbose_name = 'Инвентаризация адресного склада'
         verbose_name_plural = 'Инвентаризация адресного склада'
+
+
+class CancelShipmentOperation(OperationBaseOperation):
+    type_task = 'CANCEL_SHIPMENT'
+
+    class Meta:
+        verbose_name = 'Отмена отгрузки'
+        verbose_name_plural = 'Отмена отгрузки'
+
+    def close(self):
+        operations = OperationCell.objects.filter(operation=self.guid)
+        for operation in operations:
+            operation.pallet.status = PalletStatus.PLACED
+            operation.pallet.save()
+            cell = operation.cell_source if not operation.cell_destination else operation.cell_destination
+            StorageCellContentState.objects.create(pallet=operation.pallet, cell=cell)
+        super().close()
+
+
+class MovementShipmentOperation(OperationBaseOperation):
+
+    type_task = 'MOVEMENT_WITH_SHIPMENT'
+
+    class Meta:
+        verbose_name = 'Перемещение под отгрузку'
+        verbose_name_plural = 'Перемещения под отгрузку'

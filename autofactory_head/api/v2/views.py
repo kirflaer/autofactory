@@ -14,8 +14,8 @@ from api.v2.services import get_marks_to_unload
 from catalogs.models import ExternalSource
 from packing.marking_services import marking_close
 from packing.models import MarkingOperation
-from tasks.models import TaskStatus
-from tasks.task_services import change_task_properties
+from tasks.models import TaskStatus, Task
+from tasks.task_services import change_task_properties, RouterTask
 from warehouse_management.models import Pallet, PalletStatus
 from warehouse_management.serializers import PalletReadSerializer, PalletWriteSerializer
 from warehouse_management.warehouse_services import create_pallets, get_pallet_filter_from_shipment, \
@@ -48,7 +48,7 @@ class PalletViewSet(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_queryset(self):
-        # реализация фильртров на вхождение в диапазон
+        # реализация фильтров на вхождение в диапазон
         list_params = {
             'ids': 'id__in',
             'guids': 'guid__in',
@@ -92,11 +92,8 @@ class MarkingViewSet(api.views.MarkingViewSet):
 
 
 class TasksChangeViewSet(TasksViewSet):
-    def change_task(self, request, type_task, guid):
-        task_router = self.router.get(type_task.upper())
-        if not task_router:
-            raise APIException('Тип задачи не найден')
-
+    @staticmethod
+    def _get_task_instance(task_router: RouterTask, guid: str) -> Task:
         instance = task_router.task.objects.filter(guid=guid).first()
         if instance is None:
             external_source = ExternalSource.objects.filter(external_key=guid).first()
@@ -104,6 +101,15 @@ class TasksChangeViewSet(TasksViewSet):
 
         if instance is None:
             raise APIException('Задача не найдена')
+
+        return instance
+
+    def change_task(self, request, type_task, guid):
+        task_router = self.router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+
+        instance = TasksChangeViewSet._get_task_instance(task_router, guid)
 
         guid = instance.pk
 

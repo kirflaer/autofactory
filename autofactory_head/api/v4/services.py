@@ -117,7 +117,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
     source = None
     if content.get('pallet'):
         element = content.get('pallet')
-        pallet = Pallet.objects.get(id=element.key)
+        pallet = Pallet.objects.filter(id=element.key).first()
         row = InventoryAddressWarehouseContent.objects.create(
             product=pallet.product,
             pallet=pallet,
@@ -170,7 +170,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
                        'count': source.count,
                        'weight': source.weight,
                        'pallet': source.pallet_source.guid,
-                       'cell': row.cell.guid} if source else None,
+                       'cell': row.cell.external_key} if source else None,
             }
 
 

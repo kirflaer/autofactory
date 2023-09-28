@@ -168,7 +168,9 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
             'request_data': content,
             'source': {'pk': source.pk,
                        'count': source.count,
-                       'weight': source.weight} if source else None,
+                       'weight': source.weight,
+                       'pallet': source.pallet_source.guid,
+                       'cell': row.cell.guid} if source else None,
             }
 
 

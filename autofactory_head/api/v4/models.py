@@ -36,7 +36,6 @@ class InventoryPalletContent(BaseModel):
 class InventoryAddressWarehouseTaskContent:
     products: List[ProductContent] | None
     pallet: InventoryPalletContent | None
-    priority: int
 
 
 class InventoryAddressWarehouseTask(TaskBaseModel):

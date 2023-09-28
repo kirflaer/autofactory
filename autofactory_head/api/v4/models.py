@@ -34,8 +34,8 @@ class InventoryPalletContent(BaseModel):
 
 @dataclass
 class InventoryAddressWarehouseTaskContent:
-    products: List[ProductContent] | None
-    pallet: InventoryPalletContent | None
+    products: List[ProductContent] | None = None
+    pallet: InventoryPalletContent | None = None
 
 
 class InventoryAddressWarehouseTask(TaskBaseModel):

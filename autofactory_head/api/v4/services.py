@@ -118,6 +118,12 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
     if content.get('pallet'):
         element = content.get('pallet')
         pallet = Pallet.objects.filter(id=element.key).first()
+        if not pallet:
+            raise APIException(f'Паллета {element.key} не найдена.')
+
+        if InventoryAddressWarehouseContent.objects.filter(operation=instance.guid, pallet=pallet).exists():
+            raise APIException(f'Паллета {element.key} не может быть добавлена повторно.')
+
         row = InventoryAddressWarehouseContent.objects.create(
             product=pallet.product,
             pallet=pallet,

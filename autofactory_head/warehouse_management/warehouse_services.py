@@ -517,13 +517,21 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
 @transaction.atomic
 def change_cell_content_state(content: dict[str: str], pallet: Pallet) -> str:
     """ Меняет расположение паллеты в ячейке. Возвращает статус из области новой ячейки """
-    cell_source = StorageCell.objects.get(guid=content['cell_source'])
-    cell_destination = StorageCell.objects.get(guid=content['cell_destination'])
 
-    StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
+    cell_source_guid = content.get('cell_source')
+    cell_destination_guid = content.get('cell_destination')
+
+    if cell_source_guid != cell_destination_guid:
+        cell_source = StorageCell.objects.get(guid=cell_source_guid)
+        StorageCellContentState.objects.create(cell=cell_source, pallet=pallet, status=StatusCellContent.REMOVED)
+
+    cell_destination = StorageCell.objects.get(guid=cell_destination_guid)
     StorageCellContentState.objects.create(cell=cell_destination, pallet=pallet)
 
-    new_status = cell_destination.storage_area.new_status_on_admission
+    new_status = pallet.status
+    if cell_destination.storage_area:
+        new_status = cell_destination.storage_area.new_status_on_admission
+
     pallet.status = new_status
     pallet.save()
 

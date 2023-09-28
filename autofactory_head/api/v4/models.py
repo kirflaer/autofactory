@@ -26,7 +26,6 @@ class ProductContent(BaseModel):
     weight: int
 
 
-@dataclass
 class InventoryPalletContent(BaseModel):
     key: str
     cell: str

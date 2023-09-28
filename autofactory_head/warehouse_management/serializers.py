@@ -745,6 +745,7 @@ class InventoryWriteSerializer(serializers.ModelSerializer):
     cell = serializers.CharField()
     plan = serializers.IntegerField(min_value=0)
     fact = serializers.IntegerField(required=False)
+    priority = serializers.IntegerField(min_value=0)
 
     def validate(self, attrs):
         pallet = Pallet.objects.filter(id=attrs.get('pallet')).first()
@@ -763,4 +764,4 @@ class InventoryWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InventoryAddressWarehouseOperation
-        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')
+        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact', 'priority')

@@ -102,7 +102,7 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
             pallet = Pallet.objects.filter(id=row['pallet']).first()
             cell = StorageCell.objects.filter(external_key=row['cell']).first()
             inventory_content = InventoryAddressWarehouseContent.objects.create(
-                product=product, pallet=pallet, cell=cell, plan=row['plan']
+                product=product, pallet=pallet, cell=cell, plan=row['plan'], priority=row['priority']
             )
             inventory_content.fill_properties(operation)
 
@@ -121,7 +121,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
             product=pallet.product,
             pallet=pallet,
             cell=StorageCell.objects.get(external_key=element.cell),
-            fact=element.count, priority=content.get('priority')
+            fact=element.count
         )
 
         _create_pallet_source_to_inventory(

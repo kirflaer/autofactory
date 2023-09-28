@@ -475,6 +475,7 @@ class InventoryAddressWarehouseContent(ManyToManyOperationMixin):
     cell = models.ForeignKey(to=StorageCell, on_delete=models.CASCADE, verbose_name='Складская ячейка')
     plan = models.PositiveIntegerField('Количество (план)', default=0.0)
     fact = models.PositiveIntegerField('Количество (факт)', default=0.0)
+    priority = models.PositiveIntegerField('Приоритет сортировки', default=0)
 
     class Meta:
         verbose_name = 'Инвентаризация адресного склада (Содержимое операции)'

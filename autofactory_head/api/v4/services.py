@@ -130,6 +130,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
             cell=StorageCell.objects.get(external_key=element.cell),
             fact=element.count
         )
+        row.fill_properties(instance)
 
         source = _create_pallet_source_to_inventory(
             row,

@@ -114,6 +114,7 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 def change_content_inventory_operation(content: dict[str: str], instance: InventoryAddressWarehouseOperation) -> dict:
 
     row = None
+    source = None
     if content.get('pallet'):
         element = content.get('pallet')
         pallet = Pallet.objects.get(id=element.key)
@@ -124,7 +125,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
             fact=element.count
         )
 
-        _create_pallet_source_to_inventory(
+        source = _create_pallet_source_to_inventory(
             row,
             ext_key=row.guid,
             related_task=instance.guid,
@@ -159,8 +160,16 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
 
             row.fact += element.count
             row.save()
+            row = None
 
-    return {'operation': instance.guid, 'result': 'success', 'row': row.guid if row else None}
+    return {'operation': instance.guid,
+            'result': 'success',
+            'row': row.guid if row else None,
+            'request_data': content,
+            'source': {'pk': source.pk,
+                       'count': source.count,
+                       'weight': source.weight} if source else None,
+            }
 
 
 @transaction.atomic

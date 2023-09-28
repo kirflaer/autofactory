@@ -116,7 +116,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
     row = None
     if content.get('pallet'):
         element = content.get('pallet')
-        pallet = Pallet.objects.get(external_key=element.key)
+        pallet = Pallet.objects.get(id=element.key)
         row = InventoryAddressWarehouseContent.objects.create(
             product=pallet.product,
             pallet=pallet,

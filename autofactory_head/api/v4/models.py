@@ -27,8 +27,17 @@ class ProductContent(BaseModel):
 
 
 @dataclass
+class InventoryPalletContent(BaseModel):
+    key: str
+    cell: str
+    count: int
+
+
+@dataclass
 class InventoryAddressWarehouseTaskContent:
-    products: List[ProductContent]
+    products: List[ProductContent] | None
+    pallet: InventoryPalletContent | None
+    priority: int
 
 
 class InventoryAddressWarehouseTask(TaskBaseModel):

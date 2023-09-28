@@ -112,21 +112,43 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 
 @transaction.atomic
 def change_content_inventory_operation(content: dict[str: str], instance: InventoryAddressWarehouseOperation) -> dict:
-    for element in content['products']:
-        row = InventoryAddressWarehouseContent.objects.filter(guid=element.key).first()
 
-        if row is None:
-            raise APIException('Не найдена строка в содержимом инвентаризации')
+    row = None
+    if content.get('pallet'):
+        element = content.get('pallet')
+        row = InventoryAddressWarehouseContent.objects.create(
+            pallet=Pallet.objects.get(external_key=element.key),
+            cell=StorageCell.objects.get(external_key=element.cell),
+            fact=element.count, priority=content.get('priority')
+        )
 
-        PalletSource.objects.create(pallet_source=row.pallet, external_key=element.key,
-                                    count=element.count, type_collect=TypeCollect.INVENTORY,
-                                    related_task=instance.guid,
-                                    product=row.product, weight=element.weight)
+        _create_pallet_source_to_inventory(
+            row,
+            ext_key=row.guid,
+            related_task=instance.guid,
+            count=element.count
+        )
 
-        row.fact += element.count
-        row.save()
+    if content.get('products'):
 
-    return {'operation': instance.guid, 'result': 'success'}
+        for element in content['products']:
+            row = InventoryAddressWarehouseContent.objects.filter(guid=element.key).first()
+
+            if row is None:
+                raise APIException('Не найдена строка в содержимом инвентаризации')
+
+            _create_pallet_source_to_inventory(
+                row,
+                ext_key=element.key,
+                related_task=instance.guid,
+                count=element.count,
+                weight=element.weight
+            )
+
+            row.fact += element.count
+            row.save()
+
+    return {'operation': instance.guid, 'result': 'success', 'row': row.guid if row else None}
 
 
 @transaction.atomic
@@ -242,3 +264,16 @@ def create_movement_shipment(serializer_data, _: User) -> list:
         fill_operation_cells(operation_movement, element['pallets'])
 
     return result
+
+
+def _create_pallet_source_to_inventory(
+        content: InventoryAddressWarehouseContent,
+        **kwargs
+) -> PalletSource:
+
+    return PalletSource.objects.create(
+        pallet_source=content.pallet, external_key=kwargs.get('ext_key'),
+        count=kwargs.get('count', 0), type_collect=TypeCollect.INVENTORY,
+        related_task=kwargs.get('related_task'),
+        product=content.product, weight=kwargs.get('weight', 0)
+    )

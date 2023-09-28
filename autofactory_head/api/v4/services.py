@@ -116,8 +116,10 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
     row = None
     if content.get('pallet'):
         element = content.get('pallet')
+        pallet = Pallet.objects.get(external_key=element.key)
         row = InventoryAddressWarehouseContent.objects.create(
-            pallet=Pallet.objects.get(external_key=element.key),
+            product=pallet.product,
+            pallet=pallet,
             cell=StorageCell.objects.get(external_key=element.cell),
             fact=element.count, priority=content.get('priority')
         )

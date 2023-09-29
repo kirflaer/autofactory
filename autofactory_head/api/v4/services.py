@@ -13,7 +13,7 @@ from warehouse_management.models import (
 )
 from warehouse_management.warehouse_services import (
     create_pallets, fill_operation_pallets, get_or_create_external_source, remove_boxes_from_pallet,
-    fill_operation_cells
+    fill_operation_cells, get_cell_state, change_cell_content_state
 )
 
 User = get_user_model()
@@ -101,10 +101,10 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
             product = Product.objects.filter(external_key=row['product']).first()
             pallet = Pallet.objects.filter(id=row['pallet']).first()
             cell = StorageCell.objects.filter(external_key=row['cell']).first()
-            inventory = InventoryAddressWarehouseContent.objects.create(
-                product=product, pallet=pallet, cell=cell, plan=row['plan']
+            inventory_content = InventoryAddressWarehouseContent.objects.create(
+                product=product, pallet=pallet, cell=cell, plan=row['plan'], priority=row['priority']
             )
-            inventory.fill_properties(operation)
+            inventory_content.fill_properties(operation)
 
         result.append(operation.guid)
     return result
@@ -112,21 +112,73 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 
 @transaction.atomic
 def change_content_inventory_operation(content: dict[str: str], instance: InventoryAddressWarehouseOperation) -> dict:
-    for element in content['products']:
-        row = InventoryAddressWarehouseContent.objects.filter(guid=element.key).first()
 
-        if row is None:
-            raise APIException('Не найдена строка в содержимом инвентаризации')
+    row = None
+    source = None
+    if content.get('pallet'):
+        element = content.get('pallet')
+        pallet = Pallet.objects.filter(id=element.key).first()
+        if not pallet:
+            raise APIException(f'Паллета {element.key} не найдена.')
 
-        PalletSource.objects.create(pallet_source=row.pallet, external_key=element.key,
-                                    count=element.count, type_collect=TypeCollect.INVENTORY,
-                                    related_task=instance.guid,
-                                    product=row.product, weight=element.weight)
+        if InventoryAddressWarehouseContent.objects.filter(operation=instance.guid, pallet=pallet).exists():
+            raise APIException(f'Паллета {element.key} не может быть добавлена повторно.')
 
-        row.fact += element.count
-        row.save()
+        row = InventoryAddressWarehouseContent.objects.create(
+            product=pallet.product,
+            pallet=pallet,
+            cell=StorageCell.objects.get(external_key=element.cell),
+            fact=element.count
+        )
+        row.fill_properties(instance)
 
-    return {'operation': instance.guid, 'result': 'success'}
+        source = _create_pallet_source_to_inventory(
+            row,
+            ext_key=row.guid,
+            related_task=instance.guid,
+            count=element.count
+        )
+
+        state = get_cell_state(pallet=row.pallet)
+
+        change_cell_content_state(
+            {
+                'cell_source': state.cell.guid if state else row.cell.guid,
+                'cell_destination': row.cell.guid
+            },
+            pallet=row.pallet
+        )
+
+    if content.get('products'):
+
+        for element in content['products']:
+            row = InventoryAddressWarehouseContent.objects.filter(guid=element.key).first()
+
+            if row is None:
+                raise APIException('Не найдена строка в содержимом инвентаризации')
+
+            _create_pallet_source_to_inventory(
+                row,
+                ext_key=element.key,
+                related_task=instance.guid,
+                count=element.count,
+                weight=element.weight
+            )
+
+            row.fact += element.count
+            row.save()
+            row = None
+
+    return {'operation': instance.guid,
+            'result': 'success',
+            'row': row.guid if row else None,
+            'request_data': content,
+            'source': {'pk': source.pk,
+                       'count': source.count,
+                       'weight': source.weight,
+                       'pallet': source.pallet_source.guid,
+                       'cell': row.cell.external_key} if source else None,
+            }
 
 
 @transaction.atomic
@@ -242,3 +294,28 @@ def create_movement_shipment(serializer_data, _: User) -> list:
         fill_operation_cells(operation_movement, element['pallets'])
 
     return result
+
+
+def _create_pallet_source_to_inventory(
+        content: InventoryAddressWarehouseContent,
+        **kwargs
+) -> PalletSource:
+
+    return PalletSource.objects.create(
+        pallet_source=content.pallet, external_key=kwargs.get('ext_key'),
+        count=kwargs.get('count', 0), type_collect=TypeCollect.INVENTORY,
+        related_task=kwargs.get('related_task'),
+        product=content.product, weight=kwargs.get('weight', 0)
+    )
+
+
+def change_property_inventory(content: dict[str: str], instance: InventoryAddressWarehouseOperation):
+
+    if not content.get('unloaded', False):
+        return
+
+    inventory_contents = InventoryAddressWarehouseContent.objects.filter(operation=instance.guid)
+    for element in inventory_contents:
+        element.pallet.content_count = element.fact
+        element.pallet.save()
+

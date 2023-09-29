@@ -8,7 +8,7 @@ from api.v4.serializers import (
 from api.v4.services import (
     create_collect_operation, create_write_off_operation, change_content_write_off_operation,
     create_inventory_operation, change_content_inventory_operation, create_cancel_shipment,
-    check_pallet_collect_shipment, create_movement_shipment
+    check_pallet_collect_shipment, create_movement_shipment, change_property_inventory
 )
 from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
@@ -53,7 +53,8 @@ def get_task_router() -> dict[str: RouterTask]:
                                                       read_serializer=InventoryAddressWarehouseReadSerializer,
                                                       write_serializer=InventoryAddressWarehouseWriteSerializer,
                                                       content_model=InventoryAddressWarehouseTask,
-                                                      change_content_function=change_content_inventory_operation),
+                                                      change_content_function=change_content_inventory_operation,
+                                                      change_properties_function=change_property_inventory),
             'CANCEL_SHIPMENT': RouterTask(task=CancelShipmentOperation,
                                           create_function=create_cancel_shipment,
                                           read_serializer=CancelShipmentReadSerializer,

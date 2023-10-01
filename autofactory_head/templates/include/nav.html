@@ -94,24 +94,6 @@
                     </a>
                 </li>
 
-{#                {% if user.settings.collect_pallet_mode_is_active %}#}
-{#                <li class="sidebar-item {% if view_name  == 'pallets' %}active{% endif %}">#}
-{#                    <a class="sidebar-link" href="{% url 'pallets' %}">#}
-{#                        <i class="align-middle" data-feather="package"></i> <span#}
-{#                            class="align-middle">Сбор паллет</span>#}
-{#                    </a>#}
-{#                </li>#}
-{#                {% endif %}#}
-
-{#                {% if user.settings.collect_pallet_mode_is_active %}#}
-{#                <li class="sidebar-item {% if view_name  == 'tasks' %}active{% endif %}">#}
-{#                    <a class="sidebar-link" href="{% url 'tasks' %}">#}
-{#                        <i class="align-middle" data-feather="clipboard"></i> <span#}
-{#                            class="align-middle">Задания</span>#}
-{#                    </a>#}
-{#                </li>#}
-{#                {% endif %}#}
-
                 {% if user.is_superuser or user.is_local_admin %}
                 <li class="sidebar-item {% if view_name  == 'users' %}active{% endif %}">
                     <a class="sidebar-link" href="{% url 'users' %}">

@@ -20,7 +20,16 @@
                                 <div class="alert-message">
                                     <h4 class="alert-heading">Внимание!</h4>
                                     <p>Данное действие необратимо, вы действительно хотите закрыть смену?</p>
-                                    <p>Количество собранных паллет в смене: <b>{{ pallet_count }}</b></p>
+
+                                    {% if user.settings.shift_close_show_pallet_count %}
+                                        <p>Количество собранных паллет в смене: <b>{{ pallet_count }}</b></p>
+                                    {% endif %}
+
+                                    {% if user.settings.shift_close_show_marks_count %}
+                                        <p>Количество собранных марок в смене: <b>{{ marks_count }}</b></p>
+                                    {% endif %}
+
+
                                     <hr>
                                     <div class="btn-list">
                                         <form method="post" action="{% url  'shift_close' %}">
@@ -30,8 +39,8 @@
                                             </button>
 
                                             <a href="{% url 'shifts' %}">
-                                            <button class="btn btn-danger" type="button">Отмена</button>
-                                        </a>
+                                                <button class="btn btn-danger" type="button">Отмена</button>
+                                            </a>
                                         </form>
 
 

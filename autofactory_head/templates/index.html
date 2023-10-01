@@ -53,6 +53,48 @@
                 </div>
             </div>
         </div>
+
+
+        {% if user.settings.show_raw_marking  %}
+            <div class="col-12 col-lg-7 col-x1-8 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-header">
+
+                        <h5 class="card-title mb-0">Марки в незакрытых маркировах</h5>
+                    </div>
+
+                    <table id="datatables-dashboard-traffic" class="table table-striped my-0">
+
+                        <thead>
+
+                        <tr>
+                            <th style=width:12%;">Номер маркировки</th>
+                            <th style="width:12%;">Дата маркировки</th>
+
+                            <th style="width:8%;">Номер партии</th>
+
+                            <th style="width: 15%">Линия</th>
+                            <th style="width: 10%;">Количество</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for element in raw_marks_data %}
+                            <tr>
+                                <td> {{ element.operation__number |default_if_none:"-" }} </td>
+                                <td> {{ element.operation__date|default_if_none:"-" }} </td>
+                                <td> {{ element.operation__batch_number |default_if_none:"-" }} </td>
+                                <td> {{ element.operation__line__name |default_if_none:"-" }} </td>
+                                <td> {{ element.count }} </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            </div>
+        {% endif %}
+
     </div>
 
 

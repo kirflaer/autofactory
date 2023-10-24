@@ -153,15 +153,26 @@ class ShiftListView(OperationBasicListView):
 @login_required
 @require_http_methods(['POST', 'GET'])
 def shift_processing(request):
+    user: User = request.user
     if len(request.GET):
         instance = Shift.objects.get(guid=request.GET['shift'])
-        pallet_count = Pallet.objects.filter(shift=instance, status=PalletStatus.COLLECTED).count()
+
+        if user.settings.shift_close_show_pallet_count:
+            pallet_count = Pallet.objects.filter(shift=instance, status=PalletStatus.COLLECTED).count()
+        else:
+            pallet_count = 0
+
+        if user.settings.shift_close_show_marks_count:
+            marks_count = MarkingOperationMark.objects.filter(operation__shift=instance).count()
+        else:
+            marks_count = 0
 
         if instance.line.check_collect_pallet and not pallet_count:
             return redirect(
                 f'{reverse_lazy("shifts")}?message={"Нет собранных паллет в смене. Закрытие смены невозможно"}')
 
-        return render(request, 'confirm_shift.html', {'shift': request.GET['shift'], 'pallet_count': pallet_count})
+        return render(request, 'confirm_shift.html',
+                      {'shift': request.GET['shift'], 'pallet_count': pallet_count, 'marks_count': marks_count})
 
     shift_guid = request.POST.get('shift')
 

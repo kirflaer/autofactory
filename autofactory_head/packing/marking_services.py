@@ -45,6 +45,11 @@ def _get_report_week_marking() -> Dict:
     monday = monday.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=pytz.UTC)
     sunday = (today + timedelta(6 - dt.weekday(today))).replace(tzinfo=pytz.UTC)
 
+    raw_marks_data = RawMark.objects.all().values('operation__line__name',
+                                                  'operation__batch_number',
+                                                  'operation__date',
+                                                  'operation__number').annotate(count=Count('operation'))
+
     report_data = MarkingOperationMark.objects.filter(
         operation__date__range=[monday, sunday]).values(
         'operation__line__name').annotate(count=Count('operation'))
@@ -53,7 +58,8 @@ def _get_report_week_marking() -> Dict:
         data.append(element['count'])
     return {'week_marking_labels': labels,
             'week_marking_data': data,
-            'week_marking_table_data': report_data}
+            'week_marking_table_data': report_data,
+            'raw_marks_data': raw_marks_data}
 
 
 def _get_report_marking_dynamics() -> Dict:

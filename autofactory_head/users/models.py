@@ -67,6 +67,15 @@ class Setting(models.Model):
     use_cache = models.BooleanField('Использовать кэш', default=False)
     ttl_cache = models.PositiveIntegerField('Время жизни кэша (сек)', default=600)
 
+    # Секция настроек для дашборда
+    show_raw_marking = models.BooleanField('Отображать сырые марки на главном дашборде', default=False)
+
+    # Секция закрытие смены
+    shift_close_show_pallet_count = models.BooleanField('Показывать собранные паллеты при закрытии смены',
+                                                        default=False)
+    shift_close_show_marks_count = models.BooleanField('Показывать собранные марки при закрытии смены',
+                                                       default=False)
+
     class Meta:
         verbose_name = 'Настройки пользователя'
         verbose_name_plural = 'Настройки пользователя'

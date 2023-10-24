@@ -70,7 +70,9 @@ class Setting(models.Model):
     # Секция настроек для дашборда
     show_raw_marking = models.BooleanField('Отображать сырые марки на главном дашборде', default=False)
 
-    # Секция закрытие смены
+    # Секция по работе со сменами
+    shift_open_show_type_marking = models.BooleanField('Запрашивать тип маркировки при открытии смены', default=True)
+    shift_open_show_product = models.BooleanField('Показывать номенклатуру при открытии смены', default=False)
     shift_close_show_pallet_count = models.BooleanField('Показывать собранные паллеты при закрытии смены',
                                                         default=False)
     shift_close_show_marks_count = models.BooleanField('Показывать собранные марки при закрытии смены',

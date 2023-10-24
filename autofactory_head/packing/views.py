@@ -6,13 +6,14 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_http_methods
 
-from factory_core.models import Shift
+from factory_core.models import Shift, TypeShift
 from packing.forms import MarkingOperationForm, ShiftForm
 from packing.marking_services import get_marking_filters, shift_close
 from packing.models import (
     MarkingOperation,
     MarkingOperationMark,
 )
+from users.models import User
 
 from warehouse_management.models import PalletContent, Pallet, PalletStatus
 
@@ -23,8 +24,6 @@ from django.views.generic import (
 )
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-
-User = get_user_model()
 
 
 class OperationBasicListView(LoginRequiredMixin, ListView):
@@ -144,7 +143,8 @@ class ShiftListView(OperationBasicListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        user = self.request.user
+        user: User = self.request.user
+
         if user.is_superuser or user.is_local_admin:
             return qs[:300]
         return qs.filter(line__storage=user.shop)[:300]
@@ -188,16 +188,23 @@ class ShiftCreateView(LoginRequiredMixin, CreateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
+        user: User = self.request.user
 
-        if not (self.request.user.is_superuser or self.request.user.is_local_admin):
-            form.fields['line'].queryset = Line.objects.filter(storage=self.request.user.shop)
+        if not user.settings.use_organization:
+            form.fields.pop('organization')
+
+        if not user.settings.shift_open_show_product:
+            form.fields.pop('product')
+
+        if not (user.is_superuser or user.is_local_admin):
+            form.fields['line'].queryset = Line.objects.filter(storage=user.shop)
         return form
 
     def form_valid(self, form):
         type_shift = self.request.POST.get('type_shift')
         message = ''
         if not type_shift:
-            message = f'Не передан тип смены.'
+            type_shift = TypeShift.MARKED
 
         form_line = form.cleaned_data['line']
         if Shift.objects.filter(line=form_line, closed=False, type=type_shift).exists():

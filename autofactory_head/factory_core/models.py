@@ -6,7 +6,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models import Max
 
-from catalogs.models import Line, Product
+from catalogs.models import Line, Product, Organization
 
 User = get_user_model()
 
@@ -77,6 +77,9 @@ class Shift(models.Model):
     number = models.PositiveIntegerField('Номер', default=0)
     author = models.ForeignKey(User, verbose_name='Автор', on_delete=models.SET_NULL, blank=True, null=True)
     type = models.CharField('Тип', max_length=20, choices=TypeShift.choices, default=TypeShift.MARKED, null=True)
+    organization = models.ForeignKey(Organization, verbose_name='Организация', on_delete=models.SET_NULL, blank=True,
+                                     null=True)
+    product = models.ForeignKey(Product, verbose_name='Номенклатура', on_delete=models.SET_NULL, blank=True, null=True)
 
     class Meta:
         verbose_name = 'Смена'

@@ -9,8 +9,6 @@
 {% block content %}
     <div class="container-fluid p-0">
 
-        <!-- <h1 class="h3 mb-3">Form Layouts</h1> -->
-
         <div class="row">
             <div class="col-12 col-xl-6">
                 <div class="card">
@@ -35,6 +33,7 @@
                             {% endfor %}
 
 
+                            {% if user.settings.shift_open_show_type_marking %}
                             <button type="button" class="btn btn-primary my-1" data-bs-toggle="modal"
                                     data-bs-target="#centeredModalPrimary">
                                 Сохранить
@@ -75,6 +74,12 @@
                                     </div>
                                 </div>
                             </div>
+                        {% else %}
+                                 <button type="submit" class="btn btn-primary my-1" data-bs-toggle="modal"
+                                    data-bs-target="#centeredModalPrimary">
+                                Сохранить
+                            </button>
+                        {% endif %}
 
 
                         </form>

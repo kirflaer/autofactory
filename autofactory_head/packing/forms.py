@@ -21,4 +21,4 @@ class ShiftForm(ModelForm):
 
     class Meta:
         model = Shift
-        fields = ['line', 'batch_number', 'production_date']
+        fields = ['line', 'batch_number', 'production_date', 'product', 'organization']

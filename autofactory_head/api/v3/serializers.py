@@ -44,9 +44,11 @@ class ShiftSerializer(serializers.ModelSerializer):
         model = Shift
         fields = (
             'guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'shift_products', 'type',
-            'closed'
+            'closed', 'organization', 'product'
         )
-        read_only_fields = ('guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'type')
+        read_only_fields = (
+            'guid', 'line', 'batch_number', 'production_date', 'code_offline', 'products', 'type', 'organization',
+            'product')
 
 
 class ShiftUpdateSerializer(ShiftSerializer):

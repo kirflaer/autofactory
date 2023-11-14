@@ -271,6 +271,9 @@ class PlacementToCellsOperation(OperationBaseOperation):
         for row in cells:
             cell = row.cell_source if not row.cell_destination else row.cell_destination
             StorageCellContentState.objects.create(pallet=row.pallet, cell=cell)
+            if row.pallet.status == PalletStatus.CONFIRMED:
+                row.pallet.status = PalletStatus.PLACED
+                row.pallet.save()
         super().close()
 
 

@@ -164,7 +164,13 @@ class InventoryAddressWarehouseReadSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_products(obj):
-        products = InventoryAddressWarehouseContent.objects.filter(operation=obj.guid).order_by('priority')
+        products = (
+            InventoryAddressWarehouseContent
+            .objects
+            .filter(operation=obj.guid)
+            .exclude(pallet__status=PalletStatus.ARCHIVED)
+            .order_by('priority')
+        )
         result = []
         for row in products:
             serializer = InventoryAddressWarehouseSerializer(row)

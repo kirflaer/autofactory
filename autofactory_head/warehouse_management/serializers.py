@@ -355,9 +355,9 @@ class StorageCellsSerializer(serializers.ModelSerializer):
     storage_area = serializers.CharField(required=False)
 
     class Meta:
-        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan')
+        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan', 'id_area')
         model = StorageCell
-        read_only_fields = ('guid',)
+        read_only_fields = ('guid', 'id_area')
 
     def create(self, validated_data):
         storage_area_key = validated_data.pop('storage_area')

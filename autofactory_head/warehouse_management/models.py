@@ -330,16 +330,10 @@ class PalletCollectOperation(OperationBaseOperation):
 
     type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
                                     default=TypeCollect.ACCEPTANCE)
-    modified = models.DateTimeField('Принято в работу', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Сбор паллет'
         verbose_name_plural = 'Сбор паллет'
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.type_collect == TypeCollect.SHIPMENT and not self.modified and self.status == TaskStatus.WORK:
-            self.modified = datetime.datetime.now()
-        super().save(force_insert, force_update, using, update_fields)
 
     def close(self):
         super().close()

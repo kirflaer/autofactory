@@ -47,6 +47,7 @@ class OperationBaseModel(models.Model):
     date = models.DateTimeField('Дата создания', auto_now_add=True)
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
+    modified = models.DateTimeField('Принято в работу', null=True, blank=True)
 
     class Meta:
         abstract = True

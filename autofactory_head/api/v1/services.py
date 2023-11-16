@@ -1,8 +1,15 @@
+import datetime
+
 from django.contrib.auth import get_user_model
 
 from packing.models import MarkingOperationMark
-from warehouse_management.models import PalletContent, Pallet, PalletCollectOperation
-from tasks.models import Task, TaskStatus
+from warehouse_management.models import (
+    PalletContent,
+    Pallet,
+    PalletCollectOperation,
+    OperationBaseOperation
+)
+from tasks.models import TaskStatus
 from warehouse_management.models import OperationPallet
 
 User = get_user_model()
@@ -80,7 +87,13 @@ def task_take_pallet_collect(instance: PalletCollectOperation, user: User, guid:
             task_take(item, user)
 
 
-def task_take(instance: Task, user: User, status: TaskStatus = TaskStatus.WORK) -> None:
+def task_take(
+        instance: OperationBaseOperation,
+        user: User,
+        status: TaskStatus = TaskStatus.WORK
+) -> None:
+
     instance.status = status
     instance.user = user
+    instance.modified = datetime.datetime.now()
     instance.save()

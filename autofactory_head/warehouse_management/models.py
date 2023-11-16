@@ -47,7 +47,7 @@ class TypeCollect(models.TextChoices):
 
 
 class CellAreaIdentifier(models.TextChoices):
-    FOR_SHIPMENT = 'FOR SHIPMENT'
+    FOR_SHIPMENT = 'FOR_SHIPMENT'
     REPLACEMENT = 'REPLACEMENT'
 
 

@@ -388,10 +388,11 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
     cells = serializers.SerializerMethodField()
     external_source = ExternalSerializer()
     user = serializers.SlugRelatedField('username', read_only=True)
+    modified = serializers.DateTimeField(format='%H:%M')
 
     class Meta:
         model = PlacementToCellsOperation
-        fields = ('external_source', 'guid', 'number', 'status', 'date', 'storage', 'cells', 'user')
+        fields = ('external_source', 'guid', 'number', 'status', 'date', 'storage', 'cells', 'user', 'modified')
 
     @staticmethod
     def get_cells(obj):
@@ -540,10 +541,11 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     storage_areas = serializers.SerializerMethodField()
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    modified = serializers.DateTimeField(format='%H:%M')
 
     class Meta:
         model = SelectionOperation
-        fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'storage_areas')
+        fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'storage_areas', 'modified')
 
     @staticmethod
     def get_number(obj):

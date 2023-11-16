@@ -46,6 +46,11 @@ class TypeCollect(models.TextChoices):
     DIVIDED = 'DIVIDED'
 
 
+class CellAreaIdentifier(models.TextChoices):
+    FOR_SHIPMENT = 'FOR SHIPMENT'
+    REPLACEMENT = 'REPLACEMENT'
+
+
 class StatusCellContent(models.TextChoices):
     PLACED = 'PLACED'
     REMOVED = 'REMOVED'
@@ -101,6 +106,13 @@ class StorageCell(BaseExternalModel):
     needed_filter_by_task = models.BooleanField('Необходим фильтр по задания при размещении', default=False)
     rack_number = models.PositiveIntegerField('Номер стеллажа', default=0, blank=True)
     position = models.PositiveIntegerField('Позиция внутри стеллажа', default=0, blank=True)
+    id_area = models.CharField(
+        verbose_name='Идентификатор области',
+        max_length=20,
+        choices=CellAreaIdentifier.choices,
+        null=True,
+        blank=False
+    )
 
     class Meta:
         verbose_name = 'Складская ячейка'

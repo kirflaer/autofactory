@@ -5,24 +5,35 @@ from typing import Iterable
 
 import pytz
 from django.db import connection
+from django.db.models import Count, Sum
 
 from catalogs.models import Line
+from warehouse_management.models import PalletSource
 
 
 class ReportType(Enum):
     LINE_LOAD = 1
     LINE_LOAD_BY_HOURS = 2
+    EFFICIENCY_SHIPMENT = 3
+    EFFICIENCY_PLACEMENT_DESCENT = 4
+    EFFICIENCY_CHECK_SHIPMENT = 5
 
 
 def get_report_data(user_filters: dict, report_type: ReportType) -> Iterable:
     reports_function = {
         ReportType.LINE_LOAD: _get_load_lines_data,
-        ReportType.LINE_LOAD_BY_HOURS: _get_load_lines_data_by_hours
+        ReportType.LINE_LOAD_BY_HOURS: _get_load_lines_data_by_hours,
+        ReportType.EFFICIENCY_SHIPMENT: _get_efficiency_shipment,
+        ReportType.EFFICIENCY_PLACEMENT_DESCENT: _get_efficiency_placement_descent,
+        ReportType.EFFICIENCY_CHECK_SHIPMENT: _get_efficiency_check_shipment,
     }
 
     required_params = {
         ReportType.LINE_LOAD: {'date_start', 'date_end'},
-        ReportType.LINE_LOAD_BY_HOURS: {'date_start', 'date_end', 'line'}
+        ReportType.LINE_LOAD_BY_HOURS: {'date_start', 'date_end', 'line'},
+        ReportType.EFFICIENCY_SHIPMENT: {'date_start', 'date_end'},
+        ReportType.EFFICIENCY_PLACEMENT_DESCENT: {'date_start', 'date_end'},
+        ReportType.EFFICIENCY_CHECK_SHIPMENT: {'date_start', 'date_end'},
     }
 
     validated_params = dict()
@@ -133,3 +144,29 @@ def _get_load_lines_hours_rows(line: str, date_start: dt, date_end: dt) -> Itera
         ORDER BY sub_req_1.day, sub_req_1.hour
         """, (line, date_start, date_end))
         return [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
+
+
+def _get_efficiency_shipment(params: dict) -> Iterable:
+
+    queryset = (
+        PalletSource.objects.filter(
+            created_at__gte=params.get('date_start'),
+            created_at__lte=params.get('date_end')
+        )
+        .values('user__username')
+        .annotate(
+            assembled_pallets=Count('pallet_id'),
+            assembled_boxes=Sum('count'),
+            assembled_kg=Sum('weight')
+        )
+    )
+
+    return list(queryset)
+
+
+def _get_efficiency_placement_descent(params: dict) -> Iterable:
+    pass
+
+
+def _get_efficiency_check_shipment(params: dict) -> Iterable:
+    pass

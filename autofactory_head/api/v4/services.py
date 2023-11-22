@@ -166,6 +166,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
             )
 
             row.fact += element.count
+            row.weight = element.weight
             row.save()
             row = None
 
@@ -317,5 +318,6 @@ def change_property_inventory(content: dict[str: str], instance: InventoryAddres
     inventory_contents = InventoryAddressWarehouseContent.objects.filter(operation=instance.guid)
     for element in inventory_contents:
         element.pallet.content_count = element.fact
+        element.pallet.weight = element.weight
         element.pallet.save()
 

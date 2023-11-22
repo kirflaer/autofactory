@@ -355,9 +355,9 @@ class StorageCellsSerializer(serializers.ModelSerializer):
     storage_area = serializers.CharField(required=False)
 
     class Meta:
-        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan')
+        fields = ('guid', 'name', 'external_key', 'barcode', 'storage_area', 'needed_scan', 'id_area')
         model = StorageCell
-        read_only_fields = ('guid',)
+        read_only_fields = ('guid', 'id_area')
 
     def create(self, validated_data):
         storage_area_key = validated_data.pop('storage_area')
@@ -387,10 +387,12 @@ class PlacementToCellsOperationReadSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%d.%m.%Y %H:%M:%S")
     cells = serializers.SerializerMethodField()
     external_source = ExternalSerializer()
+    user = serializers.SlugRelatedField('username', read_only=True)
+    modified = serializers.DateTimeField(format='%H:%M')
 
     class Meta:
         model = PlacementToCellsOperation
-        fields = ('external_source', 'guid', 'number', 'status', 'date', 'storage', 'cells')
+        fields = ('external_source', 'guid', 'number', 'status', 'date', 'storage', 'cells', 'user', 'modified')
 
     @staticmethod
     def get_cells(obj):
@@ -539,10 +541,11 @@ class SelectionOperationReadSerializer(serializers.ModelSerializer):
     external_key = serializers.SlugRelatedField(slug_field='external_key', read_only=True, source='external_source')
     storage_areas = serializers.SerializerMethodField()
     user = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    modified = serializers.DateTimeField(format='%H:%M')
 
     class Meta:
         model = SelectionOperation
-        fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'storage_areas')
+        fields = ('status', 'date', 'number', 'guid', 'external_key', 'user', 'storage_areas', 'modified')
 
     @staticmethod
     def get_number(obj):
@@ -733,10 +736,11 @@ class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
     cell = StorageCellsSerializer()
     plan = serializers.IntegerField()
     fact = serializers.IntegerField()
+    weight = serializers.IntegerField()
 
     class Meta:
         model = InventoryAddressWarehouseOperation
-        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')
+        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact', 'weight')
 
 
 class InventoryWriteSerializer(serializers.ModelSerializer):

@@ -46,6 +46,11 @@ class TypeCollect(models.TextChoices):
     DIVIDED = 'DIVIDED'
 
 
+class CellAreaIdentifier(models.TextChoices):
+    FOR_SHIPMENT = 'FOR_SHIPMENT'
+    REPLACEMENT = 'REPLACEMENT'
+
+
 class StatusCellContent(models.TextChoices):
     PLACED = 'PLACED'
     REMOVED = 'REMOVED'
@@ -101,6 +106,13 @@ class StorageCell(BaseExternalModel):
     needed_filter_by_task = models.BooleanField('Необходим фильтр по задания при размещении', default=False)
     rack_number = models.PositiveIntegerField('Номер стеллажа', default=0, blank=True)
     position = models.PositiveIntegerField('Позиция внутри стеллажа', default=0, blank=True)
+    id_area = models.CharField(
+        verbose_name='Идентификатор области',
+        max_length=20,
+        choices=CellAreaIdentifier.choices,
+        null=True,
+        blank=False
+    )
 
     class Meta:
         verbose_name = 'Складская ячейка'
@@ -271,6 +283,9 @@ class PlacementToCellsOperation(OperationBaseOperation):
         for row in cells:
             cell = row.cell_source if not row.cell_destination else row.cell_destination
             StorageCellContentState.objects.create(pallet=row.pallet, cell=cell)
+            if row.pallet.status == PalletStatus.CONFIRMED:
+                row.pallet.status = PalletStatus.PLACED
+                row.pallet.save()
         super().close()
 
 
@@ -315,16 +330,10 @@ class PalletCollectOperation(OperationBaseOperation):
 
     type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
                                     default=TypeCollect.ACCEPTANCE)
-    modified = models.DateTimeField('Принято в работу', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Сбор паллет'
         verbose_name_plural = 'Сбор паллет'
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if self.type_collect == TypeCollect.SHIPMENT and not self.modified and self.status == TaskStatus.WORK:
-            self.modified = datetime.datetime.now()
-        super().save(force_insert, force_update, using, update_fields)
 
     def close(self):
         super().close()
@@ -476,6 +485,7 @@ class InventoryAddressWarehouseContent(ManyToManyOperationMixin):
     plan = models.PositiveIntegerField('Количество (план)', default=0.0)
     fact = models.PositiveIntegerField('Количество (факт)', default=0.0)
     priority = models.PositiveIntegerField('Приоритет сортировки', default=0)
+    weight = models.PositiveIntegerField('Вес', default=0.0)
 
     class Meta:
         verbose_name = 'Инвентаризация адресного склада (Содержимое операции)'

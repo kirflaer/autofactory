@@ -736,10 +736,11 @@ class InventoryAddressWarehouseSerializer(serializers.ModelSerializer):
     cell = StorageCellsSerializer()
     plan = serializers.IntegerField()
     fact = serializers.IntegerField()
+    weight = serializers.IntegerField()
 
     class Meta:
         model = InventoryAddressWarehouseOperation
-        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact')
+        fields = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact', 'weight')
 
 
 class InventoryWriteSerializer(serializers.ModelSerializer):

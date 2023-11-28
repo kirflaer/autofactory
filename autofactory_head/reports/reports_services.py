@@ -8,7 +8,11 @@ from django.db import connection
 from django.db.models import Count, Sum
 
 from catalogs.models import Line
-from warehouse_management.models import PalletSource
+from warehouse_management.models import (
+    PalletCollectOperation,
+    PalletSource,
+    TypeCollect,
+)
 
 
 class ReportType(Enum):
@@ -165,8 +169,55 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
 
 
 def _get_efficiency_placement_descent(params: dict) -> Iterable:
-    pass
+
+    with connection.cursor() as cursor:
+        cursor.execute('''
+        SELECT OPERATIONS.USERNAME,
+            SUM(OPERATIONS.PLACEMENT_PALLETS) AS PLACEMENT_PALLETS,
+            SUM(OPERATIONS.DESCENT_PALLETS) AS DESCENT_PALLETS
+        FROM
+            (SELECT USR.USERNAME,
+                    COUNT(OC.PALLET_ID) AS PLACEMENT_PALLETS,
+                    0 AS DESCENT_PALLETS
+                FROM WAREHOUSE_MANAGEMENT_PLACEMENTTOCELLSOPERATION AS PCO
+                INNER JOIN WAREHOUSE_MANAGEMENT_OPERATIONCELL AS OC ON PCO.GUID = OC.OPERATION
+                LEFT JOIN USERS_USER AS USR ON PCO.USER_ID = USR.ID
+                WHERE PCO.DATE BETWEEN %(date_start)s AND %(date_end)s
+                GROUP BY USR.USERNAME
+                UNION ALL SELECT USR.USERNAME, 0,
+                    COUNT(OC.PALLET_ID)
+                FROM WAREHOUSE_MANAGEMENT_SELECTIONOPERATION AS SO
+                INNER JOIN WAREHOUSE_MANAGEMENT_OPERATIONCELL AS OC ON SO.GUID = OC.OPERATION
+                LEFT JOIN USERS_USER AS USR ON SO.USER_ID = USR.ID
+                WHERE SO.DATE BETWEEN %(date_start)s AND %(date_end)s
+                GROUP BY USR.USERNAME) AS OPERATIONS
+        GROUP BY OPERATIONS.USERNAME
+        ''', params)
+
+        return [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
 
 
 def _get_efficiency_check_shipment(params: dict) -> Iterable:
-    pass
+
+    params['type_collect'] = TypeCollect.SHIPMENT
+
+    with connection.cursor() as cursor:
+        cursor.execute('''
+        SELECT OPERATIONS.USERNAME,
+            COUNT(OPERATIONS.PARENT_TASK) as tickets,
+            COUNT(PS.PALLET_SOURCE_ID) AS pallets,
+            SUM(PS.COUNT) AS boxes
+        FROM
+            (SELECT USR.USERNAME,
+                    PCO.PARENT_TASK,
+                    OP.PALLET_ID
+                FROM WAREHOUSE_MANAGEMENT_PALLETCOLLECTOPERATION AS PCO
+                INNER JOIN WAREHOUSE_MANAGEMENT_OPERATIONPALLET AS OP ON PCO.GUID = OP.OPERATION
+                LEFT JOIN USERS_USER AS USR ON PCO.MANAGER_ID = USR.ID
+                WHERE PCO.DATE BETWEEN %(date_start)s AND %(date_end)s
+            AND PCO.TYPE_COLLECT = %(type_collect)s) AS OPERATIONS
+        INNER JOIN WAREHOUSE_MANAGEMENT_PALLETSOURCE AS PS ON OPERATIONS.PALLET_ID = PS.PALLET_ID
+        GROUP BY OPERATIONS.USERNAME
+        ''', params)
+        return [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
+

@@ -330,6 +330,14 @@ class PalletCollectOperation(OperationBaseOperation):
 
     type_collect = models.CharField('Тип сбора', max_length=255, choices=TypeCollect.choices,
                                     default=TypeCollect.ACCEPTANCE)
+    manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Ответственный',
+        related_name='manager'
+    )
 
     class Meta:
         verbose_name = 'Сбор паллет'

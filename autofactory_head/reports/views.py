@@ -67,4 +67,15 @@ def efficiency_placement_descent(request) -> HttpResponse:
 
 @login_required
 def efficiency_check_shipment(request) -> HttpResponse:
-    return render(request, 'efficiency_check_shipment.html.html')
+
+    report_data = []
+    if len(request.GET):
+        report_data = get_report_data(request.GET, ReportType.EFFICIENCY_CHECK_SHIPMENT)
+
+    return render(request, 'efficiency_check_shipment.html', context={
+        'report_data': report_data,
+        'param': {
+            'date_start': request.GET.get('date_start'),
+            'date_end': request.GET.get('date_end')
+        }
+    })

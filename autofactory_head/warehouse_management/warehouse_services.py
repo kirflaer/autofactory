@@ -34,7 +34,8 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
 
             remove_boxes_from_pallet(pallet_source, source['count'], source.get('weight'))
 
-            source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
+            source['pallet_source'] = pallet_source
+            source['weight'] = source.get('weight', pallet_source.weight)
             source['pallet'] = instance
             source['product'] = Product.objects.filter(guid=source['product']).first()
 

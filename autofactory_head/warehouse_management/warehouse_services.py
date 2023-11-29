@@ -57,6 +57,9 @@ def remove_boxes_from_pallet(pallet: Pallet, count: int, weight: int | None = No
 
     if weight is not None:
         pallet.weight -= weight
+    elif pallet.product and not pallet.product.variable_pallet_weight:
+        unit = Unit.objects.filter(is_default=True, product=pallet.product).first()
+        pallet.weight = pallet.content_count * unit.weight if unit else 0
 
     if pallet.content_count == 0:
         pallet.status = PalletStatus.ARCHIVED

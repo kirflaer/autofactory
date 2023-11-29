@@ -1,0 +1,40 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block filter %}
+    <form class="row g-3" action="{% url 'efficiency-placement-descent' %}" method="get">
+        {% csrf_token %}
+        <div class="input-group mb-3">
+            <span class="input-group-text">Период</span>
+            <input type="date" class="form-control" aria-label="First date" name="date_start" value="{{ param.date_start }}">
+            <span class="input-group-text">-</span>
+            <input type="date" class="form-control" aria-label="Second date" name="date_end" value="{{ param.date_end }}">
+        </div>
+        <div class="mb-3">
+            <div class="col-6">
+                <button type="submit" class="btn btn-primary">Сформировать</button>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block table %}
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th scope="col">ФИО</th>
+            <th scope="col">Размещенные паллеты</th>
+            <th scope="col">Спущенные паллеты</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for element in report_data %}
+            <tr>
+                <td>{{ element.username }}</td>
+                <td>{{ element.placement_pallets }}</td>
+                <td>{{ element.descent_pallets }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

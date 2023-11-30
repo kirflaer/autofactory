@@ -319,3 +319,8 @@ def change_property_inventory(content: dict[str: str], instance: InventoryAddres
         element.pallet.content_count = element.fact
         element.pallet.save()
 
+
+def update_pallet_collect_operation(content: dict, instance: PalletCollectOperation):
+
+    instance.manager = User
+    instance.save()

@@ -34,7 +34,8 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
 
             remove_boxes_from_pallet(pallet_source, source['count'], source.get('weight'))
 
-            source['pallet_source'] = Pallet.objects.filter(guid=source['pallet_source']).first()
+            source['pallet_source'] = pallet_source
+            source['weight'] = source.get('weight', pallet_source.weight)
             source['pallet'] = instance
             source['product'] = Product.objects.filter(guid=source['product']).first()
 
@@ -57,6 +58,9 @@ def remove_boxes_from_pallet(pallet: Pallet, count: int, weight: int | None = No
 
     if weight is not None:
         pallet.weight -= weight
+    elif pallet.product and not pallet.product.variable_pallet_weight:
+        unit = Unit.objects.filter(is_default=True, product=pallet.product).first()
+        pallet.weight = pallet.content_count * unit.weight if unit else 0
 
     if pallet.content_count == 0:
         pallet.status = PalletStatus.ARCHIVED

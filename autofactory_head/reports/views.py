@@ -31,3 +31,51 @@ def _get_line_loads_report_data(request, report_type: ReportType, template: str)
 
     return render(request, template, {'lines': lines, 'stocks': stocks, 'report_data': report_data,
                                       'stock_filter': request.GET.get('stock'), 'line_filter': request.GET.get('line')})
+
+
+@login_required
+def efficiency_shipment(request) -> HttpResponse:
+
+    report_data = []
+    if len(request.GET):
+        report_data = get_report_data(request.GET, ReportType.EFFICIENCY_SHIPMENT)
+
+    return render(request, 'efficiency_shipment.html', context={
+        'report_data': report_data,
+        'param': {
+            'date_start': request.GET.get('date_start'),
+            'date_end': request.GET.get('date_end')
+        }
+    })
+
+
+@login_required
+def efficiency_placement_descent(request) -> HttpResponse:
+
+    report_data = []
+    if len(request.GET):
+        report_data = get_report_data(request.GET, ReportType.EFFICIENCY_PLACEMENT_DESCENT)
+
+    return render(request, 'efficiency_placement_descent.html', context={
+        'report_data': report_data,
+        'param': {
+            'date_start': request.GET.get('date_start'),
+            'date_end': request.GET.get('date_end')
+        }
+    })
+
+
+@login_required
+def efficiency_check_shipment(request) -> HttpResponse:
+
+    report_data = []
+    if len(request.GET):
+        report_data = get_report_data(request.GET, ReportType.EFFICIENCY_CHECK_SHIPMENT)
+
+    return render(request, 'efficiency_check_shipment.html', context={
+        'report_data': report_data,
+        'param': {
+            'date_start': request.GET.get('date_start'),
+            'date_end': request.GET.get('date_end')
+        }
+    })

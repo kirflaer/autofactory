@@ -159,7 +159,7 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
         )
         .values('user__username')
         .annotate(
-            assembled_pallets=Count('pallet_id'),
+            assembled_pallets=Count('pallet_id', distinct=True),
             assembled_boxes=Sum('count'),
             assembled_kg=Sum('weight')
         )
@@ -181,14 +181,14 @@ def _get_efficiency_placement_descent(params: dict) -> Iterable:
                     0 AS DESCENT_PALLETS
                 FROM WAREHOUSE_MANAGEMENT_PLACEMENTTOCELLSOPERATION AS PCO
                 INNER JOIN WAREHOUSE_MANAGEMENT_OPERATIONCELL AS OC ON PCO.GUID = OC.OPERATION
-                LEFT JOIN USERS_USER AS USR ON PCO.USER_ID = USR.ID
+                INNER JOIN USERS_USER AS USR ON PCO.USER_ID = USR.ID
                 WHERE PCO.DATE BETWEEN %(date_start)s AND %(date_end)s
                 GROUP BY USR.USERNAME
                 UNION ALL SELECT USR.USERNAME, 0,
                     COUNT(OC.PALLET_ID)
                 FROM WAREHOUSE_MANAGEMENT_SELECTIONOPERATION AS SO
                 INNER JOIN WAREHOUSE_MANAGEMENT_OPERATIONCELL AS OC ON SO.GUID = OC.OPERATION
-                LEFT JOIN USERS_USER AS USR ON SO.USER_ID = USR.ID
+                INNER JOIN USERS_USER AS USR ON SO.USER_ID = USR.ID
                 WHERE SO.DATE BETWEEN %(date_start)s AND %(date_end)s
                 GROUP BY USR.USERNAME) AS OPERATIONS
         GROUP BY OPERATIONS.USERNAME
@@ -204,8 +204,8 @@ def _get_efficiency_check_shipment(params: dict) -> Iterable:
     with connection.cursor() as cursor:
         cursor.execute('''
         SELECT OPERATIONS.USERNAME,
-            COUNT(OPERATIONS.PARENT_TASK) as tickets,
-            COUNT(PS.PALLET_SOURCE_ID) AS pallets,
+            COUNT(DISTINCT OPERATIONS.PARENT_TASK) as tickets,
+            COUNT(DISTINCT PS.PALLET_SOURCE_ID) AS pallets,
             SUM(PS.COUNT) AS boxes
         FROM
             (SELECT USR.USERNAME,
@@ -213,7 +213,7 @@ def _get_efficiency_check_shipment(params: dict) -> Iterable:
                     OP.PALLET_ID
                 FROM WAREHOUSE_MANAGEMENT_PALLETCOLLECTOPERATION AS PCO
                 INNER JOIN WAREHOUSE_MANAGEMENT_OPERATIONPALLET AS OP ON PCO.GUID = OP.OPERATION
-                LEFT JOIN USERS_USER AS USR ON PCO.MANAGER_ID = USR.ID
+                INNER JOIN USERS_USER AS USR ON PCO.MANAGER_ID = USR.ID
                 WHERE PCO.DATE BETWEEN %(date_start)s AND %(date_end)s
             AND PCO.TYPE_COLLECT = %(type_collect)s) AS OPERATIONS
         INNER JOIN WAREHOUSE_MANAGEMENT_PALLETSOURCE AS PS ON OPERATIONS.PALLET_ID = PS.PALLET_ID

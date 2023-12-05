@@ -205,7 +205,7 @@ def _get_efficiency_check_shipment(params: dict) -> Iterable:
         cursor.execute('''
         SELECT OPERATIONS.USERNAME,
             COUNT(DISTINCT OPERATIONS.PARENT_TASK) as tickets,
-            COUNT(DISTINCT PS.PALLET_SOURCE_ID) AS pallets,
+            COUNT(DISTINCT PS.PALLET_ID) AS pallets,
             SUM(PS.COUNT) AS boxes
         FROM
             (SELECT USR.USERNAME,

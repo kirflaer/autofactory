@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, get_user
 from django.db import transaction
 from rest_framework.exceptions import APIException
 
@@ -321,3 +321,8 @@ def change_property_inventory(content: dict[str: str], instance: InventoryAddres
         element.pallet.weight = element.weight
         element.pallet.save()
 
+
+def update_pallet_collect_operation(content: dict, instance: PalletCollectOperation):
+
+    instance.manager = content.get('user')
+    instance.save()

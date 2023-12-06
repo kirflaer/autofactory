@@ -5,7 +5,7 @@ from typing import Iterable
 
 import pytz
 from django.db import connection
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F
 
 from catalogs.models import Line
 from warehouse_management.models import (
@@ -155,13 +155,14 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
     queryset = (
         PalletSource.objects.filter(
             created_at__gte=params.get('date_start'),
-            created_at__lte=params.get('date_end')
+            created_at__lte=params.get('date_end'),
+            product__units__is_default=True
         )
         .values('user__username')
         .annotate(
             assembled_pallets=Count('pallet_id', distinct=True),
             assembled_boxes=Sum('count'),
-            assembled_kg=Sum('weight')
+            assembled_kg=F('product__units__weight') * Sum(F('count'))
         )
     )
 
@@ -220,4 +221,3 @@ def _get_efficiency_check_shipment(params: dict) -> Iterable:
         GROUP BY OPERATIONS.USERNAME
         ''', params)
         return [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
-

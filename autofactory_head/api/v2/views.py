@@ -126,19 +126,19 @@ class TasksChangeViewSet(TasksViewSet):
         old_status = instance.status
         if task_data.properties is not None:
             change_task_properties(instance, task_data.__dict__['properties'])
+            instance = task_router.task.objects.get(guid=guid)
             if task_router.change_properties_function is not None:
                 properties = task_data.__dict__['properties'].__dict__
                 properties['user'] = request.user
                 task_router.change_properties_function(properties, instance)
 
-        instance = task_router.task.objects.get(guid=guid)
-
         if old_status != instance.status and instance.user is None:
             instance.user = request.user
-            instance.save()
 
         if instance.status == TaskStatus.CLOSE and not instance.closed:
             instance.close()
+
+        instance.save()
 
         result = {'status': 'success'}
         if task_data.content is not None:

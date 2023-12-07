@@ -56,7 +56,7 @@ def enrich_pallet_info(validated_data: dict, product_keys: list, instance: Palle
 def remove_boxes_from_pallet(pallet: Pallet, count: int, weight: int | None = None) -> None:
     pallet.content_count -= count
 
-    if weight is not None:
+    if weight is not None and weight > 0:
         pallet.weight -= weight
     elif pallet.product and not pallet.product.variable_pallet_weight:
         unit = Unit.objects.filter(is_default=True, product=pallet.product).first()

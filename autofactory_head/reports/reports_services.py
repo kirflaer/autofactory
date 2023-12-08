@@ -5,7 +5,7 @@ from typing import Iterable
 
 import pytz
 from django.db import connection
-from django.db.models import Count, Sum, F
+from django.db.models import Count, Sum, F, Case, When, FloatField
 
 from catalogs.models import Line
 from warehouse_management.models import (
@@ -154,15 +154,20 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
 
     queryset = (
         PalletSource.objects.filter(
-            created_at__gte=params.get('date_start'),
-            created_at__lte=params.get('date_end'),
+            created_at__range=(params.get('date_start'), params.get('date_end')),
             product__units__is_default=True
         )
         .values('user__username')
         .annotate(
             assembled_pallets=Count('pallet_id', distinct=True),
             assembled_boxes=Sum('count'),
-            assembled_kg=F('product__units__weight') * Sum(F('count'))
+            assembled_kg=Case(When(
+                product__variable_pallet_weight=True,
+                then=F('weight')
+            ),
+                default=F('product__units__weight') * Sum(F('count')),
+                output_field=FloatField()
+            ) / 1000
         )
     )
 

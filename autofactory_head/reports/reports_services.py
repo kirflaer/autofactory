@@ -161,13 +161,13 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
         .annotate(
             assembled_pallets=Count('pallet_id', distinct=True),
             assembled_boxes=Sum('count'),
-            assembled_kg=Case(When(
+            assembled_kg=Sum(Case(When(
                 product__variable_pallet_weight=True,
                 then=F('weight')
             ),
-                default=F('product__units__weight') * Sum(F('count')),
+                default=F('product__units__weight') * F('count'),
                 output_field=FloatField()
-            ) / 1000
+            ) / 1000)
         )
     )
 

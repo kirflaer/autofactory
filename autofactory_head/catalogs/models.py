@@ -108,6 +108,7 @@ class Product(BaseExternalModel):
     semi_product = models.BooleanField('Полуфабрикат', default=False)
     not_marked = models.BooleanField('Не маркируемый', default=False)
     variable_pallet_weight = models.BooleanField('Переменный вес паллеты', default=False)
+    service_check_code = models.CharField('Внутренний код для проверки ШК', blank=True, null=True, max_length=155)
 
     class Meta:
         verbose_name = 'Номенклатура'

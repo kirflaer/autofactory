@@ -78,6 +78,11 @@ class Setting(models.Model):
     shift_close_show_marks_count = models.BooleanField('Показывать собранные марки при закрытии смены',
                                                        default=False)
 
+    # Запрос на контроль веса
+    use_control_scanning_weight = models.BooleanField(
+        'Включить запрос весового ШК, для контроля веса товаров с фиксированным весом', default=False)
+    interval_control_scanning_weight = models.PositiveIntegerField('Интервал запроса (в штуках)', default=50)
+
     class Meta:
         verbose_name = 'Настройки пользователя'
         verbose_name_plural = 'Настройки пользователя'

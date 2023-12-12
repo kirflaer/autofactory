@@ -5,11 +5,10 @@ from typing import Iterable
 
 import pytz
 from django.db import connection
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F, Case, When, FloatField, Func
 
 from catalogs.models import Line
 from warehouse_management.models import (
-    PalletCollectOperation,
     PalletSource,
     TypeCollect,
 )
@@ -21,6 +20,11 @@ class ReportType(Enum):
     EFFICIENCY_SHIPMENT = 3
     EFFICIENCY_PLACEMENT_DESCENT = 4
     EFFICIENCY_CHECK_SHIPMENT = 5
+
+
+class Round(Func):
+    function = 'ROUND'
+    template = '%(function)s(%(expressions)s::numeric, %(ndigits)s)'
 
 
 def get_report_data(user_filters: dict, report_type: ReportType) -> Iterable:
@@ -52,7 +56,9 @@ def get_report_data(user_filters: dict, report_type: ReportType) -> Iterable:
         return []
 
     if validated_params.get('date_start') is not None:
-        validated_params['date_start'] = dt.strptime(validated_params['date_start'], "%Y-%m-%d") - timedelta(hours=3)
+        validated_params['date_start'] = dt.strptime(
+            validated_params['date_start'], "%Y-%m-%d"
+        ) - timedelta(hours=3)
 
     if validated_params.get('date_end') is not None:
         date_end = dt.strptime(validated_params['date_end'], "%Y-%m-%d")
@@ -154,14 +160,20 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
 
     queryset = (
         PalletSource.objects.filter(
-            created_at__gte=params.get('date_start'),
-            created_at__lte=params.get('date_end')
+            created_at__range=(params.get('date_start'), params.get('date_end')),
+            product__units__is_default=True
         )
         .values('user__username')
         .annotate(
             assembled_pallets=Count('pallet_id', distinct=True),
             assembled_boxes=Sum('count'),
-            assembled_kg=Sum('weight')
+            assembled_kg=Round(Sum(Case(When(
+                product__variable_pallet_weight=True,
+                then=F('weight')
+            ),
+                default=F('product__units__weight') * F('count'),
+                output_field=FloatField()
+            ) / 1000), ndigits=2)
         )
     )
 
@@ -169,7 +181,6 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
 
 
 def _get_efficiency_placement_descent(params: dict) -> Iterable:
-
     with connection.cursor() as cursor:
         cursor.execute('''
         SELECT OPERATIONS.USERNAME,
@@ -198,7 +209,6 @@ def _get_efficiency_placement_descent(params: dict) -> Iterable:
 
 
 def _get_efficiency_check_shipment(params: dict) -> Iterable:
-
     params['type_collect'] = TypeCollect.SHIPMENT
 
     with connection.cursor() as cursor:
@@ -220,4 +230,3 @@ def _get_efficiency_check_shipment(params: dict) -> Iterable:
         GROUP BY OPERATIONS.USERNAME
         ''', params)
         return [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
-

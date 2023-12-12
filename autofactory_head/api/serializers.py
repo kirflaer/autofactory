@@ -81,9 +81,9 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         fields = (
             'name', 'gtin', 'guid', 'is_weight', 'expiration_date', 'units', 'external_key', 'semi_product',
-            'not_marked', 'variable_pallet_weight')
+            'not_marked', 'variable_pallet_weight', 'service_check_code')
         model = Product
-        read_only_fields = ('guid', 'expiration_date', 'store_semi_product')
+        read_only_fields = ('guid', 'expiration_date', 'service_check_code')
 
     def create(self, validated_data):
         units = validated_data.pop('units')
@@ -164,7 +164,8 @@ class SettingSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = ('use_organization', 'pallet_passport_template_base64',
-                  'reg_exp', 'label_template_base64', 'label_sizes')
+                  'reg_exp', 'label_template_base64', 'label_sizes', 'use_control_scanning_weight',
+                  'interval_control_scanning_weight')
         model = Setting
 
     @staticmethod

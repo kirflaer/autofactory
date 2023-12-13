@@ -42,8 +42,8 @@ def get_task_router() -> dict[str: RouterTask]:
                                                   create_function=None,
                                                   read_serializer=PalletCollectShipmentSerializerV4,
                                                   write_serializer=None,
-                                                  content_model=TaskBaseModel,
-                                                  change_properties_function=update_pallet_collect_operation),
+                                                  content_model=TaskBaseModel),
+                                                  #change_properties_function=update_pallet_collect_operation), TODO: не закрывается завка
             'WRITE_OFF': RouterTask(task=WriteOffOperation,
                                     create_function=create_write_off_operation,
                                     read_serializer=WriteOffOperationReadSerializer,

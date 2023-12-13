@@ -323,3 +323,4 @@ def update_pallet_collect_operation(content: dict, instance: PalletCollectOperat
 
     if TaskStatus[task_status] == TaskStatus.CLOSE and not instance.manager:
         instance.manager = user
+        instance.save()

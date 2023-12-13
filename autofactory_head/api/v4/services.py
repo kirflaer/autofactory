@@ -112,7 +112,6 @@ def create_inventory_operation(serializer_data: Iterable[dict[str: str]], user: 
 
 @transaction.atomic
 def change_content_inventory_operation(content: dict[str: str], instance: InventoryAddressWarehouseOperation) -> dict:
-
     row = None
     source = None
     if content.get('pallet'):
@@ -272,7 +271,6 @@ def check_pallet_collect_shipment(instance: ShipmentOperation) -> dict:
 
 @transaction.atomic
 def create_movement_shipment(serializer_data, _: User) -> list:
-
     result = []
     for element in serializer_data:
         external_source = get_or_create_external_source(element)
@@ -301,7 +299,6 @@ def _create_pallet_source_to_inventory(
         content: InventoryAddressWarehouseContent,
         **kwargs
 ) -> PalletSource:
-
     return PalletSource.objects.create(
         pallet_source=content.pallet, external_key=kwargs.get('ext_key'),
         count=kwargs.get('count', 0), type_collect=TypeCollect.INVENTORY,
@@ -310,8 +307,7 @@ def _create_pallet_source_to_inventory(
     )
 
 
-def change_property_inventory(content: dict[str: str], instance: InventoryAddressWarehouseOperation):
-
+def change_property_inventory(content: dict[str: str], instance: InventoryAddressWarehouseOperation, user: User):
     if not content.get('unloaded', False):
         return
 
@@ -322,12 +318,8 @@ def change_property_inventory(content: dict[str: str], instance: InventoryAddres
         element.pallet.save()
 
 
-def update_pallet_collect_operation(content: dict, instance: PalletCollectOperation):
-
+def update_pallet_collect_operation(content: dict, instance: PalletCollectOperation, user: User):
     task_status = content.get('status') or instance.status
 
-    if (
-            TaskStatus[task_status] == TaskStatus.CLOSE
-            and not instance.manager
-    ):
-        instance.manager = content.get('user')
+    if TaskStatus[task_status] == TaskStatus.CLOSE and not instance.manager:
+        instance.manager = user

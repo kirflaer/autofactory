@@ -233,7 +233,7 @@ class InventoryAddressWarehouse(admin.ModelAdmin):
 
 @admin.register(InventoryAddressWarehouseContent)
 class InventoryAddressWarehouseContentAdmin(admin.ModelAdmin):
-    search_fields = ('operation', 'pallet__id', 'product__guid')
+    search_fields = ('operation', 'pallet__id', 'product__guid', 'cell__name')
     list_display = ('guid', 'product', 'pallet', 'cell', 'plan', 'fact', 'priority')
 
 

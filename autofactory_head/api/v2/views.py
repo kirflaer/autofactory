@@ -92,8 +92,12 @@ class MarkingViewSet(api.views.MarkingViewSet):
 
 
 class TasksChangeViewSet(TasksViewSet):
-    @staticmethod
-    def _get_task_instance(task_router: RouterTask, guid: str) -> Task:
+
+    def change_task(self, request, type_task, guid):
+        task_router = self.router.get(type_task.upper())
+        if not task_router:
+            raise APIException('Тип задачи не найден')
+
         instance = task_router.task.objects.filter(guid=guid).first()
         if instance is None:
             external_source = ExternalSource.objects.filter(external_key=guid).first()
@@ -101,15 +105,6 @@ class TasksChangeViewSet(TasksViewSet):
 
         if instance is None:
             raise APIException('Задача не найдена')
-
-        return instance
-
-    def change_task(self, request, type_task, guid):
-        task_router = self.router.get(type_task.upper())
-        if not task_router:
-            raise APIException('Тип задачи не найден')
-
-        instance = TasksChangeViewSet._get_task_instance(task_router, guid)
 
         guid = instance.pk
 

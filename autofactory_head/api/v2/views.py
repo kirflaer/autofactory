@@ -122,8 +122,7 @@ class TasksChangeViewSet(TasksViewSet):
         if task_data.properties is not None:
             change_task_properties(instance, task_data.__dict__['properties'])
             if task_router.change_properties_function is not None:
-                task_router.change_properties_function(task_data.__dict__['properties'].__dict__, instance,
-                                                       self.request.user)
+                task_router.change_properties_function(task_data.__dict__['properties'].__dict__, instance)
 
         instance = task_router.task.objects.get(guid=guid)
 

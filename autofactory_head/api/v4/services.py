@@ -307,7 +307,7 @@ def _create_pallet_source_to_inventory(
     )
 
 
-def change_property_inventory(content: dict[str: str], instance: InventoryAddressWarehouseOperation, user: User):
+def change_property_inventory(content: dict[str: str], instance: InventoryAddressWarehouseOperation):
     if not content.get('unloaded', False):
         return
 

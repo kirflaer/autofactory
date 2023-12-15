@@ -33,7 +33,7 @@ class TasksViewSetV4(TasksViewSet):
         if not task_router.custom_methods.get(method):
             raise APIException(f'Метод {method} не определен для задач {type_task}')
 
-        instance = TasksViewSetV4._get_task_instance(task_router, guid)
+        instance = task_router.task.objects.get(guid=guid)
         return Response(task_router.custom_methods.get(method)(instance))
 
 

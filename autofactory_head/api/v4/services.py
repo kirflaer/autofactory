@@ -318,8 +318,9 @@ def change_property_inventory(content: dict[str: str], instance: InventoryAddres
         element.pallet.save()
 
 
-def update_pallet_collect_operation(content: dict, instance: PalletCollectOperation, user: User):
+def update_pallet_collect_operation(content: dict, instance: PalletCollectOperation):
     task_status = content.get('status') or instance.status
+    user = content.get('user')
 
     if TaskStatus[task_status] == TaskStatus.CLOSE and not instance.manager:
         instance.manager = user

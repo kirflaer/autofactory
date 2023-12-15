@@ -10,6 +10,7 @@ from api.v3.views import TasksViewSet
 from api.v4.routers import get_task_router
 from api.v4.serializers import PalletUpdateSerializer, PalletDivideSerializer
 from api.v4.services import divide_pallet
+from catalogs.models import ExternalSource
 from tasks.task_services import RouterTask
 from warehouse_management.models import Pallet, PalletSource, PalletProduct
 from warehouse_management.serializers import PalletReadSerializer
@@ -33,7 +34,11 @@ class TasksViewSetV4(TasksViewSet):
         if not task_router.custom_methods.get(method):
             raise APIException(f'Метод {method} не определен для задач {type_task}')
 
-        instance = task_router.task.objects.get(guid=guid)
+        instance = task_router.task.objects.filter(guid=guid).first()
+        if instance is None:
+            external_source = ExternalSource.objects.filter(external_key=guid).first()
+            instance = task_router.task.objects.filter(external_source=external_source).first()
+
         return Response(task_router.custom_methods.get(method)(instance))
 
 

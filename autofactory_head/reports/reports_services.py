@@ -162,7 +162,7 @@ def _get_efficiency_shipment(params: dict) -> Iterable:
         PalletSource.objects.filter(
             created_at__range=(params.get('date_start'), params.get('date_end')),
             product__units__is_default=True
-        )
+        ).exclude(type_collect=TypeCollect.WRITE_OFF)
         .values('user__username')
         .annotate(
             assembled_pallets=Count('pallet_id', distinct=True),

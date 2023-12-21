@@ -130,6 +130,9 @@ class Line(BaseModel):
                                                blank=True,
                                                verbose_name='Тип пр. операции')
     check_collect_pallet = models.BooleanField('Проверять собранные паллеты', default=True)
+    use_control_scanning_weight = models.BooleanField(
+        'Включить запрос весового ШК, для контроля веса товаров с фиксированным весом', default=False)
+    interval_control_scanning_weight = models.PositiveIntegerField('Интервал запроса (в штуках)', default=0)
 
     class Meta:
         verbose_name = 'Линия производства'

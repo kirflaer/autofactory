@@ -129,7 +129,8 @@ class LineSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = (
-            'guid', 'name', 'storage', 'department', 'products')
+            'guid', 'name', 'storage', 'department', 'products', 'use_control_scanning_weight',
+            'interval_control_scanning_weight')
         model = Line
 
 

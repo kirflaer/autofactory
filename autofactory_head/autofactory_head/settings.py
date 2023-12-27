@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'debug_toolbar',
+
     'catalogs',
     'api',
     'factory_core',
@@ -43,6 +45,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'autofactory_head.urls'
@@ -118,6 +122,10 @@ CACHES = {
         }
     }
 }
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 LANGUAGE_CODE = 'ru'
 TIME_ZONE = 'Europe/Moscow'

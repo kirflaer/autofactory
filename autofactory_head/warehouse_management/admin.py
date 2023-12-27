@@ -84,6 +84,7 @@ class PalletSourceAdmin(admin.ModelAdmin):
     list_filter = (('created_at', DateRangeFilter), 'user', 'type_collect')
     list_display = ('user', 'pallet', 'pallet_source', 'product', 'weight', 'count', 'batch_number', 'production_date')
     search_fields = ('pallet_source__id', 'pallet_source__guid', 'related_task')
+    raw_id_fields = ('pallet_source', 'product', 'order', 'pallet')
 
 
 @admin.register(OperationPallet)
@@ -91,6 +92,7 @@ class OperationPalletAdmin(admin.ModelAdmin):
     list_display = ('operation', 'pallet', 'type_operation', 'number_operation', 'external_source')
     list_filter = ('type_operation',)
     search_fields = ('pallet__guid', 'pallet__id', 'operation')
+    raw_id_fields = ('pallet', 'dependent_pallet')
 
 
 @admin.register(OperationProduct)
@@ -162,6 +164,7 @@ class OrderOperationAdmin(admin.ModelAdmin):
 class PalletProductAdmin(admin.ModelAdmin):
     list_display = ('pallet', 'product', 'weight', 'count', 'batch_number', 'production_date')
     search_fields = ('pallet__id', 'pallet__guid')
+    raw_id_fields = ('pallet',)
 
 
 @admin.register(ArrivalAtStockOperation)

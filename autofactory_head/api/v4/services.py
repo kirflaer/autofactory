@@ -164,7 +164,7 @@ def change_content_inventory_operation(content: dict[str: str], instance: Invent
                 weight=element.weight
             )
 
-            row.fact += element.count
+            row.fact = element.count
             row.weight = element.weight
             row.save()
             row = None

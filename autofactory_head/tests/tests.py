@@ -9,15 +9,18 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 from rest_framework.response import Response
 
+from catalogs.models import Line, Product
 from factory_core.models import Shift, TypeShift
 from packing.models import MarkingOperation, MarkingOperationMark
-from catalogs.models import Line, Product
+from tasks.models import TaskStatus
+from warehouse_management.models import PalletCollectOperation, Pallet, OperationPallet
 
 User = get_user_model()
 
 
 class BaseClassTest(APITestCase):
     def setUp(self) -> None:
+        self.api_version = '4'
         self.line = Line.objects.create(name='test_line')
         self.user = User.objects.create_user(username='TestUser', password='1234567', line=self.line)
         self.client.login(username='TestUser', password='1234567')
@@ -166,3 +169,71 @@ def group_marks_by_gtin(product_gtins: list[str]) -> dict[str, list[str]]:
                     break
 
     return marks_by_gtin
+
+
+class PalletCollectTestCase(BaseClassTest):
+
+    def setUp(self):
+        super().setUp()
+
+        self.pallets = []
+        counter = 0
+        for type_shift in TypeShift:
+            Pallet.objects.create(
+                id=f'01046071040807071323072991p-c46{counter}',
+                shift=Shift.objects.create(
+                    line=self.line,
+                    batch_number=f'12{counter}',
+                    production_date=datetime.datetime.utcnow(),
+                    type=type_shift,
+                    author=self.user
+                )
+            )
+            counter += 1
+
+    def create_pallet_collect_operation(self):
+        for pallet in self.pallets:
+            payload = {
+                'pallets': [{
+                    'content_count': 5,
+                    'id': pallet.id,
+                    'batch_number': pallet.shift.batch_number,
+                    'product': self.product_weight.guid,
+                    'production_date': pallet.shift.production_date.strftime('%Y-%m-%d'),
+                    'shift': pallet.shift.guid,
+                }],
+                'shift': pallet.shift.guid,
+            }
+            response = self.client.post('/api/v4/tasks/pallet_collect/', payload, format='json')
+            # Не корректный ответ на POST запрос возвращает статус 200
+            self.assertEqual(response.status_code, 200)
+
+    def test_pallet_collect_operation(self):
+
+        self.create_pallet_collect_operation()
+
+        operations_pallet = OperationPallet.objects.all()
+        for operation in operations_pallet:
+            self.assertIn(operation.pallet.shift.type, TypeShift)  # Не проставляется смена в pallet
+
+            response = self.client.patch(
+                f'/api/v4/pallets/{operation.pallet.guid}/',
+                {'status': 'CONFIRMED'},
+                format='json'
+            )
+            self.assertEqual(response.status_code, 200)
+            operation.pallet.refresh_from_db()
+            self.assertEqual(operation.pallet.status, 'CONFIRMED')
+            # Закрываем смену
+            payload = {
+                'closed': True,
+                'products': []
+            }
+            response = self.client.patch(f'/api/v4/shifts/{operation.pallet.shift.guid}/', payload, format='json')
+            self.assertEqual(response.status_code, 200)
+
+        pallet_collect_operation = PalletCollectOperation.objects.all()
+        for pallet_collect in pallet_collect_operation:
+            self.assertEqual(pallet_collect.status, TaskStatus.CLOSE)
+            self.assertTrue(pallet_collect.closed)
+            self.assertTrue(pallet_collect.ready_to_unload)

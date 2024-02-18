@@ -157,7 +157,7 @@ class OrderOperationAdmin(admin.ModelAdmin):
     list_display = (
         'date', 'guid', 'user', 'number', 'parent_task', 'external_source', 'status', 'closed', 'ready_to_unload',
         'unloaded')
-    search_fields = ('parent_task',)
+    search_fields = ('parent_task__guid', 'guid')
 
 
 @admin.register(PalletProduct)

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.forms import CharField, ModelForm, PasswordInput
 
 from catalogs.models import (Department, Device, Line, Organization, Product,
-                             Storage, TypeFactoryOperation, Unit)
+                             Storage, TypeFactoryOperation, Unit, LineProduct)
 
 User = get_user_model()
 
@@ -63,3 +63,10 @@ class OrganizationForm(ModelForm):
     class Meta:
         model = Organization
         exclude = ['guid']
+
+
+class LineProductForm(ModelForm):
+
+    class Meta:
+        model = LineProduct
+        fields = ('line', 'product')

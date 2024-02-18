@@ -22,5 +22,4 @@ urlpatterns = [
     path('shifts/', ShiftListView.as_view(), name='shifts'),
     path('shifts/new/', ShiftCreateView.as_view(), name='shift_new'),
     path('shifts/close/', views.shift_processing, name='shift_close'),
-
 ]

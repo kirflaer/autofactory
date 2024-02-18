@@ -4,7 +4,8 @@ from django.urls import path, include
 urlpatterns = [
     path('autofact-adm/', admin.site.urls),
     path('api/', include('api.urls')),
-    path("auth/", include("django.contrib.auth.urls")),
+    path('auth/', include('django.contrib.auth.urls')),
+    path('select2/', include('django_select2.urls')),
     path("", include("factory_core.urls")),
     path("", include("catalogs.urls")),
     path("", include("packing.urls")),

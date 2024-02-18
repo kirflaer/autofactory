@@ -6,11 +6,11 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from catalogs.models import (Department, Device, Line, Organization, Product,
-                             Storage, TypeFactoryOperation, Unit)
+                             Storage, TypeFactoryOperation, Unit, LineProduct)
 
 from .forms import (CustomUserForm, DepartmentForm, DeviceForm, LineForm,
                     OrganizationForm, ProductForm, StorageForm,
-                    TypeFactoryOperationForm, UnitForm)
+                    TypeFactoryOperationForm, UnitForm, LineProductForm)
 
 User = get_user_model()
 
@@ -338,3 +338,22 @@ class TypeFactoryOperationUpdateView(CatalogBasicUpdateView):
 class TypeFactoryOperationRemoveView(CatalogBasicRemoveView):
     model = TypeFactoryOperation
     success_url = reverse_lazy('type_factory_operation')
+
+
+class LineProductListView(CatalogBasicListView):
+
+    model = LineProduct
+    template_name = 'line_product.html'
+    ordering = '-id'
+    extra_context = {
+        'title': 'Номенклатура линии',
+        'element_new_link': 'line_product_new'
+    }
+
+
+class LineProductCreateView(CatalogBasicCreateView):
+
+    model = LineProduct
+    template_name = 'line_product_new.html'
+    form_class = LineProductForm
+    success_url = reverse_lazy('line-product')

@@ -20,18 +20,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    # External Packages
+    'django_filters',
+    'django_select2',
+    'rangefilter',
+    'rest_framework',
+    # Internal Apps
     'catalogs',
     'api',
     'factory_core',
     'packing',
     'users',
-    'rest_framework',
-    'django_filters',
     'tests',
     'tasks',
     'warehouse_management',
-    'rangefilter',
     'reports'
 ]
 
@@ -55,12 +57,13 @@ OPERATIONS_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "operation")
 SERVICES_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "service")
 CONFIRM_TEMPLATES_DIR = os.path.join(TEMPLATES_DIR, "confirm_pages")
 REPORTS = os.path.join(TEMPLATES_DIR, "reports")
+WAREHOUSE_MANAGEMENT_DIR = os.path.join(TEMPLATES_DIR, 'warehouse_management')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [TEMPLATES_DIR, CATALOGS_TEMPLATES_DIR,
                  TEMPLATES_ADDITIONAL_DIR, OPERATIONS_TEMPLATES_DIR,
-                 SERVICES_TEMPLATES_DIR, CONFIRM_TEMPLATES_DIR, REPORTS],
+                 SERVICES_TEMPLATES_DIR, CONFIRM_TEMPLATES_DIR, REPORTS, WAREHOUSE_MANAGEMENT_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -116,8 +119,18 @@ CACHES = {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'PASSWORD': os.getenv('REDIS_PASS')
         }
+    },
+    'select2': {
+        'BACKEND': "django_redis.cache.RedisCache",
+        "LOCATION": f'redis://{os.getenv("REDIS_HOST")}:{os.getenv("REDIS_PORT")}/2',
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            'PASSWORD': os.getenv('REDIS_PASS')
+        }
     }
 }
+
+SELECT2_CACHE_BACKEND = 'select2'
 
 LANGUAGE_CODE = 'ru'
 TIME_ZONE = 'Europe/Moscow'

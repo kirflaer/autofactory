@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block messages %}
+    {% for message in messages %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert-message">
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+
+
+{% endblock %}
+
+{% block content %}
+    <div class="card" style="width: 25rem;">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.line.id_for_label }}" class="form-label">{{ form.line.label }}</label>
+                    <select class="form-select" id="{{ form.line.id_for_label }}" name="{{ form.line.name }}">
+                        {% for value in form.line %}
+                            {{ value }}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.product.id_for_label }}">{{ form.product.label }}</label>
+                    <select class="form-select" id="{{ form.product.id_for_label }}" name="{{ form.product.name }}">
+                        {% for value in form.product %}
+                            {{ value }}
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

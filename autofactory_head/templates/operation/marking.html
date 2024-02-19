@@ -15,13 +15,13 @@
                     <div class="mb-3 row">
                         <label class="col-form-label col-sm-2 text-sm-right">Пользователь</label>
                         <div class="col-sm-5">
-                        <select class="form-control " id="user" placeholder="Jane Doe" name="user">
-                            <option value="none"> ----</option>
-                            {% for user in users %}
-                                <option value="{{ user.pk }}" {% if user.pk|slugify == user_filter|slugify %}
-                                        selected="selected" {% endif %} >{{ user.username }}</option>
-                            {% endfor %}
-                        </select>
+                            <select class="form-control" id="user" name="user">
+                                <option value="none">----</option>
+                                {% for user in users %}
+                                    <option value="{{ user.pk }}" {% if user.pk|slugify == user_filter|slugify %}
+                                            selected="selected" {% endif %} >{{ user.username }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
 

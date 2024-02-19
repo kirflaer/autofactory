@@ -296,7 +296,7 @@ class MarkingViewSet(viewsets.ViewSet):
 
     def close(self, request, pk=None):
         """Закрывает текущую маркировку
-        Если закрытие происходит с ТСД отправляется набор марок
+        Если закрытие происходит с ТСД, отправляется набор марок
         Если закрытие от автоматического сканера марки берутся из RawMark"""
 
         marking = MarkingOperation.objects.filter(guid=pk)

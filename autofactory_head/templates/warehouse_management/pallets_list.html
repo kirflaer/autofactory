@@ -1,0 +1,27 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:15%;">Дата</th>
+        <th style="width:15%;">Статус</th>
+        <th style="width:20%;">Идентификатор</th>
+        <th style="width:30%;">Номенклатура</th>
+        <th style="width:5%;">Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.creation_date }} </td>
+            <td> {{ element.status }} </td>
+            <td> {{ element.id }} </td>
+            <td> {{ element.product|default_if_none:"" }} </td>
+            <td class="table-action">
+                <a href="{% url 'pallet_detail' element.guid %}"><i class="align-middle" data-feather="edit"></i></a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

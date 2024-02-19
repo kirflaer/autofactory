@@ -29,8 +29,7 @@
                     <a data-bs-target="#catalogs" data-bs-toggle="collapse"
                        class="sidebar-link collapsed">
                         <i class="align-middle" data-feather="folder"></i>
-                        <span
-                                class="align-middle">Справочники</span>
+                        <span class="align-middle">Справочники</span>
                     </a>
                     <ul id="catalogs"
                         class="sidebar-dropdown list-unstyled {% if list_collapse  != False %}collapse{% endif %} "
@@ -38,6 +37,9 @@
                         <li class="sidebar-item {% if view_name  == 'products' %}active{% endif %}">
                             <a class="sidebar-link"
                                href="{% url 'products' %}">Номенклатура</a>
+                        </li>
+                        <li class="sidebar-item {% if view_name == 'line_product' %} active {% endif %}">
+                            <a class="sidebar-link" href="{% url 'line_product' %}">Номенклатура линии</a>
                         </li>
                         <li class="sidebar-item {% if view_name  == 'organizations' %}active{% endif %}">
                             <a class="sidebar-link"
@@ -87,29 +89,95 @@
                     </a>
                 </li>
 
+                <li class="sidebar-item {% if view_name  == 'pallets_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'pallets_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Паллеты</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'pallet_operations' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'pallet_operations' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Паллеты операций</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'pallet_collect_operation_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'pallet_collect_operation_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Сбор паллет</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'storage_cell_content_state_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'storage_cell_content_state_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Складские ячейки</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'selection_operation_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'selection_operation_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Отбор со склада</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'order_operation_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'order_operation_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Заказы клиентов</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'cancel_shipment_operation_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'cancel_shipment_operation_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Отмена отгрузки</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'movement_between_cells_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'movement_between_cells_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Перемещения между ячейками</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'acceptance_operation_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'acceptance_operation_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Приемка на склад</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'placement_to_cell_operation_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'placement_to_cell_operation_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Размещения в ячейки</span>
+                    </a>
+                </li>
+                <li class="sidebar-item {% if view_name  == 'write_off_operation_list' %}active{% endif %}">
+                    <a class="sidebar-link" href="{% url 'write_off_operation_list' %}">
+                        <i class="align-middle" data-feather="box"></i>
+                        <span class="align-middle">Списания продукции</span>
+                    </a>
+                </li>
                 <li class="sidebar-item {% if view_name  == 'reports' %}active{% endif %}">
                     <a class="sidebar-link" href="{% url 'reports' %}">
                         <i class="align-middle" data-feather="file-text"></i> <span
-                                class="align-middle">Отчеты</span>
+                            class="align-middle">Отчеты</span>
                     </a>
                 </li>
 
                 {% if user.is_superuser or user.is_local_admin %}
-                <li class="sidebar-item {% if view_name  == 'users' %}active{% endif %}">
-                    <a class="sidebar-link" href="{% url 'users' %}">
-                        <i class="align-middle" data-feather="users"></i> <span
-                            class="align-middle">Пользователи</span>
-                    </a>
-                </li>
+                    <li class="sidebar-item {% if view_name  == 'users' %}active{% endif %}">
+                        <a class="sidebar-link" href="{% url 'users' %}">
+                            <i class="align-middle" data-feather="users"></i> <span
+                                class="align-middle">Пользователи</span>
+                        </a>
+                    </li>
                 {% endif %}
 
                 {% if user.is_superuser or user.is_local_admin %}
-                <li class="sidebar-item {% if view_name  == 'logs' %}active{% endif %}">
-                    <a class="sidebar-link" href="{% url 'logs' %}">
-                        <i class="align-middle" data-feather="alert-circle"></i> <span
-                            class="align-middle">Логи</span>
-                    </a>
-                </li>
+                    <li class="sidebar-item {% if view_name  == 'logs' %}active{% endif %}">
+                        <a class="sidebar-link" href="{% url 'logs' %}">
+                            <i class="align-middle" data-feather="alert-circle"></i> <span
+                                class="align-middle">Логи</span>
+                        </a>
+                    </li>
                 {% endif %}
 
 

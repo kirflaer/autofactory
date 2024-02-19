@@ -1,21 +1,21 @@
-from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, get_object_or_404
+from django.views.generic import (
+    ListView,
+    UpdateView
+)
 from django.urls import reverse_lazy
 
-from packing.marking_services import get_dashboard_data
 from catalogs.models import (
     Device,
     Log
 )
-
-from django.views.generic import (
-    ListView
-)
-
+from packing.forms import ShiftForm
+from packing.marking_services import get_dashboard_data
 from .log_services import logs_summary_data, log_line_decode, get_log_filters
-
-from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import Shift
 
 
 @login_required
@@ -73,3 +73,11 @@ def logs_summary(request):
     date_source = request.GET.get('date_source')
     return render(request, 'log_detail.html',
                   {'data': logs_summary_data(device, date_source)})
+
+
+class ShiftUpdateView(LoginRequiredMixin, UpdateView):
+
+    form_class = ShiftForm
+    model = Shift
+    template_name = 'shift_edit.html'
+    success_url = reverse_lazy('shifts')

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block messages %}
+    {% for message in messages %}
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert-message">
+                {{ message }}
+            </div>
+        </div>
+    {% endfor %}
+
+
+{% endblock %}
+
+{% block content %}
+    <div class="card" style="width: 25rem;">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                    <select class="form-select" id="{{ form.status.id_for_label }}" name="{{ form.status.name }}">
+                        {% for value in form.status %}
+                            {{ value }}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input"
+                           id="{{ form.unloaded.id_for_label }}"
+                           value="{{ palletcollectoperation.unloaded }}"
+                            {% if palletcollectoperation.unloaded %} checked {% endif %} name="{{ form.unloaded.name }}">
+                    <label class="form-check-label" for="{{ form.unloaded.id_for_label }}">{{ form.unloaded.label }}</label>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input"
+                           id="{{ form.ready_to_unload.id_for_label }}"
+                           value="{{ palletcollectoperation.ready_to_unload }}"
+                            {% if palletcollectoperation.ready_to_unload %} checked {% endif %} name="{{ form.ready_to_unload.name }}">
+                    <label class="form-check-label" for="{{ form.ready_to_unload.id_for_label }}">{{ form.ready_to_unload.label }}</label>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="{{ form.closed.id_for_label }}"
+                           value="{{ palletcollectoperation.closed }}"
+                            {% if palletcollectoperation.closed %} checked {% endif %} name="{{ form.closed.name }}">
+                    <label class="form-check-label" for="{{ form.closed.id_for_label }}">{{ form.closed.label }}</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

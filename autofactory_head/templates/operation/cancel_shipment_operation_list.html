@@ -4,25 +4,21 @@
 {% block table %}
     <thead>
     <tr>
-        <th style="width:5%;">Паллета</th>
-        <th style="width:15%;">Дата</th>
-        <th style="width:25%;">Клиент</th>
-        <th style="width:30%;">Внешний источник</th>
-        <th style="width:5%;">Закрыт</th>
-        <th style="width:5%;">Готова в выгрузке</th>
-        <th style="width:5%;">Выгружена</th>
+        <th style="width:15%;">Дата создания</th>
+        <th style="width:10%;">Статус</th>
+        <th style="width:10%;">Выгружена</th>
+        <th style="width:10%;">Готова к выгрузке</th>
+        <th style="width:10%;">Закрыта</th>
         <th style="width:5%;">Действия</th>
     </tr>
     </thead>
     <tbody>
     {% for element in data %}
         <tr>
-            <td> {{ element.number }} </td>
-            <td> {{ element.date }} </td>
-            <td> {{ element.client_presentation|default_if_none:"-" }} </td>
-            <td> {{ element.external_source }} </td>
+            <td> {{ element.date|date:"d.m.y H:i" }} </td>
+            <td> {{ element.status }} </td>
             <td>
-                {% if element.closed %}
+                {% if element.unloaded %}
                     <span class="badge bg-success">V</span>
                 {% else %}
                     <span class="badge bg-warning">X</span>
@@ -36,20 +32,17 @@
                 {% endif %}
             </td>
             <td>
-                {% if element.unloaded %}
+                {% if element.closed %}
                     <span class="badge bg-success">V</span>
                 {% else %}
                     <span class="badge bg-warning">X</span>
                 {% endif %}
             </td>
             <td class="table-action">
-                <a href="{% url 'order_operation_edit' element.pk %}">
+                <a href="{% url 'cancel_shipment_operation_edit' element.pk %}">
                     <i class="align-middle" data-feather="edit-2"></i>
                 </a>
-                <a href="{% url 'orders_detail' element.guid %}">
-                    <i class="align-middle" data-feather="grid"></i>
-                </a>
-                <a href="{% url 'order_operation_delete' element.pk %}">
+                <a href="{% url 'cancel_shipment_operation_delete' element.pk %}">
                     <i class="align-middle" data-feather="trash"></i>
                 </a>
             </td>

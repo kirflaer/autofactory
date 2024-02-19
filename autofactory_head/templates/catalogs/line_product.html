@@ -1,0 +1,19 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:40%;">Линия</th>
+        <th style="width:40%;">Товар</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.line }} </td>
+            <td> {{ element.product }} </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

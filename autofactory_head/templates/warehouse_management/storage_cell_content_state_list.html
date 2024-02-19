@@ -1,0 +1,32 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:15%;">Дата создания</th>
+        <th style="width:15%;">Ячейка</th>
+        <th style="width:20%;">Паллета</th>
+        <th style="width:20%;">Статус</th>
+        <th style="width:5%;">Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.creating_date|date:"d.m.y H:i" }} </td>
+            <td> {{ element.cell }} </td>
+            <td> {{ element.pallet|default_if_none:"" }} </td>
+            <td> {{ element.status }} </td>
+            <td class="table-action">
+                <a href="{% url 'storage_cell_content_state_edit' element.pk %}">
+                    <i class="align-middle" data-feather="edit-2"></i>
+                </a>
+                <a href="{% url 'storage_cell_content_state_delete' element.pk %}">
+                    <i class="align-middle" data-feather="trash"></i>
+                </a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

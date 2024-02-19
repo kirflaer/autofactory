@@ -1,0 +1,47 @@
+{% extends "list_base.html" %}
+{% load static %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:15%;">Дата создания</th>
+        <th style="width:10%;">Статус</th>
+        <th style="width:10%;">Выгружена</th>
+        <th style="width:10%;">Готова к выгрузке</th>
+        <th style="width:10%;">Закрыта</th>
+        <th style="width:5%;">Действия</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.date|date:"d.m.y H:i" }} </td>
+            <td> {{ element.status }} </td>
+            <td>
+                {% if element.unloaded %}
+                    <span class="badge bg-success">V</span>
+                {% else %}
+                    <span class="badge bg-warning">X</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if element.ready_to_unload %}
+                    <span class="badge bg-success">V</span>
+                {% else %}
+                    <span class="badge bg-warning">X</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if element.closed %}
+                    <span class="badge bg-success">V</span>
+                {% else %}
+                    <span class="badge bg-warning">X</span>
+                {% endif %}
+            </td>
+            <td class="table-action">
+                {% include "table_actions.html" %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

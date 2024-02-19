@@ -53,6 +53,9 @@
                         </button>
                     </a>
                 {% else %}
+                    <a href="{% url 'shifts_edit' element.guid %}"><i
+                            class="align-middle"
+                            data-feather="edit"></i></a>
                     <a href="{% url 'shift_close' %}?shift={{ element.guid }} ">
                         <button type="submit" class="btn btn-outline-secondary">Закрыть
                         </button>

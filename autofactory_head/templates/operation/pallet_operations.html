@@ -1,0 +1,54 @@
+{% extends "list_base.html" %}
+{% load static %}
+{% block styles %}
+    {{ form.media.css }}
+{% endblock %}
+
+{% block filter %}
+
+
+    <div class="card" style="width: 25rem;">
+        <div class="card-header pb-sm-0">
+            <h5 class="card-title">Фильтрация</h5>
+        </div>
+        <div class="card-body">
+            <form action="{% url 'pallet_operations' %}" method="get">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ form.pallet.id_for_label }}" class="form-label" >{{ form.pallet.label }}</label>
+                    {{ form.pallet }}
+                </div>
+
+                <div class="mb-3 row">
+                    <div class="col-sm-10 ml-sm-auto">
+                        <button type="submit" class="btn btn-primary">Отобрать</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{% block table %}
+    <thead>
+    <tr>
+        <th style="width:10%;">Гуид</th>
+        <th style="width:10%;">Паллета</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for element in data %}
+        <tr>
+            <td> {{ element.guid }} </td>
+            <td> {{ element.pallet }} </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    {{ form.media.js }}
+{% endblock %}

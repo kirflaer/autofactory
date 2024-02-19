@@ -1,22 +1,23 @@
-from django.forms import ModelForm, DateInput, CharField
+from django import forms
 
 from factory_core.models import Shift
 from packing.models import MarkingOperation
 
 
-class MarkingOperationForm(ModelForm):
+class MarkingOperationForm(forms.ModelForm):
     class Meta:
         model = MarkingOperation
-        fields = ['unloaded', 'ready_to_unload']
+        fields = ['unloaded', 'ready_to_unload', 'closed']
 
 
-class DateCustomInput(DateInput):
+class DateCustomInput(forms.DateInput):
     input_type = "date"
 
 
-class ShiftForm(ModelForm):
-    production_date = CharField(label='Дата выработки', widget=DateCustomInput())
+class ShiftForm(forms.ModelForm):
+
+    production_date = forms.CharField(label='Дата выработки', widget=DateCustomInput())
 
     class Meta:
         model = Shift
-        fields = ['line', 'batch_number', 'production_date', 'product', 'organization']
+        fields = ('line', 'batch_number', 'production_date', 'product', 'organization', 'type', 'closed')

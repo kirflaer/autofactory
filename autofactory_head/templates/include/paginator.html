@@ -1,18 +1,40 @@
 {% if is_paginated %}
-    <nav aria-label="Page navigation example">
+    <nav aria-label="Page navigation">
         <ul class="pagination pagination-md">
             {% if page_obj.has_previous %}
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i
-                        class="fas fa-angle-left"></i></a></li>
-            {% endif %}
-            {% for i in paginator.page_range %}
-                <li class="page-item {% if page_obj.number == i %}active{% endif %}"><a class="page-link"
-                                                                                        href="?page={{ i }}">{{ i }}</a>
+                <li class="page-item ">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
                 </li>
+            {% else %}
+                <li class="disabled page-item">
+                    <a class="page-link" href="#">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+            {% for i in page_obj.paginator.get_elided_page_range %}
+                {% if page_obj.number == i %}
+                    <li class="active page-item">
+                        <span class="page-link">{{ i }} <span class="sr-only">(current)</span></span> 
+                    </li>
+                {% else %}
+                    {% if i == page_obj.paginator.ELLIPSIS %}
+                        <li class="page-item"><span class="page-link">{{ i }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
-                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}"><i
-                        class="fas fa-angle-right"></i></a></li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="disabled page-item"><a class="page-link" href="#"><i class="fas fa-angle-right"></i></a></li>
             {% endif %}
         </ul>
     </nav>

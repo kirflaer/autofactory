@@ -5,8 +5,11 @@ from warehouse_management.serializers import (SelectionOperationWriteSerializer,
                                               RepackingOperationReadSerializer, RepackingOperationWriteSerializer,
                                               InventoryWithPlacementOperationReadSerializer,
                                               InventoryWithPlacementOperationWriteSerializer)
-from warehouse_management.warehouse_services import (create_selection_operation, create_repacking_operation,
-                                                     create_inventory_with_placement_operation)
+from warehouse_management.warehouse_services import (
+    create_selection,
+    create_repacking_operation,
+    create_inventory_with_placement_operation
+)
 
 
 def get_task_router() -> dict[str: RouterTask]:
@@ -14,7 +17,7 @@ def get_task_router() -> dict[str: RouterTask]:
     В зависимости от переданного типа задания формируется класс и сериализаторы"""
 
     return {'SELECTION': RouterTask(task=SelectionOperation,
-                                    create_function=create_selection_operation,
+                                    create_function=create_selection,
                                     read_serializer=SelectionOperationReadSerializer,
                                     write_serializer=SelectionOperationWriteSerializer,
                                     content_model=TaskBaseModel),

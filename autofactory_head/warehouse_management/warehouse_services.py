@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Iterable
 
 from django.contrib.auth import get_user_model
@@ -110,43 +111,95 @@ def create_inventory_with_placement_operation(serializer_data: dict[str: str], u
 
 
 @transaction.atomic
-def create_shipment_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_shipment_operation(
+        serializer_data: Iterable[dict[str: str]],
+        user: User,
+        subtype_task: TypeCollect
+) -> Iterable[str]:
+
     """ Создает операцию отгрузки со склада"""
+
     result = []
-    for element in serializer_data:
-        external_source = get_or_create_external_source(element)
-        task = ShipmentOperation.objects.filter(external_source=external_source).first()
-        if task is not None:
-            result.append(task.guid)
+    external_sources = tuple(get_or_create_external_source(element) for element in serializer_data)
+    existing_tasks = ShipmentOperation.objects.filter(
+        external_source__in=external_sources
+    ).values_list('external_source', flat=True)
+    existing_sources = set(existing_tasks.values_list('external_source', flat=True))
+
+    for element, external_source in zip(serializer_data, external_sources):
+
+        if external_source in existing_sources:
+            result.append(existing_tasks.get(external_source).guid)
             continue
 
         pallets = element.pop('pallets')
         cells = element.pop('cells')
         element.pop('external_source')
 
-        operation = ShipmentOperation.objects.create(external_source=external_source, **element)
+        operation = ShipmentOperation.objects.create(
+            external_source=external_source,
+            subtype_task=subtype_task,
+            **element
+        )
 
-        _create_child_task_shipment(pallets, user, operation, TypeCollect.SHIPMENT)
+        _create_child_task_shipment(pallets, user, operation, operation.type_task)
+
         fill_operation_cells(operation, cells)
+
         result.append(operation.guid)
+
     return result
 
 
+create_shipment = partial(
+    create_shipment_operation,
+    subtype_task=TypeCollect.SHIPMENT
+)
+
+create_shipment_semi_product_no_date = partial(
+    create_shipment_operation,
+    subtype_task=TypeCollect.MOVEMENT
+)
+
+
 @transaction.atomic
-def create_selection_operation(serializer_data: Iterable[dict[str: str]], user: User) -> Iterable[str]:
+def create_selection_operation(
+        serializer_data: Iterable[dict[str: str]],
+        user: User,
+        subtype_task: TypeCollect
+) -> Iterable[str]:
     """ Создает операцию отбора со склада"""
     result = []
-    for element in serializer_data:
-        external_source = get_or_create_external_source(element)
-        task = SelectionOperation.objects.filter(external_source=external_source).first()
-        if task is not None:
-            result.append(task.guid)
+    external_sources = tuple(get_or_create_external_source(element) for element in serializer_data)
+    existing_tasks = SelectionOperation.objects.filter(
+        external_source__in=external_sources
+    ).values_list('external_source', flat=True)
+    existing_sources = set(existing_tasks.values_list('external_source', flat=True))
+
+    for element, external_source in zip(serializer_data, external_sources):
+
+        if external_source in existing_sources:
+            result.append(existing_tasks.get(external_source).guid)
             continue
-        operation = SelectionOperation.objects.create(external_source=external_source)
+        operation = SelectionOperation.objects.create(
+            external_source=external_source,
+            subtype_task=subtype_task
+        )
 
         fill_operation_cells(operation, element['cells'])
         result.append(operation.guid)
     return result
+
+
+create_selection = partial(
+    create_selection_operation,
+    subtype_task=TypeCollect.SELECTION
+)
+
+create_selection_semi_product_no_date = partial(
+    create_selection_operation,
+    subtype_task=TypeCollect.MOVEMENT
+)
 
 
 @transaction.atomic

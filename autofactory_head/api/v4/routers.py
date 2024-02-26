@@ -15,11 +15,20 @@ from tasks.models import TaskBaseModel
 from tasks.task_services import RouterTask
 from warehouse_management.models import (
     PalletCollectOperation, ShipmentOperation, WriteOffOperation, InventoryAddressWarehouseOperation,
-    CancelShipmentOperation, MovementShipmentOperation
+    CancelShipmentOperation, MovementShipmentOperation, SelectionOperation,
 )
-from warehouse_management.serializers import (PalletReadSerializer, PalletCollectOperationReadSerializer,
-                                              ShipmentOperationWriteSerializer)
-from warehouse_management.warehouse_services import create_shipment_operation
+from warehouse_management.serializers import (
+    PalletReadSerializer,
+    PalletCollectOperationReadSerializer,
+    ShipmentOperationWriteSerializer,
+    SelectionOperationWriteSerializer,
+    SelectionOperationReadSerializer,
+)
+from warehouse_management.warehouse_services import (
+    create_shipment,
+    create_shipment_semi_product_no_date,
+    create_selection_semi_product_no_date,
+)
 
 
 def get_task_router() -> dict[str: RouterTask]:
@@ -33,7 +42,7 @@ def get_task_router() -> dict[str: RouterTask]:
                                          content_model=TaskBaseModel,
                                          answer_serializer=PalletReadSerializer),
             'SHIPMENT': RouterTask(task=ShipmentOperation,
-                                   create_function=create_shipment_operation,
+                                   create_function=create_shipment,
                                    read_serializer=ShipmentOperationReadSerializerV4,
                                    write_serializer=ShipmentOperationWriteSerializer,
                                    content_model=TaskBaseModel,
@@ -66,5 +75,18 @@ def get_task_router() -> dict[str: RouterTask]:
                                                  create_function=create_movement_shipment,
                                                  read_serializer=MovementShipmentReadSerializer,
                                                  write_serializer=MovementShipmentWriteSerializer,
-                                                 content_model=TaskBaseModel)
+                                                 content_model=TaskBaseModel),
+            'SHIPMENT_MOVEMENT': RouterTask(
+                task=ShipmentOperation,
+                create_function=create_shipment_semi_product_no_date,
+                read_serializer=ShipmentOperationReadSerializerV4,
+                write_serializer=ShipmentOperationWriteSerializer,
+                content_model=TaskBaseModel,
+                custom_methods={'check_pallet_collect': check_pallet_collect_shipment}
+            ),
+            'SELECTION_MOVEMENT': RouterTask(task=SelectionOperation,
+                                             create_function=create_selection_semi_product_no_date,
+                                             read_serializer=SelectionOperationReadSerializer,
+                                             write_serializer=SelectionOperationWriteSerializer,
+                                             content_model=TaskBaseModel),
             }

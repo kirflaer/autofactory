@@ -1,4 +1,3 @@
-import time
 import uuid
 
 from django.shortcuts import get_object_or_404
@@ -13,7 +12,14 @@ from tasks.models import TaskStatus
 from tasks.serializers import TaskPropertiesSerializer
 from tasks.task_services import (change_task_properties, get_task_queryset, TaskException, get_content_queryset,
                                  RouterTask)
-from warehouse_management.models import Pallet, PalletStatus, StorageCell
+from warehouse_management.models import (
+    Pallet,
+    PalletStatus,
+    StorageCell,
+    ShipmentOperation,
+    SelectionOperation,
+    TypeCollect,
+)
 from warehouse_management.serializers import (PalletReadSerializer, PalletWriteSerializer, PalletUpdateSerializer,
                                               StorageCellsSerializer)
 from warehouse_management.warehouse_services import create_pallets
@@ -37,6 +43,15 @@ class TasksViewSet(viewsets.ViewSet):
         filter_task = {key: value for key, value in request.query_params.items()}
         filter_task['user'] = self.request.user
 
+        if task_router.task in (ShipmentOperation, SelectionOperation):
+            filter_value = {
+                'SHIPMENT': TypeCollect.SHIPMENT,
+                'SELECTION': TypeCollect.SELECTION,
+                'SHIPMENT_MOVEMENT': TypeCollect.MOVEMENT,
+                'SELECTION_MOVEMENT': TypeCollect.MOVEMENT,
+            }
+            filter_task['subtype_task'] = filter_value.get(type_task.upper())
+
         try:
             task_queryset = get_task_queryset(task_router.task, filter_task)
         except TaskException:
@@ -46,7 +61,7 @@ class TasksViewSet(viewsets.ViewSet):
         serializer.request_user = request.user
         serializer.is_valid()
         serializer.save()
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, type_task):
         task_router = self.router.get(type_task.upper())
@@ -67,7 +82,7 @@ class TasksViewSet(viewsets.ViewSet):
             else:
                 serializer = answer_serializer(result, many=True)
                 response = response | {'pallets': serializer.data}
-            return Response(response)
+            return Response(response, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

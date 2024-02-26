@@ -149,6 +149,7 @@ class ShipmentOperationAdmin(admin.ModelAdmin):
         'date', 'guid', 'user', 'number', 'external_source', 'has_selection', 'status', 'closed', 'ready_to_unload',
         'unloaded')
     search_fields = ('guid',)
+    list_filter = ('subtype_task',)
 
 
 @admin.register(OrderOperation)
@@ -187,7 +188,7 @@ class InventoryOperationAdmin(admin.ModelAdmin):
 @admin.register(SelectionOperation)
 class SelectionOperationAdmin(admin.ModelAdmin):
     ordering = ('-date',)
-    list_filter = (('date', DateRangeFilter), 'status')
+    list_filter = (('date', DateRangeFilter), 'status', 'subtype_task')
     list_display = (
         'date', 'guid', 'user', 'number', 'external_source', 'status', 'closed', 'ready_to_unload', 'unloaded')
 

@@ -5,30 +5,30 @@
 {% endblock %}
 
 {% block filter %}
-
-
     <div class="card" style="width: 25rem;">
         <div class="card-header pb-sm-0">
             <h5 class="card-title">Фильтрация</h5>
         </div>
         <div class="card-body">
-            <form action="{% url 'pallet_operations' %}" method="get">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="{{ form.pallet.id_for_label }}" class="form-label" >{{ form.pallet.label }}</label>
-                    {{ form.pallet }}
-                </div>
-
-                <div class="mb-3 row">
-                    <div class="col-sm-10 ml-sm-auto">
-                        <button type="submit" class="btn btn-primary">Отобрать</button>
-                    </div>
-                </div>
-            </form>
+{#            <div class="mb-3">#}
+{#                <label for="{{ form.pallet.id_for_label }}" class="form-label" >{{ form.pallet.label }}</label>#}
+{#                <input id="">#}
+{#            </div>#}
+{#            <form action="{% url 'pallet_operations' %}" method="get">#}
+{#                {% csrf_token %}#}
+{#                <div class="mb-3">#}
+{#                    <label for="{{ form.pallet.id_for_label }}" class="form-label" >{{ form.pallet.label }}</label>#}
+{#                    {{ form.pallet }}#}
+{#                </div>#}
+{##}
+{#                <div class="mb-3 row">#}
+{#                    <div class="col-sm-10 ml-sm-auto">#}
+{#                        <button type="submit" class="btn btn-primary">Отобрать</button>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </form>#}
         </div>
     </div>
-
-
 {% endblock %}
 
 {% block table %}

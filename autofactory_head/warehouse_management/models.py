@@ -44,6 +44,7 @@ class TypeCollect(models.TextChoices):
     WRITE_OFF = 'WRITE_OFF'
     INVENTORY = 'INVENTORY'
     DIVIDED = 'DIVIDED'
+    MOVEMENT = 'MOVEMENT'
 
 
 class CellAreaIdentifier(models.TextChoices):
@@ -304,6 +305,13 @@ class ShipmentOperation(OperationBaseOperation):
     manager = models.CharField('Менеджер', blank=True, null=True, max_length=155)
     direction = models.CharField('Направление', blank=True, null=True, max_length=155)
     car_carrier = models.CharField('Машина перевозчик', blank=True, null=True, max_length=155)
+    subtype_task = models.CharField(
+        'Тип отгрузки', null=True,
+        choices=TypeCollect.choices,
+        default=TypeCollect.SHIPMENT,
+        max_length=67,
+        editable=False
+    )
 
     class Meta:
         verbose_name = 'Отгрузка со склада'
@@ -315,6 +323,13 @@ class SelectionOperation(OperationBaseOperation):
     parent_task = models.ForeignKey(ShipmentOperation, on_delete=models.CASCADE, verbose_name='Родительское задание',
                                     null=True,
                                     blank=True)
+    subtype_task = models.CharField(
+        'Тип отбора', null=True,
+        choices=TypeCollect.choices,
+        default=TypeCollect.SELECTION,
+        max_length=67,
+        # editable=False,
+    )
 
     class Meta:
         verbose_name = 'Отбор со склада'
@@ -322,8 +337,10 @@ class SelectionOperation(OperationBaseOperation):
 
 
 class PalletCollectOperation(OperationBaseOperation):
-    PARENT_TASK_TYPES = {'SHIPMENT': ShipmentOperation,
-                         'SELECTION': SelectionOperation}
+    PARENT_TASK_TYPES = {
+        'SHIPMENT': ShipmentOperation,
+        'SELECTION': SelectionOperation
+    }
 
     type_task = 'PALLET_COLLECT'
     parent_task = models.CharField('Родительское задание', null=True, blank=True, max_length=36)

@@ -1,6 +1,7 @@
 import csv
 import datetime
 import os
+from typing import Any
 import uuid
 
 from django.contrib.auth import get_user_model
@@ -13,14 +14,24 @@ from catalogs.models import Line, Product
 from factory_core.models import Shift, TypeShift
 from packing.models import MarkingOperation, MarkingOperationMark
 from tasks.models import TaskStatus
-from warehouse_management.models import PalletCollectOperation, Pallet, OperationPallet
+from warehouse_management.models import (
+    PalletCollectOperation,
+    Pallet,
+    OperationPallet,
+    StorageCell,
+    StorageArea,
+    SelectionOperation,
+    ShipmentOperation,
+    TypeCollect,
+)
 
 User = get_user_model()
 
 
 class BaseClassTest(APITestCase):
+
     def setUp(self) -> None:
-        self.api_version = '4'
+        self.url_api = '/api/v4/tasks'
         self.line = Line.objects.create(name='test_line')
         self.user = User.objects.create_user(username='TestUser', password='1234567', line=self.line)
         self.client.login(username='TestUser', password='1234567')
@@ -176,39 +187,28 @@ class PalletCollectTestCase(BaseClassTest):
     def setUp(self):
         super().setUp()
 
-        self.pallets = []
-        counter = 0
-        for type_shift in TypeShift:
+        self.pallets = tuple(
             Pallet.objects.create(
-                id=f'01046071040807071323072991p-c46{counter}',
+                id=f'01046071040807071323072991p-c46{i}',
                 shift=Shift.objects.create(
                     line=self.line,
-                    batch_number=f'12{counter}',
+                    batch_number=f'12{i}',
                     production_date=datetime.datetime.utcnow(),
                     type=type_shift,
                     author=self.user
                 )
             )
-            counter += 1
+            for i, type_shift in enumerate(TypeShift, start=1)
+        )
 
     def create_pallet_collect_operation(self):
         for pallet in self.pallets:
-            payload = {
-                'pallets': [{
-                    'content_count': 5,
-                    'id': pallet.id,
-                    'batch_number': pallet.shift.batch_number,
-                    'product': self.product_weight.guid,
-                    'production_date': pallet.shift.production_date.strftime('%Y-%m-%d'),
-                    'shift': pallet.shift.guid,
-                }],
-                'shift': pallet.shift.guid,
-            }
-            response = self.client.post('/api/v4/tasks/pallet_collect/', payload, format='json')
-            # Не корректный ответ на POST запрос возвращает статус 200
-            self.assertEqual(response.status_code, 200)
+            payload = self._get_payload_data(pallet)
+            response = self.client.post(f'{self.url_api}/pallet_collect/', payload, format='json')
+            self.assertEqual(response.status_code, 201)
 
     def test_pallet_collect_operation(self):
+        """ Тест PATCH запроса /tasks/pallet_collect """
 
         self.create_pallet_collect_operation()
 
@@ -237,3 +237,241 @@ class PalletCollectTestCase(BaseClassTest):
             self.assertEqual(pallet_collect.status, TaskStatus.CLOSE)
             self.assertTrue(pallet_collect.closed)
             self.assertTrue(pallet_collect.ready_to_unload)
+
+    def _get_payload_data(self, pallet: Pallet) -> dict[str: Any]:
+
+        return {
+            'pallets': [{
+                'content_count': 5,
+                'id': pallet.id,
+                'batch_number': pallet.shift.batch_number,
+                'product': self.product_weight.guid,
+                'production_date': pallet.shift.production_date.strftime('%Y-%m-%d'),
+                'shift': pallet.shift.guid,
+            }],
+            'shift': pallet.shift.guid,
+        }
+
+
+class ShipmentTestCase(BaseClassTest):
+
+    def setUp(self):
+        super().setUp()
+
+        self.url_api = '/api/v4/tasks'
+
+        self.pallets = tuple(
+            Pallet.objects.create(
+                id=f'01046071040807071323072991p-c46{i}',
+                shift=Shift.objects.create(
+                    line=self.line,
+                    batch_number=f'12{i}',
+                    production_date=datetime.datetime.utcnow(),
+                    type=type_shift,
+                    author=self.user
+                )
+            )
+            for i, type_shift in enumerate(TypeShift, start=1)
+        )
+        self.cell = StorageCell.objects.create()
+
+    def create_shipment(self, endpoint: str):
+        payload = self._get_payload_data()
+        response = self.client.post(f'{self.url_api}/{endpoint}/', payload, format='json')
+        self.assertEqual(response.status_code, 201)
+
+        return response
+
+    def test_create_shipment_operation(self):
+        """ Тест POST запроса /tasks/shipment """
+
+        response = self.create_shipment('shipment_movement')
+        self.assertEqual(response.data['type_task'], 'shipment_movement')
+
+        response = self.create_shipment('shipment')
+        self.assertEqual(response.data['type_task'], 'shipment')
+
+    def test_fetch_shipment_operation_movement(self):
+        """ Тест GET запроса /tasks/shipment_movement/ """
+
+        self.create_shipment('shipment_movement')
+        subtypes = self._get_subtype('shipment_movement')
+
+        for _type in subtypes:
+            self.assertEqual(_type, TypeCollect.MOVEMENT)
+
+        response = self.client.get(
+            f'{self.url_api}/shipment/',
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+
+    def test_fetch_shipment_operation(self):
+
+        self.create_shipment('shipment')
+        subtypes = self._get_subtype('shipment')
+
+        for _type in subtypes:
+            self.assertEqual(_type, TypeCollect.SHIPMENT)
+
+        response = self.client.get(
+            f'{self.url_api}/shipment_movement/',
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+
+    def _get_subtype(self, type_task: str):
+
+        response = self.client.get(
+            f'{self.url_api}/{type_task}/',
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(len(response.data), 0)
+
+        selection_operation_ids = tuple(element['guid'] for element in response.data)
+        return SelectionOperation.objects.filter(
+            guid__in=selection_operation_ids
+        ).values_list('subtype_task', flat=True)
+
+    def _get_payload_data(self):
+
+        return [
+            {
+                'external_source':
+                    {
+                        'name': 'Заявка на завод 0000-008562 от 18.04.2022 11:43:25',
+                        'external_key': '9cac65ba-bef3-11ec-87f7-2e6094fbc090',
+                        'number': '22',
+                        'date': '2022-12-12+'
+                    },
+                'pallets':
+                    [
+                        {
+                            'content_count': 5,
+                            'id': pallet.id,
+                            'batch_number': pallet.shift.batch_number,
+                            'product': self.product_weight.guid,
+                            'production_date': pallet.shift.production_date.strftime('%Y-%m-%d'),
+                            'shift': pallet.shift.guid,
+                        }
+                        for pallet in self.pallets
+                    ],
+                'cells':
+                    [
+                        {
+                            'cell': self.cell.guid,
+                            'cell_destination': self.cell.guid,
+                            'pallet': pallet.id
+                        }
+                        for pallet in self.pallets
+                    ]
+            }
+        ]
+
+
+class SelectionTestCase(BaseClassTest):
+
+    def setUp(self):
+        super().setUp()
+
+        self.pallets = tuple(
+            Pallet.objects.create(
+                id=f'01046071040807071323072991p-c46{i}',
+                shift=Shift.objects.create(
+                    line=self.line,
+                    batch_number=f'12{i}',
+                    production_date=datetime.datetime.utcnow(),
+                    type=type_shift,
+                    author=self.user
+                )
+            )
+            for i, type_shift in enumerate(TypeShift, start=1)
+        )
+        self.cell = StorageCell.objects.create(storage_area=StorageArea.objects.create(name='test'))
+
+    def create_selection_operation(self, endpoint):
+        payload = self._get_payload_data()
+        response = self.client.post(f'{self.url_api}/{endpoint}/', payload, format='json')
+        self.assertEqual(response.status_code, 201)
+
+        return response
+
+    def test_create_selection_operation(self):
+        """ Тест POST запроса /tasks/selection """
+
+        response = self.create_selection_operation('selection_movement')
+        self.assertEqual(response.data['type_task'], 'selection_movement')
+
+        response = self.create_selection_operation('selection')
+        self.assertEqual(response.data['type_task'], 'selection')
+
+    def test_fetch_selection_operation_movement(self):
+        """ Тест GET запроса /tasks/selection_movement/ """
+
+        self.create_selection_operation('selection_movement')
+        subtypes = self._get_subtype('selection_movement')
+
+        for _type in subtypes:
+            self.assertEqual(_type, TypeCollect.MOVEMENT)
+
+        response = self.client.get(
+            f'{self.url_api}/selection/',
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+
+    def test_fetch_selection_operation(self):
+
+        self.create_selection_operation('selection')
+        subtypes = self._get_subtype('selection')
+
+        for _type in subtypes:
+            self.assertEqual(_type, TypeCollect.SELECTION)
+
+        response = self.client.get(
+            f'{self.url_api}/selection_movement/',
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 0)
+
+    def _get_subtype(self, type_task: str):
+
+        response = self.client.get(
+            f'{self.url_api}/{type_task}/',
+            format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(len(response.data), 0)
+
+        selection_operation_ids = tuple(element['guid'] for element in response.data)
+        return SelectionOperation.objects.filter(
+            guid__in=selection_operation_ids
+        ).values_list('subtype_task', flat=True)
+
+    def _get_payload_data(self):
+
+        return [
+            {
+                'external_source':
+                    {
+                        'name': 'Заявка на завод 0000-008562 от 18.04.2022 11:43:25',
+                        'external_key': '9cac65ba-bef3-11ec-87f7-2e6094fbc090',
+                        'number': '22',
+                        'date': '2022-12-12+'
+                    },
+                'cells':
+                    [
+                        {
+                            'cell': self.cell.guid,
+                            'cell_destination': self.cell.guid,
+                            'pallet': pallet.id
+                        }
+                        for pallet in self.pallets
+                    ]
+            }
+        ]

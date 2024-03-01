@@ -71,7 +71,7 @@ class OrderOperationListView(OrderListView):
     paginate_by = 50
 
     def get_queryset(self):
-        return OrderOperation.objects.latest().order_by(self.get_ordering())[:500]
+        return OrderOperation.objects.order_by(self.get_ordering()).all()
 
 
 class OrderOperationUpdateView(LoginRequiredMixin, UpdateView):
@@ -189,13 +189,13 @@ class PalletOperationListView(LoginRequiredMixin, ListView):
     }
 
     def get_queryset(self):
-        queryset = OperationPallet.objects.all().order_by('-guid')
+        queryset = super().get_queryset()
         if len(self.request.GET):
             filter_set = self.validate(OperationPalletForm(self.request.GET))
             if filter_set:
                 queryset = queryset.filter(**filter_set)
 
-        return queryset[:500]
+        return queryset
 
     @staticmethod
     def validate(form: OperationPalletForm) -> dict | None:
@@ -417,7 +417,7 @@ class WriteOffOperationListView(LoginRequiredMixin, ListView):
 
     context_object_name = 'data'
     model = WriteOffOperation
-    template_name = 'selection_operation_list.html'
+    template_name = 'write_off_operation_list.html'
     paginate_by = 50
     ordering = ['-date']
     extra_context = {

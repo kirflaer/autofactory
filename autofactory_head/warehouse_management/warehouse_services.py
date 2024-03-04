@@ -75,7 +75,7 @@ def remove_boxes_from_pallet(pallet: Pallet, count: int, weight: int | None = No
     pallet.save()
 
 
-def check_and_collect_orders(product_keys: list[str]):
+def check_and_collect_orders(product_keys: list[str]) -> None:
     """ Функция проверяет все ли данные по заказам собраны. """
     sources = PalletSource.objects.filter(external_key__in=product_keys).values('external_key').annotate(Sum('count'))
     pallet_products = PalletProduct.objects.filter(external_key__in=product_keys)
@@ -84,9 +84,11 @@ def check_and_collect_orders(product_keys: list[str]):
     for product in order_products:
         if not sources.filter(external_key=product['external_key'], count__sum__gte=product['count__sum']).exists():
             continue
-        order_product = PalletProduct.objects.get(external_key=product['external_key'])
-        order_product.is_collected = True
-        order_product.save()
+        order_products = PalletProduct.objects.filter(external_key=product['external_key'])
+        if order_products.exists():
+            for order_product in order_products:
+                order_product.is_collected = True
+                order_product.save()
 
 
 @transaction.atomic
